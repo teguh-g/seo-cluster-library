@@ -153,10 +153,11 @@ button{font-family:var(--f);}
 
 /* === SEARCH BAR === */
 .search-bar{padding:8px 10px;border-bottom:1px solid var(--bd);background:var(--s1);position:sticky;top:0;z-index:5;}
-.search-bar input{width:100%;background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t);font-family:var(--f);font-size:11px;padding:6px 9px 6px 28px;outline:none;transition:border .15s;}
+.search-input-wrap{position:relative;}
+.search-bar input{width:100%;background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t);font-family:var(--f);font-size:11px;padding:7px 28px 7px 30px;outline:none;transition:border .15s;height:30px;box-sizing:border-box;}
+.search-bar input::placeholder{color:var(--tf);}
 .search-bar input:focus{border-color:var(--bofu);}
-.search-bar{position:relative;}
-.search-bar .si{position:absolute;left:18px;top:50%;transform:translateY(-50%);color:var(--tf);pointer-events:none;}
+.search-bar .si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tf);pointer-events:none;display:flex;align-items:center;justify-content:center;}
 .search-filters{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;}
 .sf-chip{padding:2px 8px;border-radius:10px;font-size:9px;font-weight:600;cursor:pointer;border:1px solid var(--bd);background:var(--s2);color:var(--td);transition:all .12s;text-transform:uppercase;letter-spacing:.5px;font-family:var(--m);}
 .sf-chip:hover{border-color:var(--bd2);}
@@ -166,7 +167,7 @@ button{font-family:var(--f);}
 .sf-chip.active.published{background:rgba(52,211,153,.1);border-color:var(--ok);color:var(--ok);}
 .sf-chip.active.draft{background:var(--s3);border-color:var(--bd2);color:var(--t);}
 .sf-chip.active.needs-update{background:rgba(245,158,11,.1);border-color:var(--mofu);color:var(--mofu);}
-.search-clear{position:absolute;right:18px;top:50%;transform:translateY(-50%);background:var(--s3);border:none;color:var(--td);cursor:pointer;width:18px;height:18px;border-radius:50%;display:none;align-items:center;justify-content:center;font-size:12px;line-height:1;}
+.search-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:var(--s3);border:none;color:var(--td);cursor:pointer;width:18px;height:18px;border-radius:50%;display:none;align-items:center;justify-content:center;font-size:12px;line-height:1;padding:0;}
 .search-clear.show{display:flex;}
 .search-clear:hover{background:var(--danger);color:#fff;}
 
@@ -248,6 +249,24 @@ button{font-family:var(--f);}
 .shortcuts-help table{font-size:10px;}
 .shortcuts-help td{padding:2px 8px 2px 0;}
 .shortcuts-help kbd{background:var(--s3);border:1px solid var(--bd);border-radius:3px;padding:1px 5px;font-family:var(--m);font-size:9px;color:var(--t);}
+/* === ICON SYSTEM === */
+.btn svg.ic, .theme-tog svg.ic{width:13px;height:13px;flex-shrink:0;vertical-align:-2px;}
+.btn{display:inline-flex;align-items:center;gap:5px;}
+.btn .lbl{display:inline-block;}
+.theme-tog svg.ic{width:14px;height:14px;}
+.h3-ic{width:14px;height:14px;vertical-align:-3px;margin-right:6px;}
+.toast svg.ic{width:12px;height:12px;vertical-align:-2px;margin-right:4px;}
+.bd-warn-ic{width:12px;height:12px;vertical-align:-2px;margin-right:5px;color:var(--mofu);}
+
+/* === TABLE COPY UI === */
+.dt th.th-col{cursor:pointer;user-select:none;transition:background .12s;position:relative;padding-right:20px !important;}
+.dt th.th-col:hover{background:var(--bofuBg);color:var(--bofu);}
+.dt th.th-col:hover .th-cp{opacity:1;}
+.th-cp{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:11px;height:11px;opacity:0;transition:opacity .12s;}
+.dt th.th-cb,.dt td.td-cb{width:30px;padding-left:8px !important;padding-right:4px !important;}
+.dt td.td-cb input,.dt th.th-cb input{accent-color:var(--bofu);cursor:pointer;}
+.dt tr.sel{background:var(--bofuBg);}
+.dt tr.sel td{border-color:var(--bofuBd);}
 </style>
 </head>
 <body>
@@ -259,25 +278,26 @@ button{font-family:var(--f);}
       <span class="sd"></span>
       <span id="syncLbl">Not configured</span>
     </div>
-    <button class="btn btn-g btn-sm" onclick="undoAction()" id="btnUndo" title="Undo (Ctrl+Z)" disabled style="opacity:.4;">↶ Undo</button>
-    <button class="btn btn-g btn-sm" onclick="syncPull()" id="btnPull" title="Load from GitHub Gist">⬇ Pull</button>
-    <button class="btn btn-g btn-sm" onclick="syncPush()" id="btnPush" title="Save to GitHub Gist">⬆ Push</button>
-    <button class="btn btn-g btn-sm" onclick="openSyncMo()">⚙ Sync</button>
-    <button class="btn btn-g btn-sm" onclick="openSnapMo()" title="Backup snapshots">📸 Snaps</button>
-    <button class="btn btn-g btn-sm" onclick="checkCannibals()" title="Check keyword cannibalization">🔍 Cannibals</button>
-    <button class="btn btn-g btn-sm" onclick="exportPNG()" title="Export graph as PNG image">🖼 PNG</button>
-    <button class="btn btn-g btn-sm" onclick="exportSVG()" title="Export graph as SVG (vector)">🎨 SVG</button>
-    <button class="btn btn-g btn-sm" onclick="window.print()" title="Print / PDF">🖨 Print</button>
-    <button class="btn btn-g btn-sm" onclick="exportAll()">Export All</button>
-    <button class="btn btn-g btn-sm" onclick="document.getElementById('impAll').click()">Import</button>
-    <button class="theme-tog" onclick="toggleTheme()" id="btnTheme" title="Toggle theme">🌙</button>
+    <button class="btn btn-g btn-sm" onclick="undoAction()" id="btnUndo" title="Undo (Ctrl+Z)" disabled style="opacity:.4;"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg><span class="lbl">Undo</span></button>
+    <button class="btn btn-g btn-sm" onclick="syncPull()" id="btnPull" title="Load from GitHub Gist"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="lbl">Pull</span></button>
+    <button class="btn btn-g btn-sm" onclick="syncPush()" id="btnPush" title="Save to GitHub Gist"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="lbl">Push</span></button>
+    <button class="btn btn-g btn-sm" onclick="openSyncMo()" title="Cloud sync settings"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="lbl">Sync</span></button>
+    <button class="btn btn-g btn-sm" onclick="openSnapMo()" title="Backup snapshots"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5a2 2 0 0 1 2-2h3l2-2h4l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg><span class="lbl">Snaps</span></button>
+    <button class="btn btn-g btn-sm" onclick="checkCannibals()" title="Check keyword cannibalization"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span class="lbl">Cannibals</span></button>
+    <button class="btn btn-g btn-sm" onclick="exportPNG()" title="Export graph as PNG image"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span class="lbl">PNG</span></button>
+    <button class="btn btn-g btn-sm" onclick="exportSVG()" title="Export graph as SVG (vector)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg><span class="lbl">SVG</span></button>
+    <button class="btn btn-g btn-sm" onclick="window.print()" title="Print / PDF"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg><span class="lbl">Print</span></button>
+    <button class="btn btn-g btn-sm" onclick="exportAll()" title="Export all data as JSON"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="lbl">Export All</span></button>
+    <button class="btn btn-g btn-sm" onclick="document.getElementById('impAll').click()" title="Import JSON"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="lbl">Import</span></button>
+    <button class="theme-tog" onclick="toggleTheme()" id="btnTheme" title="Toggle theme"><svg class="ic ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
     <input type="file" id="impAll" accept=".json" style="display:none" onchange="importAll(event)">
   </div>
 </header>
 
 <!-- Cannibalization warning bar -->
 <div class="cb-warn" id="cbWarn" onclick="checkCannibals()">
-  ⚠ <strong id="cbCount">0</strong> keyword duplicate detected — click to review
+  <svg class="bd-warn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+  <strong id="cbCount">0</strong> keyword duplicate detected — click to review
 </div>
 
 <div class="layout">
@@ -347,9 +367,11 @@ button{font-family:var(--f);}
     </h3>
   </div>
   <div class="search-bar">
-    <svg class="si" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input type="text" id="searchInp" placeholder="Search keywords..." oninput="onSearch()">
-    <button class="search-clear" id="searchClr" onclick="clearSearch()">×</button>
+    <div class="search-input-wrap">
+      <svg class="si" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="searchInp" placeholder="Search keywords..." oninput="onSearch()">
+      <button class="search-clear" id="searchClr" onclick="clearSearch()">×</button>
+    </div>
     <div class="search-filters" id="searchFilters">
       <span class="sf-chip bofu" data-filter="funnel" data-val="bofu" onclick="toggleFilter(this)">BOFU</span>
       <span class="sf-chip mofu" data-filter="funnel" data-val="mofu" onclick="toggleFilter(this)">MOFU</span>
@@ -389,10 +411,12 @@ button{font-family:var(--f);}
       <span id="projName" style="font-size:11px;color:var(--td);margin-left:8px;"></span>
     </div>
     <div class="tb-r">
-      <button class="btn btn-g btn-sm" onclick="expCSV()" title="Export CSV">CSV</button>
-      <button class="btn btn-g btn-sm" onclick="expXLSX()" title="Export TSV (open with Excel/Sheets)">📊 Excel</button>
-      <button class="btn btn-g btn-sm" onclick="expJSON()">Save Project</button>
-      <button class="btn btn-g btn-sm" onclick="document.getElementById('impF').click()">Load</button>
+      <button class="btn btn-g btn-sm" onclick="copyTable('all')" title="Copy all rows as TSV (paste to Sheets/Excel)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="lbl">Copy Table</span></button>
+      <button class="btn btn-g btn-sm" onclick="copyTable('selected')" title="Copy only checked rows" id="btnCopySel" style="display:none;"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span class="lbl">Copy Selected (<span id="copySelCount">0</span>)</span></button>
+      <button class="btn btn-g btn-sm" onclick="expCSV()" title="Download CSV file"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="lbl">CSV</span></button>
+      <button class="btn btn-g btn-sm" onclick="expXLSX()" title="Download TSV (open with Excel/Sheets)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="lbl">TSV</span></button>
+      <button class="btn btn-g btn-sm" onclick="expJSON()" title="Save project as JSON file">Save Project</button>
+      <button class="btn btn-g btn-sm" onclick="document.getElementById('impF').click()" title="Load project from JSON file">Load</button>
       <input type="file" id="impF" accept=".json" style="display:none" onchange="impJSON(event)">
     </div>
   </div>
@@ -439,7 +463,7 @@ button{font-family:var(--f);}
 <!-- SYNC SETUP MODAL -->
 <div class="mo" id="syncMo">
   <div class="md" style="max-width:480px;">
-    <h3>☁ GitHub Gist Cloud Sync</h3>
+    <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>GitHub Gist Cloud Sync</h3>
     <div class="sync-modal-body">
       <div style="margin-bottom:10px;">Sync data antar device via private GitHub Gist. Token disimpan lokal di browser ini saja.</div>
 
@@ -476,11 +500,11 @@ button{font-family:var(--f);}
 <!-- SNAPSHOTS MODAL -->
 <div class="mo" id="snapMo">
   <div class="md" style="max-width:520px;">
-    <h3>📸 Backup Snapshots</h3>
+    <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5a2 2 0 0 1 2-2h3l2-2h4l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg>Backup Snapshots</h3>
     <p style="font-size:11px;color:var(--td);margin-bottom:12px;">10 versi terakhir tersimpan otomatis. Klik untuk restore.</p>
     <div class="snap-list" id="snapList"></div>
     <div class="btn-row" style="margin-top:14px;">
-      <button class="btn btn-g btn-sm" onclick="snapManual()">📸 Save snapshot now</button>
+      <button class="btn btn-g btn-sm" onclick="snapManual()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5a2 2 0 0 1 2-2h3l2-2h4l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg><span class="lbl">Save snapshot now</span></button>
       <div style="flex:1"></div>
       <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="closeSnapMo()">Close</button>
     </div>
@@ -490,7 +514,7 @@ button{font-family:var(--f);}
 <!-- CANNIBALIZATION MODAL -->
 <div class="mo" id="cbMo">
   <div class="md" style="max-width:560px;">
-    <h3>🔍 Keyword Cannibalization Check</h3>
+    <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Keyword Cannibalization Check</h3>
     <p style="font-size:11px;color:var(--td);margin-bottom:12px;">Keyword yang muncul di lebih dari 1 node — kemungkinan cannibalization SEO.</p>
     <div class="cb-list" id="cbList"></div>
     <div class="btn-row" style="margin-top:14px;">
@@ -503,7 +527,7 @@ button{font-family:var(--f);}
 <!-- PNG EXPORT MODAL -->
 <div class="mo" id="pngMo">
   <div class="md" style="max-width:420px;">
-    <h3>🖼 Export Graph as PNG</h3>
+    <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Export Graph as PNG</h3>
     <div style="font-size:11px;color:var(--td);line-height:1.6;margin-bottom:14px;">
       Export visual cluster sebagai gambar. Cocok untuk share di WhatsApp, Slack, atau presentasi.
     </div>
@@ -902,6 +926,7 @@ function renderGraph(){
   });
 
   // Internal link edges
+  const hasLinks=L().length>0;
   L().forEach(l=>{
     const fp=graphPositions[l.from],tp=graphPositions[l.to];
     if(fp&&tp){
@@ -909,11 +934,63 @@ function renderGraph(){
       const x1=fp.x+fw/2,y1=fp.y+nodeH/2,x2=tp.x+tw/2,y2=tp.y+nodeH/2;
       const line=mkSVG('line');
       line.setAttribute('x1',x1);line.setAttribute('y1',y1);line.setAttribute('x2',x2);line.setAttribute('y2',y2);
-      line.setAttribute('stroke','#8892a4');line.setAttribute('stroke-width','1');
-      line.setAttribute('stroke-dasharray','5,4');line.setAttribute('opacity','0.25');
+      line.setAttribute('stroke','#a78bfa');line.setAttribute('stroke-width','1.5');
+      line.setAttribute('stroke-dasharray','6,4');line.setAttribute('opacity','0.7');
       svg.appendChild(line);
+      // Arrow marker for direction
+      const angle=Math.atan2(y2-y1,x2-x1);
+      const ax=x2-Math.cos(angle)*(tw/2+8);
+      const ay=y2-Math.sin(angle)*(nodeH/2+2);
+      const arr=mkSVG('polygon');
+      const ah=6;
+      arr.setAttribute('points',`${ax},${ay} ${ax-ah*Math.cos(angle-0.4)},${ay-ah*Math.sin(angle-0.4)} ${ax-ah*Math.cos(angle+0.4)},${ay-ah*Math.sin(angle+0.4)}`);
+      arr.setAttribute('fill','#a78bfa');
+      arr.setAttribute('opacity','0.7');
+      svg.appendChild(arr);
     }
   });
+
+  // Legend (top-left)
+  if(hasLinks){
+    const lg=mkSVG('g');
+    lg.setAttribute('transform','translate(10, 10)');
+    const lbg=mkSVG('rect');
+    lbg.setAttribute('x','0');lbg.setAttribute('y','0');
+    lbg.setAttribute('width','165');lbg.setAttribute('height','46');
+    lbg.setAttribute('rx','6');
+    lbg.setAttribute('fill','#141820');lbg.setAttribute('opacity','0.85');
+    lbg.setAttribute('stroke','#2a3040');lbg.setAttribute('stroke-width','1');
+    lg.appendChild(lbg);
+
+    // Parent-child line
+    const l1=mkSVG('path');
+    l1.setAttribute('d','M10,16 C18,16 22,16 30,16');
+    l1.setAttribute('stroke','#5a6478');l1.setAttribute('stroke-width','1.5');
+    l1.setAttribute('fill','none');l1.setAttribute('opacity','0.6');
+    lg.appendChild(l1);
+    const t1=mkSVG('text');
+    t1.setAttribute('x','38');t1.setAttribute('y','19');
+    t1.setAttribute('fill','#8892a4');t1.setAttribute('font-size','10');
+    t1.setAttribute('font-family','DM Sans');
+    t1.textContent='Parent → Child';
+    lg.appendChild(t1);
+
+    // Internal link
+    const l2=mkSVG('line');
+    l2.setAttribute('x1','10');l2.setAttribute('y1','34');
+    l2.setAttribute('x2','30');l2.setAttribute('y2','34');
+    l2.setAttribute('stroke','#a78bfa');l2.setAttribute('stroke-width','1.5');
+    l2.setAttribute('stroke-dasharray','6,4');l2.setAttribute('opacity','0.7');
+    lg.appendChild(l2);
+    const t2=mkSVG('text');
+    t2.setAttribute('x','38');t2.setAttribute('y','37');
+    t2.setAttribute('fill','#8892a4');t2.setAttribute('font-size','10');
+    t2.setAttribute('font-family','DM Sans');
+    t2.textContent='Internal Link';
+    lg.appendChild(t2);
+
+    svg.appendChild(lg);
+  }
 
   // Nodes
   ns.forEach(n=>{
@@ -965,9 +1042,27 @@ function renderTable(){
   function nLinks(id){return L().filter(l=>l.from===id||l.to===id).map(l=>{const oid=l.from===id?l.to:l.from;const o=ns.find(x=>x.id===oid);return o?o.keyword:'';}).join(', ');}
   const ord={bofu:0,mofu:1,tofu:2};
   const sorted=[...ns].sort((a,b)=>(ord[a.funnel]||0)-(ord[b.funnel]||0));
-  let h=`<table class="dt"><thead><tr><th>Funnel</th><th>Type</th><th>Keyword</th><th>URL</th><th>Vol</th><th>KD</th><th>Pos</th><th>Status</th><th>Parent</th><th>Links</th></tr></thead><tbody>`;
+  // Header row with clickable column headers (for column copy)
+  const cols=[
+    {key:'funnel',lbl:'Funnel'},
+    {key:'pageType',lbl:'Type'},
+    {key:'keyword',lbl:'Keyword'},
+    {key:'url',lbl:'URL'},
+    {key:'volume',lbl:'Vol'},
+    {key:'kd',lbl:'KD'},
+    {key:'position',lbl:'Pos'},
+    {key:'status',lbl:'Status'},
+    {key:'parent',lbl:'Parent'},
+    {key:'links',lbl:'Links'}
+  ];
+  let h=`<table class="dt"><thead><tr>
+    <th class="th-cb"><input type="checkbox" id="tblSelAll" onchange="tblToggleAll(this)" title="Select all"></th>
+    ${cols.map(c=>`<th class="th-col" data-col="${c.key}" onclick="copyColumn('${c.key}')" title="Click to copy this column">${c.lbl} <svg class="th-cp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></th>`).join('')}
+  </tr></thead><tbody>`;
   sorted.forEach(n=>{
-    h+=`<tr ondblclick="openEd('${n.id}')" oncontextmenu="showCtx('${n.id}',event)" style="cursor:pointer;">
+    const checked=tblSelected.has(n.id);
+    h+=`<tr data-id="${n.id}" ondblclick="openEd('${n.id}')" oncontextmenu="showCtx('${n.id}',event)" style="cursor:pointer;" class="${checked?'sel':''}">
+      <td class="td-cb"><input type="checkbox" ${checked?'checked':''} onclick="event.stopPropagation();tblToggleRow('${n.id}',this.checked)"></td>
       <td><span class="fb fb-${n.funnel}" style="display:inline-block">${n.funnel.toUpperCase()}</span></td>
       <td style="font-size:10px;">${ptLabel(n.pageType)}</td>
       <td><strong>${esc(n.keyword)}</strong></td>
@@ -982,6 +1077,113 @@ function renderTable(){
   });
   h+='</tbody></table>';
   el.innerHTML=h;
+  updateCopySelBtn();
+}
+
+// === TABLE SELECTION ===
+let tblSelected=new Set();
+function tblToggleRow(id,checked){
+  if(checked)tblSelected.add(id);else tblSelected.delete(id);
+  const tr=document.querySelector(`tr[data-id="${id}"]`);
+  if(tr)tr.classList.toggle('sel',checked);
+  updateCopySelBtn();
+}
+function tblToggleAll(cb){
+  const trs=document.querySelectorAll('.dt tbody tr');
+  trs.forEach(tr=>{
+    const id=tr.dataset.id;
+    if(cb.checked)tblSelected.add(id);else tblSelected.delete(id);
+    tr.classList.toggle('sel',cb.checked);
+    const rc=tr.querySelector('input[type="checkbox"]');
+    if(rc)rc.checked=cb.checked;
+  });
+  updateCopySelBtn();
+}
+function updateCopySelBtn(){
+  const btn=document.getElementById('btnCopySel');
+  if(!btn)return;
+  if(tblSelected.size>0){
+    btn.style.display='inline-flex';
+    document.getElementById('copySelCount').textContent=tblSelected.size;
+  }else{
+    btn.style.display='none';
+  }
+}
+
+// === SMART COPY ===
+function buildRowData(n,ns){
+  function parKW(id){const x=ns.find(y=>y.id===id);return x?x.keyword:'';}
+  function nLinks(id){return L().filter(l=>l.from===id||l.to===id).map(l=>{const oid=l.from===id?l.to:l.from;const o=ns.find(x=>x.id===oid);return o?o.keyword:'';}).join(', ');}
+  return {
+    funnel:n.funnel.toUpperCase(),
+    pageType:ptLabel(n.pageType),
+    keyword:n.keyword,
+    url:n.url||'',
+    volume:n.volume||'',
+    kd:n.kd||'',
+    position:n.position||'',
+    status:n.status,
+    parent:n.parentId?parKW(n.parentId):'',
+    links:nLinks(n.id)
+  };
+}
+
+function copyTable(mode){
+  const ns=N();if(!ns.length){toast('No data!',1);return;}
+  const ord={bofu:0,mofu:1,tofu:2};
+  let rows=[...ns].sort((a,b)=>(ord[a.funnel]||0)-(ord[b.funnel]||0));
+  if(mode==='selected'){
+    if(!tblSelected.size){toast('No rows selected!',1);return;}
+    rows=rows.filter(n=>tblSelected.has(n.id));
+  }
+  const headers=['Funnel','Type','Keyword','URL','Vol','KD','Pos','Status','Parent','Links'];
+  const lines=[headers.join('\t')];
+  rows.forEach(n=>{
+    const d=buildRowData(n,ns);
+    lines.push([d.funnel,d.pageType,d.keyword,d.url,d.volume,d.kd,d.position,d.status,d.parent,d.links].map(v=>String(v).replace(/\t/g,' ').replace(/\n/g,' ')).join('\t'));
+  });
+  const text=lines.join('\n');
+  copyToClipboard(text,()=>{
+    toast(`Copied ${rows.length} row(s) to clipboard! Paste to Sheets/Excel.`);
+  });
+}
+
+function copyColumn(colKey){
+  const ns=N();if(!ns.length){toast('No data!',1);return;}
+  const ord={bofu:0,mofu:1,tofu:2};
+  const sorted=[...ns].sort((a,b)=>(ord[a.funnel]||0)-(ord[b.funnel]||0));
+  // Use selected rows if any, else all
+  const rows=tblSelected.size?sorted.filter(n=>tblSelected.has(n.id)):sorted;
+  const labels={funnel:'Funnel',pageType:'Type',keyword:'Keyword',url:'URL',volume:'Vol',kd:'KD',position:'Pos',status:'Status',parent:'Parent',links:'Links'};
+  const lines=[labels[colKey]||colKey];
+  rows.forEach(n=>{
+    const d=buildRowData(n,ns);
+    lines.push(String(d[colKey]||''));
+  });
+  copyToClipboard(lines.join('\n'),()=>{
+    const what=tblSelected.size?'selected':'all';
+    toast(`Copied "${labels[colKey]}" column (${rows.length} ${what} row(s))!`);
+  });
+}
+
+function copyToClipboard(text,onSuccess){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(onSuccess).catch(()=>{
+      copyToClipboardFallback(text,onSuccess);
+    });
+  }else{
+    copyToClipboardFallback(text,onSuccess);
+  }
+}
+function copyToClipboardFallback(text,onSuccess){
+  const ta=document.createElement('textarea');
+  ta.value=text;
+  ta.style.position='fixed';ta.style.left='-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try{document.execCommand('copy');onSuccess();}
+  catch(e){toast('Copy failed!',1);}
+  document.body.removeChild(ta);
 }
 
 // === STATS ===
@@ -1079,18 +1281,20 @@ function toast(msg,err){const t=document.getElementById('toast');t.textContent=m
 
 // === THEME ===
 const THEME_KEY='seo-cluster-theme';
+const ICON_MOON='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+const ICON_SUN='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
 function loadTheme(){
   try{
     const t=localStorage.getItem(THEME_KEY)||'dark';
     document.documentElement.setAttribute('data-theme',t);
-    document.getElementById('btnTheme').textContent=t==='dark'?'☀':'🌙';
+    document.getElementById('btnTheme').innerHTML=t==='dark'?ICON_SUN:ICON_MOON;
   }catch(e){}
 }
 function toggleTheme(){
   const cur=document.documentElement.getAttribute('data-theme')||'dark';
   const nxt=cur==='dark'?'light':'dark';
   document.documentElement.setAttribute('data-theme',nxt);
-  document.getElementById('btnTheme').textContent=nxt==='dark'?'☀':'🌙';
+  document.getElementById('btnTheme').innerHTML=nxt==='dark'?ICON_SUN:ICON_MOON;
   try{localStorage.setItem(THEME_KEY,nxt);}catch(e){}
   if(curView==='graph')renderGraph();
 }
@@ -1128,7 +1332,7 @@ function undoAction(){
     if(activeProj&&!projects.find(p=>p.id===activeProj))activeProj=projects[0]?.id||null;
     graphPositions={};
     _origSave();renderAll();
-    toast('↶ Undone');
+    toast('Undone');
   }catch(e){toast('Undo failed',1);}
   suppressHist=false;
   updateUndoBtn();
@@ -1143,7 +1347,7 @@ function redoAction(){
     if(activeProj&&!projects.find(p=>p.id===activeProj))activeProj=projects[0]?.id||null;
     graphPositions={};
     _origSave();renderAll();
-    toast('↷ Redone');
+    toast('Redone');
   }catch(e){toast('Redo failed',1);}
   suppressHist=false;
   updateUndoBtn();
@@ -1289,7 +1493,7 @@ function snapAdd(label){
 }
 function snapManual(){
   snapAdd('Manual');
-  toast('📸 Snapshot saved');
+  toast('Snapshot saved');
   renderSnaps();
 }
 function openSnapMo(){renderSnaps();document.getElementById('snapMo').classList.add('active');}
@@ -1343,7 +1547,7 @@ function findCannibals(){
 
 function checkCannibals(){
   const cb=findCannibals();
-  if(!cb.length){toast('✓ No cannibalization detected');document.getElementById('cbWarn').classList.remove('show');return;}
+  if(!cb.length){toast('No cannibalization detected');document.getElementById('cbWarn').classList.remove('show');return;}
   const el=document.getElementById('cbList');
   el.innerHTML=cb.map(c=>`
     <div class="cb-row">
@@ -1442,7 +1646,7 @@ function exportSVG(){
   a.download=p.name.replace(/[^\w-]/g,'_')+'-cluster.svg';
   a.click();
   URL.revokeObjectURL(url);
-  toast('🎨 SVG downloaded!');
+  toast('SVG downloaded!');
 }
 
 function openPngMo(){
@@ -1472,7 +1676,7 @@ async function doPngExport(){
   const isDarkBg=bgColor==='#0b0e13'||bgColor==='transparent'&&document.documentElement.getAttribute('data-theme')!=='light';
 
   closePngMo();
-  toast('🖼 Generating PNG...');
+  toast('Generating PNG...');
 
   try{
     const clone=svg.cloneNode(true);
@@ -1545,7 +1749,7 @@ async function doPngExport(){
       a.download=p.name.replace(/[^\w-]/g,'_')+'-cluster.png';
       a.click();
       URL.revokeObjectURL(url);
-      toast('🖼 PNG downloaded!');
+      toast('PNG downloaded!');
     },'image/png');
   }catch(err){
     console.error(err);
@@ -1697,7 +1901,7 @@ async function syncPush(){
       throw new Error(err.message||('HTTP '+res.status));
     }
     syncCfg.lastSync=Date.now();saveSyncCfg();
-    toast('☁ Pushed to cloud!');
+    toast('Pushed to cloud!');
   }catch(e){
     document.getElementById('syncSt').classList.add('error');
     toast('Push failed: '+e.message,1);
@@ -1739,7 +1943,7 @@ async function syncPull(){
     save();
     syncCfg.lastSync=Date.now();saveSyncCfg();
     renderAll();
-    toast('☁ Pulled '+projects.length+' project(s)!');
+    toast('Pulled '+projects.length+' project(s)!');
   }catch(e){
     document.getElementById('syncSt').classList.add('error');
     toast('Pull failed: '+e.message,1);
