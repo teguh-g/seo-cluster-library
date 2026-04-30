@@ -124,6 +124,21 @@ button{font-family:var(--f);}
 .toast.show{transform:translateY(0);opacity:1;}
 /* Rename input */
 .rename-input{background:var(--s2);border:1px solid var(--bofu);border-radius:3px;color:var(--t);font-family:var(--f);font-size:12px;padding:2px 6px;width:100%;outline:none;}
+/* Sync status */
+.sync-st{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--td);font-family:var(--m);padding:0 10px;border-right:1px solid var(--bd);margin-right:6px;}
+.sync-st .sd{width:6px;height:6px;}
+.sync-st.synced .sd{background:var(--ok);box-shadow:0 0 6px var(--ok);}
+.sync-st.syncing .sd{background:var(--mofu);animation:pulse 1s infinite;}
+.sync-st.error .sd{background:var(--danger);}
+.sync-st.off .sd{background:var(--tf);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.sync-modal-body{font-size:11px;line-height:1.65;color:var(--td);}
+.sync-modal-body code{background:var(--s2);padding:1px 5px;border-radius:3px;font-family:var(--m);font-size:10px;color:var(--bofu);}
+.sync-modal-body a{color:var(--bofu);text-decoration:none;}
+.sync-modal-body a:hover{text-decoration:underline;}
+.sync-modal-body .step{margin-bottom:6px;padding-left:14px;position:relative;}
+.sync-modal-body .step::before{content:'';position:absolute;left:0;top:8px;width:5px;height:5px;background:var(--bofu);border-radius:50%;}
+.sync-modal-body hr{border:none;border-top:1px solid var(--bd);margin:12px 0;}
 </style>
 </head>
 <body>
@@ -131,6 +146,13 @@ button{font-family:var(--f);}
 <header class="hdr">
   <h1><span class="hdr-dot"></span>SEO Cluster Library</h1>
   <div class="hdr-actions">
+    <div class="sync-st off" id="syncSt" title="Cloud sync status">
+      <span class="sd"></span>
+      <span id="syncLbl">Not configured</span>
+    </div>
+    <button class="btn btn-g btn-sm" onclick="syncPull()" id="btnPull" title="Load from GitHub Gist">⬇ Pull</button>
+    <button class="btn btn-g btn-sm" onclick="syncPush()" id="btnPush" title="Save to GitHub Gist">⬆ Push</button>
+    <button class="btn btn-g btn-sm" onclick="openSyncMo()">⚙ Sync Setup</button>
     <button class="btn btn-g btn-sm" onclick="exportAll()">Export All</button>
     <button class="btn btn-g btn-sm" onclick="document.getElementById('impAll').click()">Import</button>
     <input type="file" id="impAll" accept=".json" style="display:none" onchange="importAll(event)">
@@ -261,6 +283,43 @@ button{font-family:var(--f);}
   <div class="ctx-item" onclick="ctxEdit()">Edit</div>
   <div class="ctx-item" onclick="ctxAddChild()">Add Child</div>
   <div class="ctx-item danger" onclick="ctxDel()">Delete</div>
+</div>
+
+<!-- SYNC SETUP MODAL -->
+<div class="mo" id="syncMo">
+  <div class="md" style="max-width:480px;">
+    <h3>☁ GitHub Gist Cloud Sync</h3>
+    <div class="sync-modal-body">
+      <div style="margin-bottom:10px;">Sync data antar device via private GitHub Gist. Token disimpan lokal di browser ini saja.</div>
+
+      <div class="ig"><label>GitHub Personal Access Token</label><input type="password" id="syncTok" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"></div>
+      <div class="ig"><label>Gist ID</label><input type="text" id="syncGid" placeholder="a1b2c3d4e5f6g7h8i9j0"></div>
+
+      <div class="ir" style="margin-top:6px;">
+        <label style="font-size:10px;color:var(--td);display:flex;align-items:center;gap:5px;cursor:pointer;">
+          <input type="checkbox" id="syncAuto" style="width:auto;"> Auto-push setiap save
+        </label>
+      </div>
+
+      <hr>
+
+      <div style="font-weight:600;color:var(--t);margin-bottom:6px;">Cara setup pertama kali:</div>
+      <div class="step">Buka <a href="https://github.com/settings/tokens/new?scopes=gist&description=SEO%20Cluster%20Library" target="_blank">GitHub Token Page</a> → scope <code>gist</code> sudah otomatis dicentang → Generate → copy token</div>
+      <div class="step">Buka <a href="https://gist.github.com/" target="_blank">gist.github.com</a> → bikin <strong>secret gist</strong> dengan filename <code>seo-cluster-library.json</code> dan content <code>[]</code></div>
+      <div class="step">Copy Gist ID dari URL (bagian setelah username)</div>
+      <div class="step">Paste keduanya di atas → Save → Push</div>
+
+      <hr style="margin:10px 0;">
+      <div style="font-size:10px;color:var(--tf);">⚠ Token cuma butuh scope <code>gist</code>. Jangan share token ke siapapun.</div>
+    </div>
+
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-d btn-sm" onclick="syncDisconnect()">Disconnect</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-g btn-sm" onclick="closeSyncMo()">Cancel</button>
+      <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="syncSave()">Save Config</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -779,8 +838,159 @@ function mkSVG(tag){return document.createElementNS('http://www.w3.org/2000/svg'
 function dl(name,content,type){const b=new Blob([content],{type});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();URL.revokeObjectURL(a.href);}
 function toast(msg,err){const t=document.getElementById('toast');t.textContent=msg;t.style.background=err?'var(--danger)':'var(--ok)';t.style.color=err?'#fff':'#000';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
+// === GITHUB GIST SYNC ===
+const SYNC_KEY='seo-cluster-sync';
+let syncCfg={token:'',gistId:'',autoPush:false,lastSync:null};
+let syncBusy=false;
+
+function loadSyncCfg(){
+  try{
+    const d=localStorage.getItem(SYNC_KEY);
+    if(d){syncCfg={...syncCfg,...JSON.parse(d)};}
+  }catch(e){}
+  updateSyncUI();
+}
+
+function saveSyncCfg(){
+  try{localStorage.setItem(SYNC_KEY,JSON.stringify(syncCfg));}catch(e){}
+}
+
+function updateSyncUI(){
+  const el=document.getElementById('syncSt');
+  const lbl=document.getElementById('syncLbl');
+  if(!el)return;
+  el.classList.remove('off','synced','syncing','error');
+  if(syncBusy){
+    el.classList.add('syncing');lbl.textContent='Syncing...';
+  }else if(!syncCfg.token||!syncCfg.gistId){
+    el.classList.add('off');lbl.textContent='Not configured';
+  }else if(syncCfg.lastSync){
+    el.classList.add('synced');
+    const ago=Math.floor((Date.now()-syncCfg.lastSync)/1000);
+    let txt='just now';
+    if(ago>=60)txt=Math.floor(ago/60)+'m ago';
+    if(ago>=3600)txt=Math.floor(ago/3600)+'h ago';
+    if(ago>=86400)txt=Math.floor(ago/86400)+'d ago';
+    lbl.textContent='Synced '+txt;
+  }else{
+    el.classList.add('synced');lbl.textContent='Configured';
+  }
+}
+setInterval(updateSyncUI,30000); // refresh "x ago" label
+
+function openSyncMo(){
+  sv('syncTok',syncCfg.token);
+  sv('syncGid',syncCfg.gistId);
+  document.getElementById('syncAuto').checked=!!syncCfg.autoPush;
+  document.getElementById('syncMo').classList.add('active');
+}
+function closeSyncMo(){document.getElementById('syncMo').classList.remove('active');}
+
+function syncSave(){
+  syncCfg.token=gv('syncTok');
+  syncCfg.gistId=gv('syncGid');
+  syncCfg.autoPush=document.getElementById('syncAuto').checked;
+  if(!syncCfg.token||!syncCfg.gistId){toast('Token & Gist ID required!',1);return;}
+  saveSyncCfg();updateSyncUI();closeSyncMo();
+  toast('Sync configured! Try Push.');
+}
+
+function syncDisconnect(){
+  if(!confirm('Disconnect cloud sync? Token & Gist ID akan dihapus dari browser ini.'))return;
+  syncCfg={token:'',gistId:'',autoPush:false,lastSync:null};
+  saveSyncCfg();updateSyncUI();closeSyncMo();
+  toast('Disconnected.');
+}
+
+async function syncPush(){
+  if(!syncCfg.token||!syncCfg.gistId){toast('Setup sync first!',1);openSyncMo();return;}
+  if(syncBusy)return;
+  syncBusy=true;updateSyncUI();
+  try{
+    const res=await fetch('https://api.github.com/gists/'+syncCfg.gistId,{
+      method:'PATCH',
+      headers:{
+        'Authorization':'token '+syncCfg.token,
+        'Accept':'application/vnd.github+json',
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({
+        files:{
+          'seo-cluster-library.json':{content:JSON.stringify(projects,null,2)}
+        }
+      })
+    });
+    if(!res.ok){
+      const err=await res.json().catch(()=>({}));
+      throw new Error(err.message||('HTTP '+res.status));
+    }
+    syncCfg.lastSync=Date.now();saveSyncCfg();
+    toast('☁ Pushed to cloud!');
+  }catch(e){
+    document.getElementById('syncSt').classList.add('error');
+    toast('Push failed: '+e.message,1);
+  }finally{
+    syncBusy=false;updateSyncUI();
+  }
+}
+
+async function syncPull(){
+  if(!syncCfg.token||!syncCfg.gistId){toast('Setup sync first!',1);openSyncMo();return;}
+  if(syncBusy)return;
+  if(projects.length&&!confirm('Pull akan menimpa data lokal dengan data cloud. Lanjutkan?'))return;
+  syncBusy=true;updateSyncUI();
+  try{
+    const res=await fetch('https://api.github.com/gists/'+syncCfg.gistId,{
+      headers:{
+        'Authorization':'token '+syncCfg.token,
+        'Accept':'application/vnd.github+json'
+      }
+    });
+    if(!res.ok){
+      const err=await res.json().catch(()=>({}));
+      throw new Error(err.message||('HTTP '+res.status));
+    }
+    const gist=await res.json();
+    const file=gist.files['seo-cluster-library.json']||Object.values(gist.files)[0];
+    if(!file)throw new Error('No data file in gist');
+    let content=file.content;
+    // Handle truncated content
+    if(file.truncated&&file.raw_url){
+      const raw=await fetch(file.raw_url);
+      content=await raw.text();
+    }
+    const data=JSON.parse(content||'[]');
+    if(!Array.isArray(data))throw new Error('Invalid data format (must be array)');
+    projects=data;
+    activeProj=projects.length?projects[0].id:null;
+    graphPositions={};
+    save();
+    syncCfg.lastSync=Date.now();saveSyncCfg();
+    renderAll();
+    toast('☁ Pulled '+projects.length+' project(s)!');
+  }catch(e){
+    document.getElementById('syncSt').classList.add('error');
+    toast('Pull failed: '+e.message,1);
+  }finally{
+    syncBusy=false;updateSyncUI();
+  }
+}
+
+// Auto-push hook: wrap save() to also push if autoPush enabled
+const _origSave=save;
+let autoPushTimer=null;
+save=function(){
+  _origSave();
+  if(syncCfg.autoPush&&syncCfg.token&&syncCfg.gistId){
+    // Debounce: push 3s after last change to avoid spamming API
+    clearTimeout(autoPushTimer);
+    autoPushTimer=setTimeout(()=>syncPush(),3000);
+  }
+};
+
 // === INIT ===
 load();
+loadSyncCfg();
 onFC();
 renderAll();
 </script>
