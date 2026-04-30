@@ -62,9 +62,21 @@ button{font-family:var(--f);}
 .ir{display:grid;grid-template-columns:1fr 1fr;gap:6px;}.ir3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:7px 12px;border:none;border-radius:var(--rs);font-size:11px;font-weight:600;cursor:pointer;transition:all .12s;}
 .btn-p{background:var(--bofu);color:#fff;width:100%;}.btn-p:hover{background:#3a7dee;}
-.btn-g{background:transparent;color:var(--td);border:1px solid var(--bd);}.btn-g:hover{border-color:var(--bd2);color:var(--t);}
+.btn-g{background:var(--s2);color:var(--t);border:1px solid var(--bd2);font-weight:500;}
+.btn-g:hover{background:var(--s3);border-color:var(--bofu);color:var(--bofu);}
 .btn-d{background:transparent;color:var(--danger);border:1px solid rgba(239,68,68,.2);}.btn-d:hover{background:rgba(239,68,68,.08);}
-.btn-sm{padding:4px 7px;font-size:10px;}
+.btn-sm{padding:5px 9px;font-size:10px;}
+[data-theme="light"] .btn-g{background:#fff;border-color:#cbd5e1;color:#1f2937;}
+[data-theme="light"] .btn-g:hover{background:#eff6ff;border-color:var(--bofu);color:var(--bofu);}
+/* Header group separators */
+.hdr-actions{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.hdr-actions .sep{width:1px;height:18px;background:var(--bd);margin:0 3px;}
+.hdr-actions .btn{transition:all .12s;}
+/* Variant: Primary action buttons in header */
+.btn.btn-acc{background:var(--bofuBg);border-color:var(--bofuBd);color:var(--bofu);}
+.btn.btn-acc:hover{background:rgba(74,144,255,.15);border-color:var(--bofu);}
+[data-theme="light"] .btn.btn-acc{background:#dbeafe;border-color:#93c5fd;color:#1e40af;}
+[data-theme="light"] .btn.btn-acc:hover{background:#bfdbfe;}
 .btn-row{display:flex;gap:5px;margin-top:10px;}
 /* === TREE === */
 .tree-wrap{padding:6px 10px;flex-shrink:0;}
@@ -267,6 +279,64 @@ button{font-family:var(--f);}
 .dt td.td-cb input,.dt th.th-cb input{accent-color:var(--bofu);cursor:pointer;}
 .dt tr.sel{background:var(--bofuBg);}
 .dt tr.sel td{border-color:var(--bofuBd);}
+/* === GSC IMPORT === */
+.gsc-src{display:flex;gap:14px;margin:8px 0 14px;padding:10px 12px;background:var(--s2);border-radius:var(--rs);}
+.gsc-src-opt{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t);cursor:pointer;}
+.gsc-src-opt input{width:auto;cursor:pointer;}
+.gsc-tag{font-size:9px;background:var(--bofuBg);color:var(--bofu);padding:1px 5px;border-radius:3px;font-weight:600;}
+.gsc-stats{display:flex;gap:14px;padding:8px 12px;background:var(--s2);border-radius:var(--rs);font-size:10px;color:var(--td);font-family:var(--m);margin-bottom:10px;}
+.gsc-stats strong{color:var(--bofu);}
+.gsc-filters{display:flex;gap:6px;margin-bottom:8px;}
+.gsc-filters input,.gsc-filters select{flex:0 0 auto;background:var(--s2);border:1px solid var(--bd);border-radius:4px;color:var(--t);font-size:10px;padding:5px 8px;outline:none;}
+.gsc-filters input{flex:1;}
+.gsc-tbl-wrap{flex:1;overflow:auto;border:1px solid var(--bd);border-radius:var(--rs);min-height:240px;max-height:340px;}
+.gsc-tbl{width:100%;border-collapse:collapse;font-size:10.5px;}
+.gsc-tbl th{position:sticky;top:0;background:var(--s2);text-align:left;padding:8px 9px;font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--td);border-bottom:1px solid var(--bd);font-weight:600;z-index:1;}
+.gsc-tbl th.num,.gsc-tbl td.num{text-align:right;font-family:var(--m);}
+.gsc-tbl td{padding:6px 9px;border-bottom:1px solid var(--bd);color:var(--t);}
+.gsc-tbl tr:hover td{background:var(--s2);}
+.gsc-tbl tr.sel td{background:var(--bofuBg);}
+.gsc-tbl .url-cell{font-family:var(--m);font-size:10px;color:var(--td);max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gsc-cb,.gsc-tbl .gsc-cb-row{width:30px;padding-left:8px !important;padding-right:4px !important;}
+.gsc-cb input{accent-color:var(--bofu);cursor:pointer;}
+.gsc-bulk{display:flex;gap:6px;align-items:center;margin-top:8px;padding-bottom:10px;border-bottom:1px solid var(--bd);}
+.gsc-bulk .spacer{flex:1;}
+.gsc-import-cfg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;padding:12px;background:var(--s2);border-radius:var(--rs);}
+.gsc-import-cfg .ig{margin-bottom:0;}
+.gsc-import-cfg label{font-size:9px;text-transform:uppercase;letter-spacing:.5px;}
+
+/* === COMPARISON TABLE === */
+.cmp-tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.cmp-tbl th{position:sticky;top:0;background:var(--s2);text-align:left;padding:8px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--td);border-bottom:1px solid var(--bd);font-weight:600;z-index:1;}
+.cmp-tbl td{padding:8px 10px;border-bottom:1px solid var(--bd);color:var(--t);}
+.cmp-tbl .url-c{font-family:var(--m);font-size:10px;color:var(--td);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cmp-tbl .num{text-align:right;font-family:var(--m);}
+.cmp-tbl .delta{font-family:var(--m);font-weight:600;font-size:10px;}
+.cmp-tbl .delta.up{color:var(--ok);}
+.cmp-tbl .delta.down{color:var(--danger);}
+.cmp-tbl .delta.flat{color:var(--tf);}
+.cmp-tbl .spark{display:inline-block;height:24px;}
+.cmp-tbl .badge{display:inline-block;font-size:8px;padding:1px 5px;border-radius:3px;font-family:var(--m);font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.cmp-tbl .badge.new{background:rgba(74,144,255,.15);color:var(--bofu);}
+.cmp-tbl .badge.lost{background:rgba(239,68,68,.15);color:var(--danger);}
+
+/* === NODE TREND INDICATOR === */
+.tn-trend{font-size:9px;font-family:var(--m);font-weight:600;padding:1px 5px;border-radius:3px;margin-left:5px;display:inline-flex;align-items:center;gap:2px;vertical-align:middle;}
+.tn-trend.up{background:rgba(52,211,153,.15);color:var(--ok);}
+.tn-trend.down{background:rgba(239,68,68,.15);color:var(--danger);}
+.tn-trend.new{background:rgba(74,144,255,.15);color:var(--bofu);}
+
+/* === GRAPH MULTI-SELECT === */
+.gc{position:relative;cursor:default;user-select:none;}
+.gc.selecting{cursor:crosshair;}
+.gc-rect-sel{position:absolute;border:1.5px dashed var(--bofu);background:rgba(74,144,255,.08);pointer-events:none;z-index:10;display:none;}
+.gc-rect-sel.show{display:block;}
+.gc svg .gn-rect.gn-selected{stroke:var(--bofu);stroke-width:2.5;}
+.gc svg .gn-group{cursor:move;}
+.gc-toolbar{position:sticky;top:8px;left:8px;display:none;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--bd2);border-radius:var(--rs);padding:6px 10px;z-index:20;width:fit-content;margin:8px 0 0 8px;box-shadow:0 4px 12px rgba(0,0,0,.4);}
+.gc-toolbar.show{display:inline-flex;}
+.gc-toolbar .count{font-size:10px;color:var(--bofu);font-weight:700;font-family:var(--m);margin-right:5px;}
+
 </style>
 </head>
 <body>
@@ -278,16 +348,28 @@ button{font-family:var(--f);}
       <span class="sd"></span>
       <span id="syncLbl">Not configured</span>
     </div>
+    <span class="sep"></span>
+    <!-- Edit group -->
     <button class="btn btn-g btn-sm" onclick="undoAction()" id="btnUndo" title="Undo (Ctrl+Z)" disabled style="opacity:.4;"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg><span class="lbl">Undo</span></button>
-    <button class="btn btn-g btn-sm" onclick="syncPull()" id="btnPull" title="Load from GitHub Gist"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="lbl">Pull</span></button>
-    <button class="btn btn-g btn-sm" onclick="syncPush()" id="btnPush" title="Save to GitHub Gist"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="lbl">Push</span></button>
-    <button class="btn btn-g btn-sm" onclick="openSyncMo()" title="Cloud sync settings"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="lbl">Sync</span></button>
+    <span class="sep"></span>
+    <!-- Sync group (accent) -->
+    <button class="btn btn-acc btn-sm" onclick="syncPull()" id="btnPull" title="Load from GitHub Gist"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="lbl">Pull</span></button>
+    <button class="btn btn-acc btn-sm" onclick="syncPush()" id="btnPush" title="Save to GitHub Gist"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="lbl">Push</span></button>
+    <button class="btn btn-g btn-sm" onclick="openSyncMo()" title="Cloud sync settings"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <span class="sep"></span>
+    <!-- Tools group -->
+    <button class="btn btn-g btn-sm" onclick="openGscMo()" title="Import from GSC"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="lbl">GSC</span></button>
     <button class="btn btn-g btn-sm" onclick="openSnapMo()" title="Backup snapshots"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5a2 2 0 0 1 2-2h3l2-2h4l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg><span class="lbl">Snaps</span></button>
-    <button class="btn btn-g btn-sm" onclick="checkCannibals()" title="Check keyword cannibalization"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span class="lbl">Cannibals</span></button>
+    <button class="btn btn-g btn-sm" onclick="checkCannibals()" title="Check keyword cannibalization"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
+    <button class="btn btn-g btn-sm" onclick="openCmpMo()" title="Trend & comparison"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span class="lbl">Trends</span></button>
+    <span class="sep"></span>
+    <!-- Export group -->
     <button class="btn btn-g btn-sm" onclick="exportPNG()" title="Export graph as PNG image"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span class="lbl">PNG</span></button>
     <button class="btn btn-g btn-sm" onclick="exportSVG()" title="Export graph as SVG (vector)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg><span class="lbl">SVG</span></button>
-    <button class="btn btn-g btn-sm" onclick="window.print()" title="Print / PDF"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg><span class="lbl">Print</span></button>
-    <button class="btn btn-g btn-sm" onclick="exportAll()" title="Export all data as JSON"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="lbl">Export All</span></button>
+    <button class="btn btn-g btn-sm" onclick="window.print()" title="Print / PDF"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></button>
+    <span class="sep"></span>
+    <!-- File ops -->
+    <button class="btn btn-g btn-sm" onclick="exportAll()" title="Export all data as JSON"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="lbl">Export</span></button>
     <button class="btn btn-g btn-sm" onclick="document.getElementById('impAll').click()" title="Import JSON"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="lbl">Import</span></button>
     <button class="theme-tog" onclick="toggleTheme()" id="btnTheme" title="Toggle theme"><svg class="ic ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
     <input type="file" id="impAll" accept=".json" style="display:none" onchange="importAll(event)">
@@ -420,7 +502,16 @@ button{font-family:var(--f);}
       <input type="file" id="impF" accept=".json" style="display:none" onchange="impJSON(event)">
     </div>
   </div>
-  <div class="gc" id="gc"><div class="es" id="gEmpty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--tf)" stroke-width="1.5"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg><h4>Cluster Map</h4><p>Add nodes to visualize.</p></div></div>
+  <div class="gc" id="gc">
+    <div class="gc-toolbar" id="gcToolbar">
+      <span class="count" id="gcSelCount">0 selected</span>
+      <button class="btn btn-g btn-sm" onclick="dupSelected()" title="Duplicate (Ctrl+D)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="lbl">Duplicate</span></button>
+      <button class="btn btn-d btn-sm" onclick="delSelected()" title="Delete (Del)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg><span class="lbl">Delete</span></button>
+      <button class="btn btn-g btn-sm" onclick="clearGraphSel()" title="Deselect (Esc)">Clear</button>
+    </div>
+    <div class="gc-rect-sel" id="gcRectSel"></div>
+    <div class="es" id="gEmpty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--tf)" stroke-width="1.5"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg><h4>Cluster Map</h4><p>Add nodes to visualize.</p></div>
+  </div>
   <div class="tv" id="tv"></div>
   <div class="sb">
     <div class="st">Nodes: <span id="sT">0</span></div>
@@ -457,6 +548,7 @@ button{font-family:var(--f);}
 <div class="ctx" id="ctx">
   <div class="ctx-item" onclick="ctxEdit()">Edit</div>
   <div class="ctx-item" onclick="ctxAddChild()">Add Child</div>
+  <div class="ctx-item" onclick="ctxDup()">Duplicate (with subtree)</div>
   <div class="ctx-item danger" onclick="ctxDel()">Delete</div>
 </div>
 
@@ -559,7 +651,7 @@ button{font-family:var(--f);}
 
 <!-- SHORTCUTS HELP -->
 <div class="shortcuts-help" id="shortcutsHelp">
-  <h4>⌨ Keyboard Shortcuts <button onclick="document.getElementById('shortcutsHelp').classList.remove('show')">×</button></h4>
+  <h4>Keyboard Shortcuts <button onclick="document.getElementById('shortcutsHelp').classList.remove('show')">×</button></h4>
   <table>
     <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Undo</td></tr>
     <tr><td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></td><td>Redo</td></tr>
@@ -567,9 +659,166 @@ button{font-family:var(--f);}
     <tr><td><kbd>Ctrl</kbd> + <kbd>S</kbd></td><td>Push to cloud</td></tr>
     <tr><td><kbd>Ctrl</kbd> + <kbd>K</kbd></td><td>New node (focus keyword)</td></tr>
     <tr><td><kbd>Ctrl</kbd> + <kbd>B</kbd></td><td>Toggle bulk mode</td></tr>
-    <tr><td><kbd>Esc</kbd></td><td>Close modal / clear search</td></tr>
+    <tr><td><kbd>Ctrl</kbd> + <kbd>D</kbd></td><td>Duplicate selected (graph)</td></tr>
+    <tr><td><kbd>Ctrl</kbd> + <kbd>A</kbd></td><td>Select all (graph)</td></tr>
+    <tr><td><kbd>Shift</kbd> + Click</td><td>Toggle node selection (graph)</td></tr>
+    <tr><td>Drag empty area</td><td>Rectangle selection (graph)</td></tr>
+    <tr><td><kbd>Delete</kbd></td><td>Delete selected (graph)</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>Close modal / clear selection</td></tr>
     <tr><td><kbd>?</kbd></td><td>Toggle this help</td></tr>
   </table>
+</div>
+
+<!-- GSC IMPORT MODAL -->
+<div class="mo" id="gscMo">
+  <div class="md" style="max-width:840px;max-height:90vh;display:flex;flex-direction:column;">
+    <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Import from Google Search Console</h3>
+
+    <!-- Source picker -->
+    <div class="gsc-src">
+      <label class="gsc-src-opt"><input type="radio" name="gscSrc" value="sheet" checked onchange="gscSrcChange()"> Google Sheet URL <span class="gsc-tag">recommended</span></label>
+      <label class="gsc-src-opt"><input type="radio" name="gscSrc" value="csv" onchange="gscSrcChange()"> Upload CSV file</label>
+    </div>
+
+    <!-- Sheet URL input -->
+    <div id="gscSheetSec">
+      <div class="ig">
+        <label>Saved Sheets <button class="btn btn-g btn-sm" style="float:right;padding:2px 8px;font-size:9px;" onclick="gscSaveCurSheet()" title="Save current URL as preset"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save</button></label>
+        <select id="gscPresets" onchange="gscPresetPick()">
+          <option value="">-- Saved sheets / paste URL below --</option>
+        </select>
+      </div>
+      <div class="ig">
+        <label>Sheet URL (must be public view-only)</label>
+        <input type="text" id="gscSheetUrl" placeholder="https://docs.google.com/spreadsheets/d/xxx/edit#gid=yyy">
+      </div>
+      <div class="ig" style="margin-top:6px;">
+        <label>Or shortcut: <button class="btn btn-g btn-sm" onclick="gscFillCurrentExample()" style="padding:2px 8px;font-size:9px;">Use my GOC example</button></label>
+      </div>
+    </div>
+
+    <!-- CSV Upload -->
+    <div id="gscCsvSec" style="display:none;">
+      <div class="ig"><label>Upload CSV file from GSC export</label>
+        <input type="file" id="gscCsvFile" accept=".csv" onchange="gscCsvLoad(event)" style="padding:6px;">
+      </div>
+      <div style="font-size:10px;color:var(--td);margin-top:4px;">Expected columns: URL, Clicks, Impressions, CTR, Position (Article Cluster, Intent Group, Date Updated optional)</div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn btn-acc btn-sm" onclick="gscFetch()" id="gscFetchBtn"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg><span class="lbl">Fetch / Load Data</span></button>
+      <span id="gscStatus" style="font-size:10px;color:var(--td);align-self:center;"></span>
+    </div>
+
+    <!-- Data preview -->
+    <div id="gscData" style="display:none;flex:1;overflow:hidden;display:none;flex-direction:column;margin-top:14px;">
+      <div class="gsc-stats" id="gscStats"></div>
+
+      <!-- Filters -->
+      <div class="gsc-filters">
+        <input type="text" id="gscSearch" placeholder="Filter URL..." oninput="gscRender()">
+        <select id="gscMinImpr" onchange="gscRender()">
+          <option value="0">All impressions</option>
+          <option value="100">Min 100 impr</option>
+          <option value="500">Min 500 impr</option>
+          <option value="1000">Min 1k impr</option>
+        </select>
+        <select id="gscPosFilter" onchange="gscRender()">
+          <option value="">All positions</option>
+          <option value="1-3">Top 3 (1-3)</option>
+          <option value="1-10">Top 10 (1-10)</option>
+          <option value="11-20">Page 2 (11-20)</option>
+          <option value="20-100">Beyond 20</option>
+        </select>
+      </div>
+
+      <!-- Data table (scrollable) -->
+      <div class="gsc-tbl-wrap">
+        <table class="gsc-tbl">
+          <thead><tr>
+            <th class="gsc-cb"><input type="checkbox" id="gscSelAll" onchange="gscToggleAll(this)"></th>
+            <th>URL</th>
+            <th class="num">Clicks</th>
+            <th class="num">Impr</th>
+            <th class="num">CTR</th>
+            <th class="num">Pos</th>
+          </tr></thead>
+          <tbody id="gscTbody"></tbody>
+        </table>
+      </div>
+
+      <div class="gsc-bulk">
+        <button class="btn btn-g btn-sm" onclick="gscSelectVisible()">Select all visible</button>
+        <button class="btn btn-g btn-sm" onclick="gscSelectTop(50)">Select top 50</button>
+        <button class="btn btn-g btn-sm" onclick="gscSelectNone()">Clear selection</button>
+        <span class="spacer"></span>
+        <span id="gscSelCount" style="font-size:10px;color:var(--bofu);font-weight:600;font-family:var(--m);">0 selected</span>
+      </div>
+
+      <!-- Import settings -->
+      <div class="gsc-import-cfg">
+        <div class="ig"><label>Add to project</label>
+          <select id="gscTarget">
+            <option value="__new__">+ New project (auto-named)</option>
+          </select>
+        </div>
+        <div class="ig"><label>New project name (if "new")</label>
+          <input type="text" id="gscNewName" placeholder="e.g. GOC GSC April 2026">
+        </div>
+        <div class="ig"><label>Default funnel for new nodes</label>
+          <select id="gscDefaultFunnel">
+            <option value="tofu" selected>TOFU</option>
+            <option value="mofu">MOFU</option>
+            <option value="bofu">BOFU</option>
+          </select>
+        </div>
+        <div style="font-size:10px;color:var(--td);grid-column:1/-1;line-height:1.5;">
+          <strong style="color:var(--t);">How matching works:</strong> URLs that already exist in the target project are <strong style="color:var(--ok);">updated</strong> (new history entry added). New URLs are <strong style="color:var(--bofu);">created</strong> with the default funnel above. Existing URLs not in this import remain unchanged.
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row" style="margin-top:14px;flex-shrink:0;">
+      <div style="flex:1"></div>
+      <button class="btn btn-g btn-sm" onclick="closeGscMo()">Cancel</button>
+      <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="gscDoImport()" id="gscImportBtn" disabled>Import Selected →</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARISON MODAL -->
+<div class="mo" id="cmpMo">
+  <div class="md" style="max-width:780px;max-height:90vh;display:flex;flex-direction:column;">
+    <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Trend &amp; Comparison</h3>
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+      <select id="cmpMetric" onchange="renderCmp()" style="background:var(--s2);border:1px solid var(--bd);border-radius:4px;color:var(--t);font-size:11px;padding:5px 8px;">
+        <option value="position">Position</option>
+        <option value="impressions">Impressions</option>
+        <option value="clicks">Clicks</option>
+        <option value="ctr">CTR</option>
+      </select>
+      <select id="cmpSort" onchange="renderCmp()" style="background:var(--s2);border:1px solid var(--bd);border-radius:4px;color:var(--t);font-size:11px;padding:5px 8px;">
+        <option value="change-desc">Biggest improvement</option>
+        <option value="change-asc">Biggest decline</option>
+        <option value="latest-asc">Latest value (best first)</option>
+        <option value="latest-desc">Latest value (worst first)</option>
+      </select>
+      <select id="cmpFilter" onchange="renderCmp()" style="background:var(--s2);border:1px solid var(--bd);border-radius:4px;color:var(--t);font-size:11px;padding:5px 8px;">
+        <option value="all">All nodes</option>
+        <option value="changed">Only changed (>1 history)</option>
+        <option value="new">New (after last import)</option>
+        <option value="lost">Lost (no recent data)</option>
+      </select>
+    </div>
+    <div style="flex:1;overflow:auto;border:1px solid var(--bd);border-radius:var(--rs);">
+      <table class="cmp-tbl" id="cmpTable"></table>
+    </div>
+    <div class="btn-row" style="margin-top:12px;flex-shrink:0;">
+      <button class="btn btn-g btn-sm" onclick="cmpExport()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="lbl">Copy as TSV</span></button>
+      <div style="flex:1"></div>
+      <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="closeCmpMo()">Close</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -742,6 +991,12 @@ function ctxDel(){
   p.nodes=p.nodes.filter(x=>x.id!==ctxNodeId);
   p.links=p.links.filter(l=>l.from!==ctxNodeId&&l.to!==ctxNodeId);
   hideCtx();save();renderAll();toast('Deleted.');
+}
+function ctxDup(){
+  if(!ctxNodeId)return;
+  graphSelected=new Set([ctxNodeId]);
+  hideCtx();
+  dupSelected();
 }
 document.addEventListener('click',hideCtx);
 
@@ -999,24 +1254,58 @@ function renderGraph(){
     const col=cols[n.funnel]||'#8892a4';
     const sc=stCols[n.status]||'#5a6478';
     const g=mkSVG('g');
+    g.classList.add('gn-group');
+    g.dataset.id=n.id;
     g.style.cursor='grab';
+    // Trend indicator
+    let trendSvg='';
+    const h=n.history||[];
+    if(h.length>=2){
+      const last=h[h.length-1].position,prev=h[h.length-2].position;
+      const delta=last-prev;
+      if(Math.abs(delta)>=0.5){
+        const isUp=delta<0; // position lower = better
+        const trCol=isUp?'#34d399':'#ef4444';
+        const arrow=isUp?'↑':'↓';
+        trendSvg=`<text x="${p.x+w-8}" y="${p.y+38}" fill="${trCol}" font-size="9" font-family="Space Mono" font-weight="700" text-anchor="end">${arrow}${Math.abs(delta).toFixed(1)}</text>`;
+      }
+    }else if(n.isNew){
+      trendSvg=`<text x="${p.x+w-8}" y="${p.y+38}" fill="#4a90ff" font-size="8" font-family="Space Mono" font-weight="700" text-anchor="end">NEW</text>`;
+    }
+    const isDark=document.documentElement.getAttribute('data-theme')!=='light';
+    const nodeBg=isDark?'#141820':'#ffffff';
+    const textCol=isDark?'#e4e8f0':'#111827';
+    const subTextCol=isDark?'#5a6478':'#6b7280';
     g.innerHTML=`
-      <rect x="${p.x}" y="${p.y}" width="${w}" height="${nodeH}" rx="8" fill="#141820" stroke="${col}" stroke-width="1.5"/>
+      <rect class="gn-rect ${graphSelected.has(n.id)?'gn-selected':''}" data-id="${n.id}" x="${p.x}" y="${p.y}" width="${w}" height="${nodeH}" rx="8" fill="${nodeBg}" stroke="${col}" stroke-width="1.5"/>
       <circle cx="${p.x+12}" cy="${p.y+15}" r="3" fill="${sc}"/>
       <text x="${p.x+20}" y="${p.y+18}" fill="${col}" font-size="9" font-family="Space Mono" font-weight="700">${n.funnel.toUpperCase()}</text>
-      <text x="${p.x+w-8}" y="${p.y+18}" fill="#5a6478" font-size="8" font-family="Space Mono" text-anchor="end">${ptLabel(n.pageType)}</text>
-      <text x="${p.x+10}" y="${p.y+38}" fill="#e4e8f0" font-size="12" font-family="DM Sans" font-weight="600">${esc(n.keyword)}</text>
-      <text x="${p.x+10}" y="${p.y+54}" fill="#5a6478" font-size="9" font-family="Space Mono">${[n.volume?'vol:'+n.volume:'',n.kd?'kd:'+n.kd:'',n.position?'#'+n.position:''].filter(Boolean).join('  ')}</text>
+      <text x="${p.x+w-8}" y="${p.y+18}" fill="${subTextCol}" font-size="8" font-family="Space Mono" text-anchor="end">${ptLabel(n.pageType)}</text>
+      <text x="${p.x+10}" y="${p.y+38}" fill="${textCol}" font-size="12" font-family="DM Sans" font-weight="600">${esc(n.keyword)}</text>
+      ${trendSvg}
+      <text x="${p.x+10}" y="${p.y+54}" fill="${subTextCol}" font-size="9" font-family="Space Mono">${[n.volume?'impr:'+n.volume:'',n.position?'#'+n.position.toFixed(1):''].filter(Boolean).join('  ')}</text>
     `;
-    // Graph drag
+    // Graph drag (single node) — only if not part of multi-select
     g.addEventListener('mousedown',(e)=>{
       if(e.button!==0)return;
+      // If node is part of multiselect & multiple selected, multi-drag handler will take over
+      if(graphSelected.has(n.id)&&graphSelected.size>1)return;
+      // Shift+click toggles selection
+      if(e.shiftKey){
+        e.stopPropagation();
+        toggleGraphNode(n.id,true);
+        return;
+      }
+      // Otherwise normal drag
       graphDragId=n.id;
       graphDragOff={x:e.clientX-p.x,y:e.clientY-p.y};
       e.preventDefault();
     });
+    g.addEventListener('click',(e)=>{
+      if(e.shiftKey){e.stopPropagation();return;}
+    });
     g.addEventListener('dblclick',()=>openEd(n.id));
-    g.addEventListener('contextmenu',(e)=>showCtx(n.id,e));
+    g.addEventListener('contextmenu',(e)=>{ctxNode=n.id;showCtx(n.id,e);});
     svg.appendChild(g);
   });
 
@@ -1031,6 +1320,9 @@ function renderGraph(){
   });
   svg.addEventListener('mouseup',()=>{graphDragId=null;});
   svg.addEventListener('mouseleave',()=>{graphDragId=null;});
+
+  // Setup container-level multi-select events (once)
+  setupGraphMouseEvents();
 }
 
 // === TABLE ===
@@ -1573,6 +1865,674 @@ function updateCannibalWarn(){
   }
 }
 
+// === GSC IMPORT ===
+const GSC_PRESETS_KEY='seo-cluster-gsc-presets';
+let gscPresets=[];
+let gscRows=[]; // parsed CSV rows
+let gscSelected=new Set(); // URLs selected for import
+
+function loadGscPresets(){
+  try{gscPresets=JSON.parse(localStorage.getItem(GSC_PRESETS_KEY)||'[]');}catch(e){gscPresets=[];}
+  refreshGscPresetUI();
+}
+function saveGscPresets(){
+  try{localStorage.setItem(GSC_PRESETS_KEY,JSON.stringify(gscPresets));}catch(e){}
+}
+function refreshGscPresetUI(){
+  const sel=document.getElementById('gscPresets');
+  if(!sel)return;
+  sel.innerHTML='<option value="">-- Saved sheets / paste URL below --</option>'+
+    gscPresets.map((p,i)=>`<option value="${i}">${esc(p.name)} (${esc(p.domain)})</option>`).join('');
+}
+function gscPresetPick(){
+  const i=document.getElementById('gscPresets').value;
+  if(i==='')return;
+  const p=gscPresets[parseInt(i)];
+  if(p){document.getElementById('gscSheetUrl').value=p.url;}
+}
+function gscSaveCurSheet(){
+  const url=gv('gscSheetUrl').trim();
+  if(!url){toast('Paste URL first!',1);return;}
+  const name=prompt('Save this sheet as:','GSC Sheet '+(gscPresets.length+1));
+  if(!name)return;
+  // try detect domain from first data row if loaded
+  let domain='';
+  if(gscRows.length){try{domain=new URL(gscRows[0].url).hostname;}catch(e){}}
+  gscPresets.push({name,url,domain:domain||'unknown',created:Date.now()});
+  saveGscPresets();refreshGscPresetUI();
+  toast('Sheet saved!');
+}
+function gscFillCurrentExample(){
+  document.getElementById('gscSheetUrl').value='https://docs.google.com/spreadsheets/d/1W89B91WZMN4CrYid27LH4nkqiBEAJNiYngljJ-yvCcA/edit?gid=1660959094';
+}
+
+function openGscMo(){
+  loadGscPresets();
+  gscRows=[];gscSelected.clear();
+  document.getElementById('gscData').style.display='none';
+  document.getElementById('gscStatus').textContent='';
+  // Populate target project list
+  const sel=document.getElementById('gscTarget');
+  sel.innerHTML='<option value="__new__">+ New project (auto-named)</option>'+
+    projects.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  document.getElementById('gscMo').classList.add('active');
+}
+function closeGscMo(){document.getElementById('gscMo').classList.remove('active');}
+function gscSrcChange(){
+  const v=document.querySelector('input[name="gscSrc"]:checked').value;
+  document.getElementById('gscSheetSec').style.display=v==='sheet'?'block':'none';
+  document.getElementById('gscCsvSec').style.display=v==='csv'?'block':'none';
+}
+
+// Convert sheet URL to CSV export URL
+function gscSheetToCsvUrl(url){
+  const m=url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+  if(!m)return null;
+  const id=m[1];
+  let gid='0';
+  const gm=url.match(/gid=(\d+)/);
+  if(gm)gid=gm[1];
+  return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+}
+
+async function gscFetch(){
+  const src=document.querySelector('input[name="gscSrc"]:checked').value;
+  document.getElementById('gscFetchBtn').disabled=true;
+  document.getElementById('gscStatus').textContent='Loading...';
+  try{
+    let csvText='';
+    if(src==='sheet'){
+      const url=gv('gscSheetUrl').trim();
+      if(!url){toast('Paste URL first!',1);throw new Error('No URL');}
+      const csvUrl=gscSheetToCsvUrl(url);
+      if(!csvUrl){throw new Error('Invalid Sheet URL');}
+      const res=await fetch(csvUrl);
+      if(!res.ok){
+        if(res.status===401||res.status===403){
+          throw new Error('Sheet is not public. Set sharing to "Anyone with link can view".');
+        }
+        throw new Error('Fetch failed (HTTP '+res.status+')');
+      }
+      csvText=await res.text();
+    }else{
+      const f=document.getElementById('gscCsvFile').files[0];
+      if(!f){toast('Pick CSV file first!',1);throw new Error('No file');}
+      csvText=await f.text();
+    }
+    gscRows=parseGscCsv(csvText);
+    if(!gscRows.length){throw new Error('No valid data rows found');}
+    // Auto-suggest project name from domain
+    let domain='';
+    try{domain=new URL(gscRows[0].url).hostname;}catch(e){}
+    const dt=new Date().toLocaleDateString('en-GB',{month:'short',year:'numeric'});
+    document.getElementById('gscNewName').value=`${domain.replace('www.','').split('.')[0].toUpperCase()} GSC ${dt}`;
+    // Show data section
+    document.getElementById('gscData').style.display='flex';
+    document.getElementById('gscStatus').textContent=`Loaded ${gscRows.length} URLs`;
+    gscRender();
+  }catch(e){
+    document.getElementById('gscStatus').textContent='Error: '+e.message;
+    toast(e.message,1);
+  }finally{
+    document.getElementById('gscFetchBtn').disabled=false;
+  }
+}
+
+function gscCsvLoad(e){
+  // Just storing; parse happens on gscFetch
+  if(e.target.files[0]){
+    document.getElementById('gscStatus').textContent=`File: ${e.target.files[0].name} (click Load Data)`;
+  }
+}
+
+// CSV parser (handles quoted fields with commas)
+function parseCSV(text){
+  const lines=[];
+  let cur='',row=[],inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i],n=text[i+1];
+    if(inQ){
+      if(c==='"'&&n==='"'){cur+='"';i++;}
+      else if(c==='"'){inQ=false;}
+      else{cur+=c;}
+    }else{
+      if(c==='"'){inQ=true;}
+      else if(c===','){row.push(cur);cur='';}
+      else if(c==='\n'){row.push(cur);lines.push(row);row=[];cur='';}
+      else if(c==='\r'){/* skip */}
+      else{cur+=c;}
+    }
+  }
+  if(cur||row.length){row.push(cur);lines.push(row);}
+  return lines.filter(r=>r.some(c=>c.trim()));
+}
+
+function parseGscCsv(text){
+  const rows=parseCSV(text);
+  if(rows.length<2)return [];
+  const headers=rows[0].map(h=>h.trim().toLowerCase());
+  const idx={
+    url:headers.findIndex(h=>h==='url'||h==='top pages'||h==='page'),
+    clicks:headers.findIndex(h=>h==='clicks'),
+    impressions:headers.findIndex(h=>h==='impressions'||h==='impr'),
+    ctr:headers.findIndex(h=>h.startsWith('ctr')),
+    position:headers.findIndex(h=>h==='position'||h==='pos'),
+    date:headers.findIndex(h=>h.startsWith('date')||h.startsWith('updated'))
+  };
+  if(idx.url<0)return [];
+  const out=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];
+    const url=(r[idx.url]||'').trim();
+    if(!url||!url.startsWith('http'))continue;
+    const ctrRaw=(r[idx.ctr]||'0').replace('%','').trim();
+    out.push({
+      url,
+      clicks:parseInt(r[idx.clicks]||'0')||0,
+      impressions:parseInt(r[idx.impressions]||'0')||0,
+      ctr:parseFloat(ctrRaw)||0,
+      position:parseFloat(r[idx.position]||'0')||0,
+      date:(r[idx.date]||new Date().toISOString().split('T')[0]).trim()
+    });
+  }
+  return out;
+}
+
+function gscRender(){
+  const q=gv('gscSearch').toLowerCase();
+  const minImpr=parseInt(document.getElementById('gscMinImpr').value)||0;
+  const posF=document.getElementById('gscPosFilter').value;
+  let rows=gscRows.filter(r=>{
+    if(q&&!r.url.toLowerCase().includes(q))return false;
+    if(r.impressions<minImpr)return false;
+    if(posF){
+      const [lo,hi]=posF.split('-').map(Number);
+      if(r.position<lo||r.position>hi)return false;
+    }
+    return true;
+  });
+  const stats=document.getElementById('gscStats');
+  stats.innerHTML=`<div>Total: <strong>${gscRows.length}</strong> URLs</div>`+
+    `<div>Filtered: <strong>${rows.length}</strong></div>`+
+    `<div>Sum impressions: <strong>${rows.reduce((s,r)=>s+r.impressions,0).toLocaleString()}</strong></div>`+
+    `<div>Sum clicks: <strong>${rows.reduce((s,r)=>s+r.clicks,0).toLocaleString()}</strong></div>`;
+  const tbody=document.getElementById('gscTbody');
+  tbody.innerHTML=rows.map(r=>{
+    const sel=gscSelected.has(r.url);
+    return `<tr class="${sel?'sel':''}" onclick="gscToggleRow('${esc(r.url).replace(/'/g,"&#39;")}')">
+      <td class="gsc-cb-row"><input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();gscToggleRow('${esc(r.url).replace(/'/g,"&#39;")}')"></td>
+      <td class="url-cell" title="${esc(r.url)}">${esc(r.url.replace(/^https?:\/\//,''))}</td>
+      <td class="num">${r.clicks.toLocaleString()}</td>
+      <td class="num">${r.impressions.toLocaleString()}</td>
+      <td class="num">${r.ctr.toFixed(2)}%</td>
+      <td class="num">${r.position.toFixed(1)}</td>
+    </tr>`;
+  }).join('');
+  updateGscSelCount();
+}
+function gscToggleRow(url){
+  if(gscSelected.has(url))gscSelected.delete(url);
+  else gscSelected.add(url);
+  gscRender();
+}
+function gscToggleAll(cb){
+  if(cb.checked){
+    document.querySelectorAll('#gscTbody tr').forEach(tr=>{
+      const url=tr.querySelector('.url-cell').title;
+      gscSelected.add(url);
+    });
+  }else{
+    gscSelected.clear();
+  }
+  gscRender();
+}
+function gscSelectVisible(){
+  document.querySelectorAll('#gscTbody tr').forEach(tr=>{
+    const url=tr.querySelector('.url-cell').title;
+    gscSelected.add(url);
+  });
+  gscRender();
+}
+function gscSelectTop(n){
+  // Select top N by impressions from currently filtered
+  const q=gv('gscSearch').toLowerCase();
+  const minImpr=parseInt(document.getElementById('gscMinImpr').value)||0;
+  const posF=document.getElementById('gscPosFilter').value;
+  let rows=gscRows.filter(r=>{
+    if(q&&!r.url.toLowerCase().includes(q))return false;
+    if(r.impressions<minImpr)return false;
+    if(posF){const [lo,hi]=posF.split('-').map(Number);if(r.position<lo||r.position>hi)return false;}
+    return true;
+  });
+  rows.sort((a,b)=>b.impressions-a.impressions).slice(0,n).forEach(r=>gscSelected.add(r.url));
+  gscRender();
+}
+function gscSelectNone(){gscSelected.clear();gscRender();}
+function updateGscSelCount(){
+  document.getElementById('gscSelCount').textContent=gscSelected.size+' selected';
+  document.getElementById('gscImportBtn').disabled=gscSelected.size===0;
+}
+
+// Extract keyword from URL slug
+function urlToKeyword(url){
+  try{
+    const u=new URL(url);
+    let path=u.pathname.replace(/^\/|\/$/g,'');
+    if(!path)return u.hostname.replace('www.','');
+    // Take last segment
+    const seg=path.split('/').pop()||path;
+    return seg.replace(/-/g,' ').replace(/\.(html|php|aspx)$/,'').trim();
+  }catch(e){
+    return url.split('/').filter(Boolean).pop()||url;
+  }
+}
+
+function gscDoImport(){
+  if(!gscSelected.size){toast('Select rows first!',1);return;}
+  const targetVal=document.getElementById('gscTarget').value;
+  const defaultFunnel=document.getElementById('gscDefaultFunnel').value;
+  let p;
+  if(targetVal==='__new__'){
+    const name=gv('gscNewName').trim()||'GSC Import '+new Date().toLocaleDateString();
+    p={id:Date.now()+'',name,nodes:[],links:[]};
+    projects.push(p);
+    activeProj=p.id;
+  }else{
+    p=projects.find(x=>x.id===targetVal);
+    if(!p){toast('Target project not found!',1);return;}
+    activeProj=p.id;
+  }
+  // Build URL → existing node map
+  const byUrl={};
+  p.nodes.forEach(n=>{if(n.url)byUrl[n.url.trim()]=n;});
+
+  let updated=0,created=0;
+  const today=new Date().toISOString().split('T')[0];
+
+  gscRows.forEach(r=>{
+    if(!gscSelected.has(r.url))return;
+    const existing=byUrl[r.url.trim()];
+    const histEntry={
+      date:r.date||today,
+      position:r.position,
+      impressions:r.impressions,
+      clicks:r.clicks,
+      ctr:r.ctr
+    };
+    if(existing){
+      // Update existing: refresh latest values + push history
+      existing.position=r.position;
+      existing.volume=r.impressions; // use as proxy
+      existing.clicks=r.clicks;
+      existing.ctr=r.ctr;
+      if(!existing.history)existing.history=[];
+      // Avoid duplicate same-date entries
+      const last=existing.history[existing.history.length-1];
+      if(!last||last.date!==histEntry.date){
+        existing.history.push(histEntry);
+        // Cap at 24 entries
+        if(existing.history.length>24)existing.history=existing.history.slice(-24);
+      }
+      existing.isLost=false;
+      updated++;
+    }else{
+      // Create new node
+      const node={
+        id:'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+        keyword:urlToKeyword(r.url),
+        url:r.url,
+        funnel:defaultFunnel,
+        pageType:defaultFunnel==='bofu'?'landing-page':defaultFunnel==='mofu'?'consideration':'informational',
+        volume:r.impressions,
+        kd:0,
+        position:r.position,
+        clicks:r.clicks,
+        ctr:r.ctr,
+        status:'published',
+        parentId:null,
+        history:[histEntry],
+        isNew:true,
+        importDate:today
+      };
+      p.nodes.push(node);
+      created++;
+    }
+  });
+
+  snapshotState();save();renderAll();closeGscMo();
+  toast(`Imported! ${created} new, ${updated} updated.`);
+}
+
+// === COMPARISON / TRENDS ===
+function openCmpMo(){
+  document.getElementById('cmpMo').classList.add('active');
+  renderCmp();
+}
+function closeCmpMo(){document.getElementById('cmpMo').classList.remove('active');}
+
+function renderCmp(){
+  const p=P();if(!p){document.getElementById('cmpTable').innerHTML='<tr><td style="padding:30px;text-align:center;color:var(--tf);">No project selected.</td></tr>';return;}
+  const metric=document.getElementById('cmpMetric').value;
+  const sortBy=document.getElementById('cmpSort').value;
+  const filter=document.getElementById('cmpFilter').value;
+
+  let nodes=p.nodes.filter(n=>{
+    if(filter==='changed')return n.history&&n.history.length>1;
+    if(filter==='new')return n.isNew;
+    if(filter==='lost')return n.isLost;
+    return true;
+  });
+
+  // Calculate change for each node
+  nodes=nodes.map(n=>{
+    const h=n.history||[];
+    const latest=h.length?h[h.length-1][metric]:n[metric==='impressions'?'volume':metric]||0;
+    const previous=h.length>1?h[h.length-2][metric]:null;
+    const change=previous!==null?latest-previous:null;
+    return {node:n,latest,previous,change};
+  });
+
+  // Sort
+  if(sortBy==='change-desc'){
+    // For position metric: lower is better, so "improvement" = change < 0
+    if(metric==='position'){
+      nodes.sort((a,b)=>(a.change??0)-(b.change??0));
+    }else{
+      nodes.sort((a,b)=>(b.change??-Infinity)-(a.change??-Infinity));
+    }
+  }else if(sortBy==='change-asc'){
+    if(metric==='position'){
+      nodes.sort((a,b)=>(b.change??0)-(a.change??0));
+    }else{
+      nodes.sort((a,b)=>(a.change??Infinity)-(b.change??Infinity));
+    }
+  }else if(sortBy==='latest-asc'){
+    nodes.sort((a,b)=>{if(metric==='position'){return (a.latest||999)-(b.latest||999);}return (b.latest||0)-(a.latest||0);});
+  }else if(sortBy==='latest-desc'){
+    nodes.sort((a,b)=>{if(metric==='position'){return (b.latest||0)-(a.latest||0);}return (a.latest||0)-(b.latest||0);});
+  }
+
+  const isPos=metric==='position';
+  const fmtVal=(v)=>{
+    if(v===null||v===undefined||v==='')return '--';
+    if(metric==='position'||metric==='ctr')return Number(v).toFixed(2)+(metric==='ctr'?'%':'');
+    return Math.round(v).toLocaleString();
+  };
+  const fmtChange=(c)=>{
+    if(c===null||c===undefined)return '--';
+    const sign=c>0?'+':'';
+    if(metric==='position')return (c<0?'↑ ':c>0?'↓ ':'= ')+sign+c.toFixed(1);
+    if(metric==='ctr')return (c>0?'↑ ':c<0?'↓ ':'= ')+sign+c.toFixed(2)+'%';
+    return (c>0?'↑ ':c<0?'↓ ':'= ')+sign+Math.round(c).toLocaleString();
+  };
+  const changeClass=(c)=>{
+    if(c===null||c===undefined||c===0)return 'flat';
+    if(metric==='position'){return c<0?'up':'down';}
+    return c>0?'up':'down';
+  };
+
+  let html=`<thead><tr>
+    <th>Node</th>
+    <th class="num">Latest ${metric}</th>
+    <th class="num">Change</th>
+    <th>Trend</th>
+    <th>Status</th>
+  </tr></thead><tbody>`;
+
+  if(!nodes.length){
+    html+=`<tr><td colspan="5" style="padding:30px;text-align:center;color:var(--tf);">No data matches filter.</td></tr>`;
+  }else{
+    nodes.forEach(({node:n,latest,previous,change})=>{
+      const h=n.history||[];
+      const sparkData=h.map(x=>x[metric]);
+      const spark=h.length>1?renderSparkline(sparkData,isPos):'';
+      let badge='';
+      if(n.isNew)badge='<span class="badge new">NEW</span>';
+      else if(n.isLost)badge='<span class="badge lost">LOST</span>';
+      html+=`<tr>
+        <td><strong>${esc(n.keyword)}</strong><br><span class="url-c" title="${esc(n.url||'')}">${esc((n.url||'').replace(/^https?:\/\//,''))}</span></td>
+        <td class="num">${fmtVal(latest)}</td>
+        <td class="num delta ${changeClass(change)}">${fmtChange(change)}</td>
+        <td>${spark}</td>
+        <td>${badge||'-'}</td>
+      </tr>`;
+    });
+  }
+  html+='</tbody>';
+  document.getElementById('cmpTable').innerHTML=html;
+}
+
+function renderSparkline(data,inverted){
+  if(!data||data.length<2)return '<span style="color:var(--tf);font-size:9px;">no data</span>';
+  const w=80,h=22;
+  const max=Math.max(...data),min=Math.min(...data);
+  const range=max-min||1;
+  const points=data.map((v,i)=>{
+    const x=(i/(data.length-1))*w;
+    let y;
+    if(inverted){
+      // Position: lower = better, so flip
+      y=((v-min)/range)*h;
+    }else{
+      y=h-((v-min)/range)*h;
+    }
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  // Color based on trend (last vs first)
+  const last=data[data.length-1],first=data[0];
+  const improving=inverted?last<first:last>first;
+  const color=last===first?'#5a6478':(improving?'#34d399':'#ef4444');
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+function cmpExport(){
+  const p=P();if(!p)return;
+  const metric=document.getElementById('cmpMetric').value;
+  const lines=['Keyword\tURL\tLatest '+metric+'\tPrevious\tChange'];
+  p.nodes.forEach(n=>{
+    const h=n.history||[];
+    const latest=h.length?h[h.length-1][metric]:'';
+    const prev=h.length>1?h[h.length-2][metric]:'';
+    const change=(latest!==''&&prev!=='')?(latest-prev).toFixed(2):'';
+    lines.push([n.keyword,n.url||'',latest,prev,change].join('\t'));
+  });
+  copyToClipboard(lines.join('\n'),()=>toast('Trends copied as TSV!'));
+}
+
+// === GRAPH MULTI-SELECT & DRAG ===
+let graphSelected=new Set();
+let isRectSelecting=false;
+let isMultiDragging=false;
+let rectSelStart={x:0,y:0};
+let multiDragStart={x:0,y:0};
+let nodeStartPos={};
+
+function clearGraphSel(){
+  graphSelected.clear();
+  document.querySelectorAll('.gn-rect.gn-selected').forEach(r=>r.classList.remove('gn-selected'));
+  updateGraphSelToolbar();
+}
+function updateGraphSelToolbar(){
+  const tb=document.getElementById('gcToolbar');
+  if(!tb)return;
+  if(graphSelected.size>0){
+    tb.classList.add('show');
+    document.getElementById('gcSelCount').textContent=graphSelected.size+' selected';
+  }else{
+    tb.classList.remove('show');
+  }
+}
+function toggleGraphNode(id,additive){
+  if(!additive)graphSelected.clear();
+  if(graphSelected.has(id))graphSelected.delete(id);
+  else graphSelected.add(id);
+  // Update visual
+  document.querySelectorAll('.gn-rect').forEach(r=>{
+    const nid=r.dataset.id;
+    r.classList.toggle('gn-selected',graphSelected.has(nid));
+  });
+  updateGraphSelToolbar();
+}
+
+function delSelected(){
+  if(!graphSelected.size)return;
+  if(!confirm(`Delete ${graphSelected.size} node(s)? Children will be re-parented.`))return;
+  const p=P();if(!p)return;
+  graphSelected.forEach(id=>{
+    const n=p.nodes.find(x=>x.id===id);if(!n)return;
+    p.nodes.filter(c=>c.parentId===n.id).forEach(c=>c.parentId=n.parentId);
+  });
+  p.nodes=p.nodes.filter(n=>!graphSelected.has(n.id));
+  p.links=p.links.filter(l=>!graphSelected.has(l.from)&&!graphSelected.has(l.to));
+  graphSelected.clear();
+  snapshotState();save();renderAll();
+  toast('Deleted.');
+}
+
+function dupSelected(){
+  if(!graphSelected.size){
+    // try to duplicate single node from context
+    if(ctxNode){dupSingle(ctxNode);return;}
+    toast('No nodes selected!',1);return;
+  }
+  const p=P();if(!p)return;
+  // Duplicate including subtree relationships
+  const idMap={};
+  const toDup=[...graphSelected];
+  // Add all descendants
+  function addDesc(id){
+    p.nodes.filter(n=>n.parentId===id).forEach(c=>{
+      if(!toDup.includes(c.id)){toDup.push(c.id);addDesc(c.id);}
+    });
+  }
+  [...graphSelected].forEach(addDesc);
+  // Create copies
+  const newNodes=[];
+  toDup.forEach(id=>{
+    const orig=p.nodes.find(n=>n.id===id);if(!orig)return;
+    const newId='n_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+    idMap[id]=newId;
+    const copy={...orig,id:newId,keyword:orig.keyword+' (copy)',history:[],isNew:false};
+    newNodes.push(copy);
+  });
+  // Fix parent refs within duplicated set
+  newNodes.forEach(n=>{
+    if(n.parentId&&idMap[n.parentId])n.parentId=idMap[n.parentId];
+    else if(!toDup.includes(n.parentId))n.parentId=null; // detached
+  });
+  p.nodes.push(...newNodes);
+  // Offset positions for visual clarity
+  newNodes.forEach(n=>{
+    if(graphPositions[idMap[Object.keys(idMap).find(k=>idMap[k]===n.id)]]){
+      const orig=graphPositions[Object.keys(idMap).find(k=>idMap[k]===n.id)];
+      graphPositions[n.id]={x:orig.x+30,y:orig.y+30};
+    }
+  });
+  // Select duplicated
+  graphSelected=new Set(newNodes.map(n=>n.id));
+  snapshotState();save();renderAll();
+  toast(`Duplicated ${newNodes.length} node(s).`);
+}
+
+function dupSingle(id){
+  const p=P();if(!p)return;
+  const orig=p.nodes.find(n=>n.id===id);if(!orig)return;
+  if(!confirm(`Duplicate "${orig.keyword}" and its subtree?`))return;
+  graphSelected=new Set([id]);
+  dupSelected();
+}
+
+// Right-click duplicate (extends ctx menu)
+let ctxNode=null;
+
+// Setup graph mouse events for rectangle selection
+function setupGraphMouseEvents(){
+  const gc=document.getElementById('gc');
+  if(!gc||gc.dataset.boundGraph)return;
+  gc.dataset.boundGraph='1';
+
+  gc.addEventListener('mousedown',(e)=>{
+    // Only handle left button on empty area (not on a node, not on toolbar)
+    if(e.button!==0)return;
+    if(e.target.closest('.gc-toolbar'))return;
+    if(e.target.closest('g.gn-group')){
+      // Maybe start multi-drag if clicking on selected node
+      const g=e.target.closest('g.gn-group');
+      const id=g.dataset.id;
+      if(graphSelected.has(id)&&graphSelected.size>1){
+        e.preventDefault();
+        isMultiDragging=true;
+        multiDragStart={x:e.clientX,y:e.clientY};
+        nodeStartPos={};
+        graphSelected.forEach(sid=>{
+          if(graphPositions[sid])nodeStartPos[sid]={...graphPositions[sid]};
+        });
+      }
+      return;
+    }
+    // Empty area: start rect selection
+    if(!e.shiftKey)clearGraphSel();
+    isRectSelecting=true;
+    const rect=gc.getBoundingClientRect();
+    rectSelStart={x:e.clientX-rect.left+gc.scrollLeft,y:e.clientY-rect.top+gc.scrollTop};
+    const sel=document.getElementById('gcRectSel');
+    sel.style.left=rectSelStart.x+'px';
+    sel.style.top=rectSelStart.y+'px';
+    sel.style.width='0px';
+    sel.style.height='0px';
+    sel.classList.add('show');
+    gc.classList.add('selecting');
+    e.preventDefault();
+  });
+
+  gc.addEventListener('mousemove',(e)=>{
+    if(isRectSelecting){
+      const rect=gc.getBoundingClientRect();
+      const cx=e.clientX-rect.left+gc.scrollLeft;
+      const cy=e.clientY-rect.top+gc.scrollTop;
+      const sel=document.getElementById('gcRectSel');
+      sel.style.left=Math.min(rectSelStart.x,cx)+'px';
+      sel.style.top=Math.min(rectSelStart.y,cy)+'px';
+      sel.style.width=Math.abs(cx-rectSelStart.x)+'px';
+      sel.style.height=Math.abs(cy-rectSelStart.y)+'px';
+    }else if(isMultiDragging){
+      const dx=e.clientX-multiDragStart.x;
+      const dy=e.clientY-multiDragStart.y;
+      Object.keys(nodeStartPos).forEach(id=>{
+        graphPositions[id]={x:nodeStartPos[id].x+dx,y:nodeStartPos[id].y+dy};
+      });
+      renderGraph();
+    }
+  });
+
+  document.addEventListener('mouseup',(e)=>{
+    if(isRectSelecting){
+      const sel=document.getElementById('gcRectSel');
+      const r1=sel.getBoundingClientRect();
+      // Find nodes inside rect
+      document.querySelectorAll('g.gn-group').forEach(g=>{
+        const r2=g.getBoundingClientRect();
+        if(r2.left<r1.right&&r2.right>r1.left&&r2.top<r1.bottom&&r2.bottom>r1.top){
+          graphSelected.add(g.dataset.id);
+        }
+      });
+      sel.classList.remove('show');
+      isRectSelecting=false;
+      gc.classList.remove('selecting');
+      // Update visual
+      document.querySelectorAll('.gn-rect').forEach(r=>{
+        const nid=r.dataset.id;
+        r.classList.toggle('gn-selected',graphSelected.has(nid));
+      });
+      updateGraphSelToolbar();
+    }
+    if(isMultiDragging){
+      isMultiDragging=false;
+      save();
+    }
+  });
+}
+
 // === PNG/SVG EXPORT ===
 function getGraphSVG(){
   // Make sure graph is rendered first
@@ -1789,10 +2749,11 @@ function expXLSX(){
 document.addEventListener('keydown',(e)=>{
   // Skip if typing in input/textarea (except special cases)
   const inField=['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName);
-  // Esc — close modals / clear search
+  // Esc — close modals / clear search / clear graph selection
   if(e.key==='Escape'){
     document.querySelectorAll('.mo.active').forEach(m=>m.classList.remove('active'));
     document.querySelector('.shortcuts-help.show')?.classList.remove('show');
+    if(graphSelected.size){clearGraphSel();}
     if(searchQ){clearSearch();}
     return;
   }
@@ -1809,6 +2770,14 @@ document.addEventListener('keydown',(e)=>{
     if(e.key==='k'){e.preventDefault();document.getElementById('aKW').focus();return;}
     // Ctrl+B — toggle bulk mode
     if(e.key==='b'){if(!inField){e.preventDefault();toggleBulkMode();}return;}
+    // Ctrl+D — duplicate selected (graph)
+    if(e.key==='d'){if(!inField&&curView==='graph'&&graphSelected.size){e.preventDefault();dupSelected();}return;}
+    // Ctrl+A — select all in graph
+    if(e.key==='a'){if(!inField&&curView==='graph'){e.preventDefault();N().forEach(n=>graphSelected.add(n.id));renderGraph();updateGraphSelToolbar();}return;}
+  }
+  // Delete — delete selected nodes (graph view)
+  if((e.key==='Delete'||e.key==='Backspace')&&!inField&&curView==='graph'&&graphSelected.size){
+    e.preventDefault();delSelected();return;
   }
   // ? — shortcuts help
   if(e.key==='?'&&!inField){e.preventDefault();document.getElementById('shortcutsHelp').classList.toggle('show');}
