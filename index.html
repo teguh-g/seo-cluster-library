@@ -337,6 +337,85 @@ button{font-family:var(--f);}
 .gc-toolbar.show{display:inline-flex;}
 .gc-toolbar .count{font-size:10px;color:var(--bofu);font-weight:700;font-family:var(--m);margin-right:5px;}
 
+/* === DASHBOARD VIEW === */
+.dv{flex:1;overflow-y:auto;padding:18px 22px 60px;background:var(--bg);}
+.dash-section{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;}
+.dash-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.dash-h h4{font-size:11px;font-weight:700;color:var(--t);text-transform:uppercase;letter-spacing:.7px;margin:0;}
+
+/* Stat cards */
+.dash-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px;}
+.dash-stat{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px;}
+.dash-stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--td);margin-bottom:6px;font-weight:600;}
+.dash-stat-val{font-size:22px;font-weight:700;color:var(--t);font-family:var(--m);line-height:1.1;}
+.dash-stat-sub{font-size:10px;color:var(--td);margin-top:4px;font-family:var(--m);}
+.dash-delta{display:inline-block;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700;font-family:var(--m);margin-left:4px;}
+.dash-delta.up{background:rgba(52,211,153,.15);color:var(--ok);}
+.dash-delta.down{background:rgba(239,68,68,.15);color:var(--danger);}
+
+/* 2-column grid for sections */
+.dash-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+@media (max-width:900px){.dash-grid-2{grid-template-columns:1fr;}}
+
+/* Periods management */
+.period-list{display:flex;gap:10px;flex-wrap:wrap;}
+.period-card{background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);padding:10px 12px;min-width:140px;flex:0 0 auto;}
+.period-label{font-size:12px;font-weight:700;color:var(--t);margin-bottom:2px;}
+.period-meta{font-size:9px;color:var(--td);font-family:var(--m);margin-bottom:6px;}
+.period-actions{display:flex;gap:5px;}
+.period-actions .btn{padding:3px 7px;font-size:9px;}
+
+/* Compare selector */
+.cmp-selector{display:flex;gap:8px;align-items:center;font-size:11px;color:var(--td);}
+.cmp-selector select{background:var(--s2);border:1px solid var(--bd);border-radius:4px;color:var(--t);font-size:11px;padding:5px 8px;outline:none;cursor:pointer;}
+.cmp-selector select:hover{border-color:var(--bd2);}
+
+/* Movers table */
+.dash-mtbl{width:100%;border-collapse:collapse;font-size:11px;}
+.dash-mtbl tr{border-bottom:1px solid var(--bd);}
+.dash-mtbl tr:last-child{border-bottom:none;}
+.dash-mtbl td{padding:7px 6px;color:var(--t);}
+.dash-mtbl td.num{text-align:right;font-family:var(--m);font-size:10px;color:var(--td);}
+.dash-mtbl td.delta{font-weight:700;}
+.dash-mtbl td.delta.up{color:var(--ok);}
+.dash-mtbl td.delta.down{color:var(--danger);}
+.dash-url{font-family:var(--m);font-size:9px;color:var(--td);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px;}
+.dash-empty{padding:20px;text-align:center;color:var(--tf);font-size:11px;}
+
+/* Trend table */
+.dash-trend-wrap{max-height:420px;overflow:auto;border:1px solid var(--bd);border-radius:var(--rs);}
+.dash-trend-tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.dash-trend-tbl th{position:sticky;top:0;background:var(--s2);text-align:left;padding:8px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--td);font-weight:600;border-bottom:1px solid var(--bd);z-index:1;}
+.dash-trend-tbl td{padding:7px 10px;border-bottom:1px solid var(--bd);color:var(--t);}
+.dash-trend-tbl td.num{text-align:right;font-family:var(--m);}
+.dash-trend-tbl td.delta{font-family:var(--m);font-weight:700;font-size:10px;}
+.dash-trend-tbl td.delta.up{color:var(--ok);}
+.dash-trend-tbl td.delta.down{color:var(--danger);}
+.dash-trend-tbl td.delta.flat{color:var(--tf);}
+.dash-trend-tbl .badge{display:inline-block;font-size:8px;padding:1px 5px;border-radius:3px;font-family:var(--m);font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.dash-trend-tbl .badge.new{background:rgba(74,144,255,.15);color:var(--bofu);}
+
+/* Position distribution */
+.dist-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;}
+.dist-lbl{flex:0 0 100px;color:var(--td);font-size:10px;}
+.dist-bar-wrap{flex:1;background:var(--s2);height:14px;border-radius:7px;overflow:hidden;}
+.dist-bar{height:100%;border-radius:7px;transition:width .3s;}
+.dist-val{flex:0 0 30px;text-align:right;font-family:var(--m);color:var(--t);font-size:10px;font-weight:600;}
+
+/* New / Lost */
+.dash-nl{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.dash-nl-col{}
+.dash-nl-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
+.dash-nl-item{font-size:10px;color:var(--t);padding:3px 0;border-bottom:1px solid var(--bd);font-family:var(--m);}
+.dash-nl-item:last-child{border-bottom:none;}
+
+/* Funnel distribution */
+.funnel-dist{display:flex;height:34px;border-radius:var(--rs);overflow:hidden;background:var(--s2);}
+.funnel-bar{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;font-family:var(--m);color:#fff;transition:flex .3s;letter-spacing:.5px;min-width:60px;}
+.funnel-bar.bofu{background:var(--bofu);}
+.funnel-bar.mofu{background:var(--mofu);}
+.funnel-bar.tofu{background:var(--tofu);}
+
 </style>
 </head>
 <body>
@@ -361,7 +440,7 @@ button{font-family:var(--f);}
     <button class="btn btn-g btn-sm" onclick="openGscMo()" title="Import from GSC"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="lbl">GSC</span></button>
     <button class="btn btn-g btn-sm" onclick="openSnapMo()" title="Backup snapshots"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5a2 2 0 0 1 2-2h3l2-2h4l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg><span class="lbl">Snaps</span></button>
     <button class="btn btn-g btn-sm" onclick="checkCannibals()" title="Check keyword cannibalization"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
-    <button class="btn btn-g btn-sm" onclick="openCmpMo()" title="Trend & comparison"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span class="lbl">Trends</span></button>
+    <span class="sep"></span>
     <span class="sep"></span>
     <!-- Export group -->
     <button class="btn btn-g btn-sm" onclick="exportPNG()" title="Export graph as PNG image"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span class="lbl">PNG</span></button>
@@ -489,6 +568,7 @@ button{font-family:var(--f);}
       <div class="vt">
         <button class="active" onclick="setV('graph')">Graph</button>
         <button onclick="setV('table')">Table</button>
+        <button onclick="setV('dashboard')">Dashboard</button>
       </div>
       <span id="projName" style="font-size:11px;color:var(--td);margin-left:8px;"></span>
     </div>
@@ -513,6 +593,7 @@ button{font-family:var(--f);}
     <div class="es" id="gEmpty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--tf)" stroke-width="1.5"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg><h4>Cluster Map</h4><p>Add nodes to visualize.</p></div>
   </div>
   <div class="tv" id="tv"></div>
+  <div class="dv" id="dv" style="display:none;"></div>
   <div class="sb">
     <div class="st">Nodes: <span id="sT">0</span></div>
     <div class="st">BOFU: <span id="sB">0</span></div>
@@ -533,7 +614,10 @@ button{font-family:var(--f);}
     <div class="ig"><label>Page Type</label><select id="ePT"></select></div>
     <div class="ig"><label>Keyword</label><input type="text" id="eKW"></div>
     <div class="ig"><label>URL</label><input type="text" id="eURL"></div>
-    <div class="ir3"><div class="ig"><label>Vol</label><input type="number" id="eVol"></div><div class="ig"><label>KD</label><input type="number" id="eKD"></div><div class="ig"><label>Pos</label><input type="number" id="ePos"></div></div>
+    <div style="font-size:10px;color:var(--td);text-transform:uppercase;letter-spacing:.6px;margin:8px 0 4px;font-weight:600;">Research / Planning</div>
+    <div class="ir3"><div class="ig"><label>Search Vol</label><input type="number" id="eVol" placeholder="from Ahrefs/Semrush"></div><div class="ig"><label>KD</label><input type="number" id="eKD"></div><div class="ig"><label>Position</label><input type="number" id="ePos" step="0.1"></div></div>
+    <div style="font-size:10px;color:var(--td);text-transform:uppercase;letter-spacing:.6px;margin:8px 0 4px;font-weight:600;">GSC Metrics</div>
+    <div class="ir3"><div class="ig"><label>Impressions</label><input type="number" id="eImpr" placeholder="0"></div><div class="ig"><label>Clicks</label><input type="number" id="eClicks" placeholder="0"></div><div class="ig"><label>CTR (%)</label><input type="number" id="eCtr" step="0.01" placeholder="0"></div></div>
     <div class="ir"><div class="ig"><label>Parent</label><select id="ePar"></select></div><div class="ig"><label>Status</label><select id="eSt"><option value="draft">Draft</option><option value="published">Published</option><option value="needs-update">Perlu Update</option></select></div></div>
     <div class="btn-row">
       <button class="btn btn-d btn-sm" onclick="delNode()">Delete</button>
@@ -944,7 +1028,10 @@ function openEd(id){
   // Fill page types
   const s=document.getElementById('ePT');s.innerHTML='';
   PT_ALL.forEach(pt=>{s.innerHTML+=`<option value="${pt.v}" ${pt.v===n.pageType?'selected':''}>${pt.l}</option>`;});
-  sv('eKW',n.keyword);sv('eURL',n.url);sv('eVol',n.volume||'');sv('eKD',n.kd||'');sv('ePos',n.position||'');sv('eSt',n.status);
+  sv('eKW',n.keyword);sv('eURL',n.url);
+  sv('eVol',n.volume||'');sv('eKD',n.kd||'');sv('ePos',n.position||'');
+  sv('eImpr',n.impressions||'');sv('eClicks',n.clicks||'');sv('eCtr',n.ctr||'');
+  sv('eSt',n.status);
   const ps=document.getElementById('ePar');ps.innerHTML='<option value="">-- Root --</option>';
   N().filter(x=>x.id!==id).forEach(x=>{ps.innerHTML+=`<option value="${x.id}" ${x.id===n.parentId?'selected':''}>${esc(x.keyword)}</option>`;});
   document.getElementById('eMo').classList.add('active');
@@ -952,7 +1039,9 @@ function openEd(id){
 function saveEd(){
   const n=N().find(x=>x.id===editId);if(!n)return;
   n.funnel=gv('eF');n.pageType=gv('ePT');n.keyword=gv('eKW');n.url=gv('eURL');
-  n.volume=int(gv('eVol'));n.kd=int(gv('eKD'));n.position=int(gv('ePos'));n.status=gv('eSt');
+  n.volume=int(gv('eVol'));n.kd=int(gv('eKD'));n.position=parseFloat(gv('ePos'))||0;
+  n.impressions=int(gv('eImpr'));n.clicks=int(gv('eClicks'));n.ctr=parseFloat(gv('eCtr'))||0;
+  n.status=gv('eSt');
   const np=gv('ePar')||null;
   if(np&&isDesc(editId,np,N())){toast('Circular!',1);return;}
   n.parentId=np;closeMo();save();renderAll();toast('Updated!');
@@ -1027,7 +1116,9 @@ function renderAll(){
   renderFolders();
   updateSelects();
   renderTree();
-  if(curView==='graph')renderGraph();else renderTable();
+  if(curView==='graph')renderGraph();
+  else if(curView==='table')renderTable();
+  else if(curView==='dashboard')renderDashboard();
   renderStats();
   const p=P();
   document.getElementById('projName').textContent=p?p.name:'No project selected';
@@ -1171,12 +1262,22 @@ function renderGraph(){
     if(n.parentId&&graphPositions[n.parentId]&&graphPositions[n.id]){
       const pp=graphPositions[n.parentId],cp=graphPositions[n.id];
       const pw=widths[n.parentId]||200,cw=widths[n.id]||200;
-      const x1=pp.x+pw/2,y1=pp.y+nodeH,x2=cp.x+cw/2,y2=cp.y,my=(y1+y2)/2;
+      const x1=pp.x+pw/2,y1=pp.y+nodeH,x2=cp.x+cw/2,y2=cp.y;
+      const arrowSize=7;
+      const yEnd=y2-arrowSize;
+      const my=(y1+yEnd)/2;
+      const col=cols[n.funnel]||'#3d4860';
       const path=mkSVG('path');
-      path.setAttribute('d',`M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}`);
-      path.setAttribute('stroke',cols[n.funnel]||'#3d4860');path.setAttribute('stroke-width','1.5');
-      path.setAttribute('fill','none');path.setAttribute('opacity','0.35');
+      path.setAttribute('d',`M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${yEnd}`);
+      path.setAttribute('stroke',col);path.setAttribute('stroke-width','1.5');
+      path.setAttribute('fill','none');path.setAttribute('opacity','0.5');
       svg.appendChild(path);
+      // Arrow head pointing down to child
+      const arr=mkSVG('polygon');
+      arr.setAttribute('points',`${x2},${y2} ${x2-arrowSize/1.4},${y2-arrowSize} ${x2+arrowSize/1.4},${y2-arrowSize}`);
+      arr.setAttribute('fill',col);
+      arr.setAttribute('opacity','0.6');
+      svg.appendChild(arr);
     }
   });
 
@@ -1283,7 +1384,7 @@ function renderGraph(){
       <text x="${p.x+w-8}" y="${p.y+18}" fill="${subTextCol}" font-size="8" font-family="Space Mono" text-anchor="end">${ptLabel(n.pageType)}</text>
       <text x="${p.x+10}" y="${p.y+38}" fill="${textCol}" font-size="12" font-family="DM Sans" font-weight="600">${esc(n.keyword)}</text>
       ${trendSvg}
-      <text x="${p.x+10}" y="${p.y+54}" fill="${subTextCol}" font-size="9" font-family="Space Mono">${[n.volume?'impr:'+n.volume:'',n.position?'#'+n.position.toFixed(1):''].filter(Boolean).join('  ')}</text>
+      <text x="${p.x+10}" y="${p.y+54}" fill="${subTextCol}" font-size="9" font-family="Space Mono">${[n.impressions?'impr:'+n.impressions.toLocaleString():'',n.clicks?'clk:'+n.clicks:'',n.position?'#'+(typeof n.position==='number'?n.position.toFixed(1):n.position):''].filter(Boolean).join('  ')}</text>
     `;
     // Graph drag (single node) — only if not part of multi-select
     g.addEventListener('mousedown',(e)=>{
@@ -1340,8 +1441,11 @@ function renderTable(){
     {key:'pageType',lbl:'Type'},
     {key:'keyword',lbl:'Keyword'},
     {key:'url',lbl:'URL'},
-    {key:'volume',lbl:'Vol'},
+    {key:'volume',lbl:'Search Vol'},
     {key:'kd',lbl:'KD'},
+    {key:'impressions',lbl:'Impr'},
+    {key:'clicks',lbl:'Clicks'},
+    {key:'ctr',lbl:'CTR%'},
     {key:'position',lbl:'Pos'},
     {key:'status',lbl:'Status'},
     {key:'parent',lbl:'Parent'},
@@ -1361,7 +1465,10 @@ function renderTable(){
       <td class="mono url-c">${n.url?esc(n.url):'--'}</td>
       <td class="mono">${n.volume||'--'}</td>
       <td class="mono">${n.kd||'--'}</td>
-      <td class="mono">${n.position||'--'}</td>
+      <td class="mono">${n.impressions?n.impressions.toLocaleString():'--'}</td>
+      <td class="mono">${n.clicks?n.clicks.toLocaleString():'--'}</td>
+      <td class="mono">${n.ctr?n.ctr.toFixed(2):'--'}</td>
+      <td class="mono">${n.position?(typeof n.position==='number'?n.position.toFixed(1):n.position):'--'}</td>
       <td><span class="sd sd-${n.status}" style="display:inline-block;vertical-align:middle;margin-right:3px;"></span>${n.status}</td>
       <td style="font-size:10px;">${n.parentId?esc(parKW(n.parentId)):'--'}</td>
       <td style="font-size:10px;">${nLinks(n.id)||'--'}</td>
@@ -1413,7 +1520,10 @@ function buildRowData(n,ns){
     url:n.url||'',
     volume:n.volume||'',
     kd:n.kd||'',
-    position:n.position||'',
+    impressions:n.impressions||'',
+    clicks:n.clicks||'',
+    ctr:n.ctr?Number(n.ctr).toFixed(2):'',
+    position:n.position?(typeof n.position==='number'?Number(n.position).toFixed(1):n.position):'',
     status:n.status,
     parent:n.parentId?parKW(n.parentId):'',
     links:nLinks(n.id)
@@ -1428,11 +1538,11 @@ function copyTable(mode){
     if(!tblSelected.size){toast('No rows selected!',1);return;}
     rows=rows.filter(n=>tblSelected.has(n.id));
   }
-  const headers=['Funnel','Type','Keyword','URL','Vol','KD','Pos','Status','Parent','Links'];
+  const headers=['Funnel','Type','Keyword','URL','Search Vol','KD','Impr','Clicks','CTR%','Pos','Status','Parent','Links'];
   const lines=[headers.join('\t')];
   rows.forEach(n=>{
     const d=buildRowData(n,ns);
-    lines.push([d.funnel,d.pageType,d.keyword,d.url,d.volume,d.kd,d.position,d.status,d.parent,d.links].map(v=>String(v).replace(/\t/g,' ').replace(/\n/g,' ')).join('\t'));
+    lines.push([d.funnel,d.pageType,d.keyword,d.url,d.volume,d.kd,d.impressions,d.clicks,d.ctr,d.position,d.status,d.parent,d.links].map(v=>String(v).replace(/\t/g,' ').replace(/\n/g,' ')).join('\t'));
   });
   const text=lines.join('\n');
   copyToClipboard(text,()=>{
@@ -1446,7 +1556,7 @@ function copyColumn(colKey){
   const sorted=[...ns].sort((a,b)=>(ord[a.funnel]||0)-(ord[b.funnel]||0));
   // Use selected rows if any, else all
   const rows=tblSelected.size?sorted.filter(n=>tblSelected.has(n.id)):sorted;
-  const labels={funnel:'Funnel',pageType:'Type',keyword:'Keyword',url:'URL',volume:'Vol',kd:'KD',position:'Pos',status:'Status',parent:'Parent',links:'Links'};
+  const labels={funnel:'Funnel',pageType:'Type',keyword:'Keyword',url:'URL',volume:'Search Vol',kd:'KD',impressions:'Impr',clicks:'Clicks',ctr:'CTR%',position:'Pos',status:'Status',parent:'Parent',links:'Links'};
   const lines=[labels[colKey]||colKey];
   rows.forEach(n=>{
     const d=buildRowData(n,ns);
@@ -1478,6 +1588,419 @@ function copyToClipboardFallback(text,onSuccess){
   document.body.removeChild(ta);
 }
 
+// === DASHBOARD ===
+let dashCmpA=null,dashCmpB=null;
+
+function getNodeMetricFromHistory(n,periodLabel,metric){
+  if(!n.history||!n.history.length)return null;
+  if(periodLabel){
+    const e=n.history.find(h=>h.label===periodLabel);
+    return e?e[metric]:null;
+  }
+  // Latest
+  return n.history[n.history.length-1][metric];
+}
+
+function fmtNum(n){
+  if(n===null||n===undefined||n==='')return '--';
+  if(typeof n==='number'&&!Number.isInteger(n))return n.toFixed(2);
+  return Number(n).toLocaleString();
+}
+function fmtPct(n){
+  if(n===null||n===undefined||n==='')return '--';
+  return Number(n).toFixed(2)+'%';
+}
+function fmtPos(n){
+  if(n===null||n===undefined||n==='')return '--';
+  return Number(n).toFixed(1);
+}
+
+function renderDashboard(){
+  const dv=document.getElementById('dv');
+  const p=P();
+  const ns=p?p.nodes:[];
+
+  if(!p){
+    dv.innerHTML='<div class="es" style="padding:60px 20px;"><h4>No project selected</h4><p>Pick a project from the sidebar.</p></div>';
+    return;
+  }
+
+  // Periods management
+  const periods=p.periods||[];
+  // Auto-rebuild periods from history if missing (backwards compat)
+  if(!periods.length&&ns.some(n=>n.history&&n.history.length)){
+    const seen=new Set();
+    ns.forEach(n=>(n.history||[]).forEach(h=>{
+      const lbl=h.label||h.date||'unknown';
+      if(!seen.has(lbl)){seen.add(lbl);periods.push({label:lbl,date:h.date,urlCount:0});}
+    }));
+    p.periods=periods;
+  }
+
+  // Set default compare A/B if periods exist
+  if(periods.length>=1){
+    if(!dashCmpA||!periods.find(pr=>pr.label===dashCmpA))dashCmpA=periods[0].label;
+    if(periods.length>=2){
+      if(!dashCmpB||!periods.find(pr=>pr.label===dashCmpB))dashCmpB=periods[periods.length-1].label;
+    }else{
+      dashCmpB=null;
+    }
+  }
+
+  // Calculate aggregates for each period
+  function aggForPeriod(label){
+    let totalImpr=0,totalClicks=0,positions=[],count=0;
+    ns.forEach(n=>{
+      const h=label?(n.history||[]).find(e=>e.label===label):null;
+      if(label&&!h)return;
+      if(!label){
+        // use latest values
+        if(n.impressions)totalImpr+=n.impressions;
+        if(n.clicks)totalClicks+=n.clicks;
+        if(n.position)positions.push(n.position);
+        count++;
+      }else{
+        if(h.impressions)totalImpr+=h.impressions;
+        if(h.clicks)totalClicks+=h.clicks;
+        if(h.position)positions.push(h.position);
+        count++;
+      }
+    });
+    const avgPos=positions.length?positions.reduce((s,x)=>s+x,0)/positions.length:0;
+    const avgCtr=totalImpr>0?(totalClicks/totalImpr*100):0;
+    return {totalImpr,totalClicks,avgPos,avgCtr,count};
+  }
+
+  const aggA=aggForPeriod(dashCmpA);
+  const aggB=dashCmpB?aggForPeriod(dashCmpB):null;
+
+  function deltaArrow(a,b,inverted){
+    if(!aggB||a===b||!a||!b)return '';
+    const diff=b-a;
+    const pct=a?((diff/a)*100):0;
+    const isUp=inverted?diff<0:diff>0;
+    const cls=isUp?'up':'down';
+    const arrow=isUp?'▲':'▼';
+    return `<span class="dash-delta ${cls}">${arrow} ${Math.abs(pct).toFixed(1)}%</span>`;
+  }
+
+  // Top movers calculation
+  function calcMovers(){
+    if(!dashCmpA||!dashCmpB)return {ups:[],downs:[]};
+    const list=[];
+    ns.forEach(n=>{
+      const a=(n.history||[]).find(e=>e.label===dashCmpA);
+      const b=(n.history||[]).find(e=>e.label===dashCmpB);
+      if(!a||!b)return;
+      const posDiff=a.position-b.position; // lower position is better, so positive diff = improvement
+      list.push({node:n,a,b,posDiff,imprDiff:b.impressions-a.impressions,clicksDiff:b.clicks-a.clicks});
+    });
+    list.sort((x,y)=>y.posDiff-x.posDiff);
+    return {ups:list.slice(0,10),downs:list.slice(-10).reverse()};
+  }
+  const movers=calcMovers();
+
+  // Position distribution (latest period or current values)
+  const dist={top3:0,top10:0,page2:0,beyond:0,np:0};
+  ns.forEach(n=>{
+    const pos=dashCmpB?(n.history||[]).find(e=>e.label===dashCmpB)?.position:(n.history||[]).slice(-1)[0]?.position||n.position;
+    if(!pos){dist.np++;return;}
+    if(pos<=3)dist.top3++;
+    else if(pos<=10)dist.top10++;
+    else if(pos<=20)dist.page2++;
+    else dist.beyond++;
+  });
+
+  // New / Lost
+  const newest=dashCmpB||(periods.length?periods[periods.length-1].label:null);
+  const newNodes=ns.filter(n=>{
+    if(!n.history||!n.history.length)return false;
+    return n.history[0].label===newest&&n.history.length===1;
+  });
+  const lostNodes=ns.filter(n=>n.isLost);
+
+  // === Render HTML ===
+  let html='';
+
+  // Periods management section
+  html+=`<div class="dash-section">
+    <div class="dash-h">
+      <h4>Periods Tracked</h4>
+      <button class="btn btn-acc btn-sm" onclick="openGscMo()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span class="lbl">Add Period</span></button>
+    </div>
+    <div class="period-list">`;
+  if(!periods.length){
+    html+='<div style="padding:14px;color:var(--tf);font-size:11px;">No periods yet. Click "Add Period" to import GSC data.</div>';
+  }else{
+    periods.forEach((pr,i)=>{
+      html+=`<div class="period-card">
+        <div class="period-label">${esc(pr.label)}</div>
+        <div class="period-meta">${pr.urlCount||'?'} URLs · ${pr.date||'-'}</div>
+        <div class="period-actions">
+          <button class="btn btn-g btn-sm" onclick="periodReplace('${esc(pr.label).replace(/'/g,"&#39;")}')">Replace</button>
+          <button class="btn btn-d btn-sm" onclick="periodDelete('${esc(pr.label).replace(/'/g,"&#39;")}')">Delete</button>
+        </div>
+      </div>`;
+    });
+  }
+  html+=`</div></div>`;
+
+  // Compare selector
+  if(periods.length>=2){
+    html+=`<div class="dash-section">
+      <div class="dash-h"><h4>Compare</h4></div>
+      <div class="cmp-selector">
+        <span>Period A:</span>
+        <select onchange="dashSetCmp('A',this.value)">${periods.map(pr=>`<option value="${esc(pr.label)}" ${pr.label===dashCmpA?'selected':''}>${esc(pr.label)}</option>`).join('')}</select>
+        <span>vs</span>
+        <span>Period B:</span>
+        <select onchange="dashSetCmp('B',this.value)">${periods.map(pr=>`<option value="${esc(pr.label)}" ${pr.label===dashCmpB?'selected':''}>${esc(pr.label)}</option>`).join('')}</select>
+      </div>
+    </div>`;
+  }
+
+  // Stat cards
+  if(aggA.count){
+    html+=`<div class="dash-stat-grid">
+      <div class="dash-stat">
+        <div class="dash-stat-lbl">Total Impressions</div>
+        <div class="dash-stat-val">${fmtNum(aggB?aggB.totalImpr:aggA.totalImpr)}</div>
+        ${aggB?`<div class="dash-stat-sub">vs ${fmtNum(aggA.totalImpr)} ${deltaArrow(aggA.totalImpr,aggB.totalImpr,false)}</div>`:''}
+      </div>
+      <div class="dash-stat">
+        <div class="dash-stat-lbl">Total Clicks</div>
+        <div class="dash-stat-val">${fmtNum(aggB?aggB.totalClicks:aggA.totalClicks)}</div>
+        ${aggB?`<div class="dash-stat-sub">vs ${fmtNum(aggA.totalClicks)} ${deltaArrow(aggA.totalClicks,aggB.totalClicks,false)}</div>`:''}
+      </div>
+      <div class="dash-stat">
+        <div class="dash-stat-lbl">Avg CTR</div>
+        <div class="dash-stat-val">${fmtPct(aggB?aggB.avgCtr:aggA.avgCtr)}</div>
+        ${aggB?`<div class="dash-stat-sub">vs ${fmtPct(aggA.avgCtr)} ${deltaArrow(aggA.avgCtr,aggB.avgCtr,false)}</div>`:''}
+      </div>
+      <div class="dash-stat">
+        <div class="dash-stat-lbl">Avg Position</div>
+        <div class="dash-stat-val">${fmtPos(aggB?aggB.avgPos:aggA.avgPos)}</div>
+        ${aggB?`<div class="dash-stat-sub">vs ${fmtPos(aggA.avgPos)} ${deltaArrow(aggA.avgPos,aggB.avgPos,true)}</div>`:''}
+      </div>
+    </div>`;
+  }
+
+  // Top Movers
+  if(periods.length>=2){
+    html+=`<div class="dash-grid-2">
+      <div class="dash-section">
+        <div class="dash-h"><h4>Top Movers — Improvement</h4></div>
+        ${movers.ups.length?`<table class="dash-mtbl">${movers.ups.slice(0,10).map(m=>`<tr>
+          <td><strong>${esc(m.node.keyword)}</strong><div class="dash-url">${esc((m.node.url||'').replace(/^https?:\/\//,''))}</div></td>
+          <td class="num">${fmtPos(m.a.position)} → ${fmtPos(m.b.position)}</td>
+          <td class="num delta up">▲ ${m.posDiff.toFixed(1)}</td>
+        </tr>`).join('')}</table>`:'<div class="dash-empty">No movers — need 2+ periods with overlap.</div>'}
+      </div>
+      <div class="dash-section">
+        <div class="dash-h"><h4>Top Movers — Decline</h4></div>
+        ${movers.downs.length?`<table class="dash-mtbl">${movers.downs.slice(0,10).map(m=>`<tr>
+          <td><strong>${esc(m.node.keyword)}</strong><div class="dash-url">${esc((m.node.url||'').replace(/^https?:\/\//,''))}</div></td>
+          <td class="num">${fmtPos(m.a.position)} → ${fmtPos(m.b.position)}</td>
+          <td class="num delta down">▼ ${Math.abs(m.posDiff).toFixed(1)}</td>
+        </tr>`).join('')}</table>`:'<div class="dash-empty">No declining nodes.</div>'}
+      </div>
+    </div>`;
+  }
+
+  // Trend table with sparklines
+  if(ns.length){
+    html+=`<div class="dash-section">
+      <div class="dash-h">
+        <h4>All Nodes Trend</h4>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <select id="trendMetric" onchange="renderDashboard()" style="background:var(--s2);border:1px solid var(--bd);border-radius:4px;color:var(--t);font-size:10px;padding:4px 7px;">
+            <option value="position">Position</option>
+            <option value="impressions">Impressions</option>
+            <option value="clicks">Clicks</option>
+            <option value="ctr">CTR</option>
+          </select>
+          <button class="btn btn-g btn-sm" onclick="dashCopyTrends()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="lbl">Copy TSV</span></button>
+        </div>
+      </div>
+      <div class="dash-trend-wrap">
+        <table class="dash-trend-tbl" id="dashTrendTbl"></table>
+      </div>
+    </div>`;
+  }
+
+  // Position Distribution
+  const totalDist=dist.top3+dist.top10+dist.page2+dist.beyond;
+  if(totalDist){
+    function bar(label,val,col){
+      const pct=totalDist?((val/totalDist)*100):0;
+      return `<div class="dist-row">
+        <div class="dist-lbl">${label}</div>
+        <div class="dist-bar-wrap"><div class="dist-bar" style="width:${pct}%;background:${col};"></div></div>
+        <div class="dist-val">${val}</div>
+      </div>`;
+    }
+    html+=`<div class="dash-grid-2">
+      <div class="dash-section">
+        <div class="dash-h"><h4>Position Distribution</h4></div>
+        ${bar('Top 3',dist.top3,'#34d399')}
+        ${bar('Top 10',dist.top10,'#4a90ff')}
+        ${bar('Page 2 (11-20)',dist.page2,'#f59e0b')}
+        ${bar('Beyond 20',dist.beyond,'#ef4444')}
+      </div>`;
+
+    // New / Lost
+    html+=`<div class="dash-section">
+      <div class="dash-h"><h4>New / Lost URLs</h4></div>
+      <div class="dash-nl">
+        <div class="dash-nl-col">
+          <div class="dash-nl-lbl" style="color:var(--bofu);">NEW (${newNodes.length})</div>
+          ${newNodes.slice(0,8).map(n=>`<div class="dash-nl-item">${esc(n.keyword)}</div>`).join('')||'<div class="dash-nl-item" style="color:var(--tf);">none</div>'}
+        </div>
+        <div class="dash-nl-col">
+          <div class="dash-nl-lbl" style="color:var(--danger);">LOST (${lostNodes.length})</div>
+          ${lostNodes.slice(0,8).map(n=>`<div class="dash-nl-item">${esc(n.keyword)}</div>`).join('')||'<div class="dash-nl-item" style="color:var(--tf);">none</div>'}
+        </div>
+      </div>
+    </div></div>`;
+  }
+
+  // Funnel distribution
+  const fdist={bofu:ns.filter(n=>n.funnel==='bofu').length,mofu:ns.filter(n=>n.funnel==='mofu').length,tofu:ns.filter(n=>n.funnel==='tofu').length};
+  const ftotal=fdist.bofu+fdist.mofu+fdist.tofu;
+  if(ftotal){
+    html+=`<div class="dash-section">
+      <div class="dash-h"><h4>Funnel Distribution</h4></div>
+      <div class="funnel-dist">
+        <div class="funnel-bar bofu" style="flex:${fdist.bofu};"><span>BOFU ${fdist.bofu}</span></div>
+        <div class="funnel-bar mofu" style="flex:${fdist.mofu};"><span>MOFU ${fdist.mofu}</span></div>
+        <div class="funnel-bar tofu" style="flex:${fdist.tofu};"><span>TOFU ${fdist.tofu}</span></div>
+      </div>
+    </div>`;
+  }
+
+  dv.innerHTML=html;
+
+  // Render trend table separately (so we can re-render on metric change)
+  renderDashTrend();
+}
+
+function renderDashTrend(){
+  const tbl=document.getElementById('dashTrendTbl');
+  if(!tbl)return;
+  const metric=(document.getElementById('trendMetric')||{}).value||'position';
+  const ns=N();
+  const isPos=metric==='position';
+
+  const rows=ns.map(n=>{
+    const h=n.history||[];
+    const latest=h.length?h[h.length-1][metric]:n[metric==='impressions'?'impressions':metric]||0;
+    const prev=h.length>1?h[h.length-2][metric]:null;
+    const change=prev!==null?latest-prev:null;
+    return {n,h,latest,prev,change};
+  });
+
+  // Sort: biggest improvement first
+  rows.sort((a,b)=>{
+    if(a.change===null&&b.change===null)return 0;
+    if(a.change===null)return 1;
+    if(b.change===null)return -1;
+    if(isPos)return a.change-b.change; // for position lower is better
+    return b.change-a.change;
+  });
+
+  let html=`<thead><tr>
+    <th>Keyword</th>
+    <th class="num">Latest</th>
+    <th class="num">Δ</th>
+    <th>Trend</th>
+  </tr></thead><tbody>`;
+
+  if(!rows.length){
+    html+='<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--tf);">No data.</td></tr>';
+  }else{
+    rows.slice(0,30).forEach(({n,h,latest,prev,change})=>{
+      const sparkData=h.map(x=>x[metric]).filter(v=>v!=null);
+      const spark=sparkData.length>1?renderSparkline(sparkData,isPos):'<span style="color:var(--tf);font-size:9px;">—</span>';
+      let badge='';
+      if(n.isNew)badge='<span class="badge new">NEW</span>';
+      const fmtV=(v)=>{
+        if(v===null||v===undefined||v==='')return '--';
+        if(metric==='ctr')return Number(v).toFixed(2)+'%';
+        if(metric==='position')return Number(v).toFixed(1);
+        return Math.round(v).toLocaleString();
+      };
+      const fmtCh=(c)=>{
+        if(c===null)return '--';
+        const sign=c>0?'+':'';
+        if(metric==='ctr')return sign+c.toFixed(2)+'%';
+        if(metric==='position')return sign+c.toFixed(1);
+        return sign+Math.round(c).toLocaleString();
+      };
+      const chClass=(()=>{
+        if(change===null||change===0)return 'flat';
+        if(isPos)return change<0?'up':'down';
+        return change>0?'up':'down';
+      })();
+      html+=`<tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <strong>${esc(n.keyword)}</strong>
+            ${badge}
+          </div>
+          <div class="dash-url">${esc((n.url||'').replace(/^https?:\/\//,''))}</div>
+        </td>
+        <td class="num">${fmtV(latest)}</td>
+        <td class="num delta ${chClass}">${fmtCh(change)}</td>
+        <td>${spark}</td>
+      </tr>`;
+    });
+  }
+  html+='</tbody>';
+  tbl.innerHTML=html;
+}
+
+function dashSetCmp(slot,label){
+  if(slot==='A')dashCmpA=label;
+  else dashCmpB=label;
+  renderDashboard();
+}
+
+function periodReplace(label){
+  // Open GSC modal pre-filled to replace this label
+  openGscMo();
+  toast(`Upload new CSV/Sheet, then label it "${label}" to replace.`);
+}
+
+function periodDelete(label){
+  if(!confirm(`Delete period "${label}" and all its history entries from nodes?`))return;
+  const p=P();if(!p)return;
+  // Remove from periods
+  p.periods=(p.periods||[]).filter(pr=>pr.label!==label);
+  // Remove history entries with this label
+  p.nodes.forEach(n=>{
+    if(n.history)n.history=n.history.filter(h=>h.label!==label);
+  });
+  // Reset compare selectors if needed
+  if(dashCmpA===label)dashCmpA=null;
+  if(dashCmpB===label)dashCmpB=null;
+  snapshotState();save();renderDashboard();
+  toast(`Period "${label}" deleted.`);
+}
+
+function dashCopyTrends(){
+  const ns=N();if(!ns.length){toast('No data!',1);return;}
+  const metric=(document.getElementById('trendMetric')||{}).value||'position';
+  const lines=['Keyword\tURL\tFunnel\tLatest '+metric+'\tPrevious\tChange'];
+  ns.forEach(n=>{
+    const h=n.history||[];
+    const latest=h.length?h[h.length-1][metric]:'';
+    const prev=h.length>1?h[h.length-2][metric]:'';
+    const change=(latest!==''&&prev!=='')?(latest-prev).toFixed(2):'';
+    lines.push([n.keyword,n.url||'',n.funnel.toUpperCase(),latest,prev,change].join('\t'));
+  });
+  copyToClipboard(lines.join('\n'),()=>toast('Trends copied as TSV!'));
+}
+
 // === STATS ===
 function renderStats(){
   const ns=N();
@@ -1494,11 +2017,19 @@ function renderStats(){
 function setV(v){
   curView=v;
   document.querySelectorAll('.vt button').forEach(b=>b.classList.remove('active'));
-  document.querySelector(`.vt button:${v==='graph'?'first':'last'}-child`).classList.add('active');
+  // Find button by index
+  const btns=document.querySelectorAll('.vt button');
+  const idx={graph:0,table:1,dashboard:2}[v];
+  if(btns[idx])btns[idx].classList.add('active');
   document.getElementById('gc').style.display=v==='graph'?'block':'none';
   document.getElementById('tv').style.display=v==='table'?'block':'none';
   document.getElementById('tv').classList.toggle('active',v==='table');
-  if(v==='graph')renderGraph();else renderTable();
+  document.getElementById('dv').style.display=v==='dashboard'?'block':'none';
+  // Hide stats bar in dashboard view (dashboard has its own stats)
+  document.querySelector('.sb').style.display=v==='dashboard'?'none':'flex';
+  if(v==='graph')renderGraph();
+  else if(v==='table')renderTable();
+  else if(v==='dashboard')renderDashboard();
 }
 
 // === EXPORT CSV (current project) ===
@@ -2131,16 +2662,29 @@ function gscDoImport(){
   if(!gscSelected.size){toast('Select rows first!',1);return;}
   const targetVal=document.getElementById('gscTarget').value;
   const defaultFunnel=document.getElementById('gscDefaultFunnel').value;
+
+  // Ask for period label
+  const defLabel=new Date().toLocaleDateString('en-GB',{month:'short',year:'numeric'});
+  const periodLabel=prompt('Label for this period (e.g. "April 2026", "Q1", "Before Update"):',defLabel);
+  if(periodLabel===null)return; // cancelled
+  const label=(periodLabel||defLabel).trim();
+
   let p;
   if(targetVal==='__new__'){
     const name=gv('gscNewName').trim()||'GSC Import '+new Date().toLocaleDateString();
-    p={id:Date.now()+'',name,nodes:[],links:[]};
+    p={id:Date.now()+'',name,nodes:[],links:[],periods:[]};
     projects.push(p);
     activeProj=p.id;
   }else{
     p=projects.find(x=>x.id===targetVal);
     if(!p){toast('Target project not found!',1);return;}
     activeProj=p.id;
+    if(!p.periods)p.periods=[];
+  }
+  // Check if label already exists in periods → ask replace
+  let existingPeriodIdx=p.periods.findIndex(pr=>pr.label===label);
+  if(existingPeriodIdx>=0){
+    if(!confirm(`Period "${label}" already exists. Replace its data?`))return;
   }
   // Build URL → existing node map
   const byUrl={};
@@ -2149,30 +2693,38 @@ function gscDoImport(){
   let updated=0,created=0;
   const today=new Date().toISOString().split('T')[0];
 
+  // Add to periods registry (or update existing)
+  if(existingPeriodIdx>=0){
+    p.periods[existingPeriodIdx]={label,date:today,urlCount:gscSelected.size};
+  }else{
+    p.periods.push({label,date:today,urlCount:gscSelected.size});
+  }
+
+  // Process each selected URL
   gscRows.forEach(r=>{
     if(!gscSelected.has(r.url))return;
-    const existing=byUrl[r.url.trim()];
     const histEntry={
-      date:r.date||today,
+      label,
+      date:today,
       position:r.position,
       impressions:r.impressions,
       clicks:r.clicks,
       ctr:r.ctr
     };
+    const existing=byUrl[r.url.trim()];
     if(existing){
-      // Update existing: refresh latest values + push history
+      // Update existing: refresh latest values + push/replace history entry by label
       existing.position=r.position;
-      existing.volume=r.impressions; // use as proxy
+      existing.impressions=r.impressions;
       existing.clicks=r.clicks;
       existing.ctr=r.ctr;
       if(!existing.history)existing.history=[];
-      // Avoid duplicate same-date entries
-      const last=existing.history[existing.history.length-1];
-      if(!last||last.date!==histEntry.date){
-        existing.history.push(histEntry);
-        // Cap at 24 entries
-        if(existing.history.length>24)existing.history=existing.history.slice(-24);
-      }
+      // Replace if same label, else append
+      const idx=existing.history.findIndex(h=>h.label===label);
+      if(idx>=0)existing.history[idx]=histEntry;
+      else existing.history.push(histEntry);
+      // Cap at 24 entries
+      if(existing.history.length>24)existing.history=existing.history.slice(-24);
       existing.isLost=false;
       updated++;
     }else{
@@ -2183,9 +2735,10 @@ function gscDoImport(){
         url:r.url,
         funnel:defaultFunnel,
         pageType:defaultFunnel==='bofu'?'landing-page':defaultFunnel==='mofu'?'consideration':'informational',
-        volume:r.impressions,
+        volume:0,
         kd:0,
         position:r.position,
+        impressions:r.impressions,
         clicks:r.clicks,
         ctr:r.ctr,
         status:'published',
@@ -2200,7 +2753,7 @@ function gscDoImport(){
   });
 
   snapshotState();save();renderAll();closeGscMo();
-  toast(`Imported! ${created} new, ${updated} updated.`);
+  toast(`Period "${label}" imported! ${created} new, ${updated} updated.`);
 }
 
 // === COMPARISON / TRENDS ===
