@@ -1895,81 +1895,91 @@ function renderDashboard(){
 }
 
 function renderDashTrend(){
-  const tbl = document.getElementById('dashTrendTbl');
-  if (!tbl) return;
+  const tbl=document.getElementById('dashTrendTbl');
+  if(!tbl)return;
   
-  const metricRaw = (document.getElementById('trendMetric')||{}).value || 'position';
-  const metric = metricRaw.toLowerCase();
+  // 1. Ambil metrik dari dropdown (Position, Clicks, dll)
+  const metric=(document.getElementById('trendMetric')||{}).value||'position';
+  const ns=N();
   const isPosMetric = metric === 'position';
-  const ns = N();
 
   const rows = ns.map(n => {
     const h = n.history || [];
     let valA = null, valB = null;
 
-    if (dashCmpA && dashCmpB) {
+    // 2. Ambil data spesifik berdasarkan Period A dan B yang dipilih di dropdown Compare
+    if(dashCmpA && dashCmpB) {
         const entryA = h.find(e => e.label === dashCmpA);
         const entryB = h.find(e => e.label === dashCmpB);
         valA = entryA ? entryA[metric] : null;
         valB = entryB ? entryB[metric] : null;
     } else {
-        valB = h.length ? h[h.length - 1][metric] : (n[metric] || 0);
-        valA = h.length > 1 ? h[h.length - 2][metric] : null;
+        // Fallback jika periode belum diset
+        valB = h.length ? h[h.length-1][metric] : (n[metric] || 0);
+        valA = h.length > 1 ? h[h.length-2][metric] : null;
     }
 
-    const change = (valA !== null && valB !== null) ? valB - valA : null;
-    return { n, h, valA, valB, change };
+    // --- Start of New Logic for Inverting Position Conceptual Slope ---
+    let conceptualValA = valA;
+    let conceptualValB = valB;
+    let conceptuallyInvertedHistory = h.map(x => x[metric]);
+
+    if(isPosMetric){
+      // Invert position conceptual slope so Up = better, Down = worse
+      const maxVal = Math.max(101, ...conceptuallyInvertedHistory.filter(v => v !== null));
+      conceptuallyInvertedHistory = conceptuallyInvertedHistory.map(v => v !== null ? (maxVal - v) : null);
+      conceptualValA = valA !== null ? (maxVal - valA) : null;
+      conceptualValB = valB !== null ? (maxVal - valB) : null;
+    }
+    // --- End of New Logic ---
+
+    // 3. Gunakan conceptual values untuk change dan sparkline
+    const change = (conceptualValA !== null && conceptualValB !== null) ? conceptualValB - conceptualValA : null;
+    return { n, h, valA, valB, change, conceptuallyInvertedHistory };
   });
 
-  // Sorting: Perubahan terbaik selalu di urutan teratas
-  rows.sort((a, b) => {
-    if (a.change === null && b.change === null) return 0;
-    if (a.change === null) return 1;
-    if (b.change === null) return -1;
-    return isPosMetric ? a.change - b.change : b.change - a.change;
+  // Sorting: Berdasarkan perubahan terbaik
+  rows.sort((a,b) => {
+    if(a.change === null) return 1;
+    if(b.change === null) return -1;
+    // Lower position metric = conceptual increase, higher non-pos metric = conceptual increase.
+    // Conceptual increase is now always change > 0, so b.change - a.change is correct for sorting by improvement.
+    return b.change - a.change;
   });
 
   const labelA = dashCmpA || 'Period A';
   const labelB = dashCmpB || 'Period B';
 
-  let html = `<thead><tr>
-    <th style="text-align:left;">Keyword</th>
-    <th class="num" style="text-align:right; color:var(--td); font-size:9px;">${esc(labelA)}</th>
-    <th class="num" style="text-align:right; color:var(--t); font-size:9px;">${esc(labelB)}</th>
-    <th class="num" style="text-align:right;">Δ Change</th>
-    <th style="text-align:center;">Trend</th>
+  let html=`<thead><tr>
+    <th>Keyword</th>
+    <th class="num" style="color:var(--td); font-size:9px;">${esc(labelA)}</th>
+    <th class="num" style="color:var(--t); font-size:9px;">${esc(labelB)}</th>
+    <th class="num">Δ Change</th>
+    <th>Trend</th>
   </tr></thead><tbody>`;
 
-  if (!rows.length) {
-    html += '<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--tf);">No data.</td></tr>';
+  if(!rows.length){
+    html+='<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--tf);">No data.</td></tr>';
   } else {
-    rows.slice(0, 30).forEach(({ n, h, valA, valB, change }) => {
-      const sparkData = h.map(x => x[metric]).filter(v => v != null);
+    rows.slice(0, 30).forEach(({n, h, valA, valB, change, conceptuallyInvertedHistory}) => {
+      // 4. Gunakan inverted history untuk sparkline dan inverted=false
+      const sparkData = conceptuallyInvertedHistory.filter(v => v != null);
+      const spark = sparkData.length > 1 ? renderSparkline(sparkData, false) : '<span style="color:var(--tf);font-size:9px;">—</span>';
       
       const fmtV = (v) => {
-        if (v === null || v === undefined) return '--';
-        if (metric === 'ctr') return Number(v).toFixed(2) + '%';
-        if (metric === 'position') return Number(v).toFixed(1);
+        if(v === null || v === undefined) return '--';
+        if(metric === 'ctr') return Number(v).toFixed(2) + '%';
+        if(metric === 'position') return Number(v).toFixed(1);
         return Math.round(v).toLocaleString();
       };
 
-      let chClass = 'flat';
-      let sign = change > 0 ? '+' : '';
-      let isImproving = false;
+      const chClass=(()=>{
+        if(change===null||change===0)return 'flat';
+        // Now change > 0 always means conceptual up (improved)
+        return change > 0 ? 'up' : 'down';
+      })();
       
-      if (change !== null && change !== 0) {
-        if (isPosMetric) {
-          chClass = change < 0 ? 'up' : 'down';
-          isImproving = change < 0; // Posisi turun angka = hijau
-        } else {
-          chClass = change > 0 ? 'up' : 'down';
-          isImproving = change > 0; // Klik/Impresi naik angka = hijau
-        }
-      }
-
-      // Paksa warna sparkline agar sinkron 100% dengan teks Delta Change
-      const sparkColor = (change === null || change === 0) ? '#5a6478' : (isImproving ? '#34d399' : '#ef4444');
-      const spark = sparkData.length > 1 ? renderSparkline(sparkData, isPosMetric, sparkColor) : '<span style="color:var(--tf);font-size:9px;">—</span>';
+      let sign = change > 0 ? '+' : '';
 
       html += `<tr>
         <td>
@@ -1979,10 +1989,10 @@ function renderDashTrend(){
           </div>
           <div class="dash-url" style="font-size:9px;">${esc((n.url||'').replace(/^https?:\/\//,''))}</div>
         </td>
-        <td class="num" style="text-align:right; color:var(--td); opacity:0.8;">${fmtV(valA)}</td>
-        <td class="num" style="text-align:right; font-weight:600;">${fmtV(valB)}</td>
-        <td class="num delta ${chClass}" style="text-align:right;">${sign}${change !== null ? (isPosMetric ? change.toFixed(1) : Math.round(change)) : '--'}</td>
-        <td style="text-align:center; vertical-align:middle;">${spark}</td>
+        <td class="num" style="color:var(--td); opacity:0.8;">${fmtV(valA)}</td>
+        <td class="num" style="font-weight:600;">${fmtV(valB)}</td>
+        <td class="num delta ${chClass}">${sign}${change ? (isPosMetric ? Math.abs(change).toFixed(1) : Math.abs(change)) : '--'}</td>
+        <td>${spark}</td>
       </tr>`;
     });
   }
