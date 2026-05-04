@@ -65,41 +65,6 @@
 body{background:var(--bg);color:var(--t);font-family:var(--f);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
 ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px;}
 button{font-family:var(--f);}
-
-/* === CONTEXT MENU === */
-.ctx-menu {
-  position: fixed;
-  background: var(--sf);
-  border: 1px solid var(--bd);
-  border-radius: var(--rs);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  padding: 4px 0;
-  min-width: 160px;
-  z-index: 9999;
-  font-size: 12px;
-  font-family: var(--f);
-  color: var(--tx);
-}
-.ctx-menu div {
-  padding: 8px 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: background 0.15s;
-}
-.ctx-menu div:hover {
-  background: var(--sf2);
-}
-.ctx-menu .del { color: #ef4444; }
-.ctx-menu .del:hover { background: #fef2f2; }
-.ctx-divider {
-  height: 1px !important;
-  background: var(--bd) !important;
-  margin: 4px 0 !important;
-  padding: 0 !important;
-  cursor: default !important;
-}
-  
 /* === HEADER === */
 .hdr{padding:12px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:var(--s1);flex-shrink:0;}
 .hdr h1{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;}
@@ -978,21 +943,7 @@ button{font-family:var(--f);}
 </div>
 
 <div class="toast" id="toast"></div>
-// === ctxmenu ===
-<div id="ctxMenu" class="ctx-menu" style="display: none;">
-  <div onclick="ctxCreateBrief()" style="font-weight:600; color:var(--bl);">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:6px;vertical-align:-2px;">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-      <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-    </svg>Create Brief
-  </div>
-  <div class="ctx-divider"></div>
-  <div onclick="ctxEdit()">Edit Node...</div>
-  <div onclick="ctxAddChild()">Add Child Node</div>
-  <div onclick="ctxAddLink()">Add Internal Link</div>
-  <div class="del" onclick="ctxDel()">Delete Node</div>
-</div>
-  
+
 <script>
 // === STATE ===
 let projects=[]; // [{id,name,nodes:[],links:[]}]
@@ -1281,90 +1232,6 @@ function quickDel(id){
 
 function tgl(btn){btn.classList.toggle('open');const c=btn.closest('.tn').querySelector('.tc');if(c)c.classList.toggle('open');}
 
-// === CONTEXT MENU LOGIC ===
-let ctxNode = null;
-
-// Memunculkan menu saat klik kanan
-function showCtx(id, e) {
-  e.preventDefault();
-  ctxNode = id;
-  const menu = document.getElementById('ctxMenu');
-  if(!menu) return;
-  menu.style.display = 'block';
-  menu.style.left = e.clientX + 'px';
-  menu.style.top = e.clientY + 'px';
-}
-
-// Menutup menu
-function closeCtx() {
-  const menu = document.getElementById('ctxMenu');
-  if(menu) menu.style.display = 'none';
-}
-
-// Otomatis menutup menu kalau user klik sembarang tempat
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('.ctx-menu')) closeCtx();
-});
-
-// === AKSI CONTEXT MENU ===
-
-function ctxCreateBrief() {
-  if(!ctxNode) return;
-  const pData = P(); if(!pData) return;
-  const n = pData.nodes.find(x => x.id === ctxNode);
-  if(!n) return;
-
-  const baseUrl = 'https://teguh-g.github.io/seo-brief-generator/'; 
-  const params = new URLSearchParams();
-  
-  params.append('kw', n.keyword);
-  if(n.funnel) params.append('funnel', n.funnel);
-  if(n.pageType) params.append('type', ptLabel(n.pageType));
-
-  if(n.parentId) {
-    const parentNode = pData.nodes.find(x => x.id === n.parentId);
-    if(parentNode) params.append('cluster', parentNode.keyword);
-  }
-
-  const outgoingLink = pData.links.find(l => l.from === n.id);
-  if(outgoingLink) {
-    const targetNode = pData.nodes.find(x => x.id === outgoingLink.to);
-    if(targetNode) params.append('anchor', targetNode.keyword);
-  }
-
-  window.open(`${baseUrl}?${params.toString()}`, '_blank');
-  closeCtx();
-}
-
-// (Fungsi stub/cadangan jika fungsi asli belum ada agar tidak error)
-if(typeof ctxEdit !== 'function') {
-  window.ctxEdit = function() { openEd(ctxNode); closeCtx(); };
-}
-if(typeof ctxAddChild !== 'function') {
-  window.ctxAddChild = function() { 
-    graphSelected = new Set([ctxNode]);
-    document.getElementById('addNodeBtn').click(); // Memicu modal add node
-    closeCtx(); 
-  };
-}
-if(typeof ctxDel !== 'function') {
-  window.ctxDel = function() { 
-    if(confirm('Delete this node?')) {
-      const p = P();
-      p.nodes = p.nodes.filter(x => x.id !== ctxNode);
-      p.links = p.links.filter(x => x.from !== ctxNode && x.to !== ctxNode);
-      save(); renderGraph(); if(curView==='table') renderTable();
-    }
-    closeCtx(); 
-  };
-}
-if(typeof ctxAddLink !== 'function') {
-  window.ctxAddLink = function() {
-    toast('Select another node using SHIFT+CLICK to add link.', 2);
-    closeCtx();
-  };
-}
-  
 // === GRAPH ===
 function renderGraph(){
   const gc=document.getElementById('gc');
