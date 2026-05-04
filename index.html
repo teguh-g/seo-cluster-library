@@ -1685,18 +1685,28 @@ function renderDashboard(){
   }
 
   // Top movers calculation
-  function calcMovers(){
+ function calcMovers(){
     if(!dashCmpA||!dashCmpB)return {ups:[],downs:[]};
-    const list=[];
+    const ups=[];
+    const downs=[];
     ns.forEach(n=>{
       const a=(n.history||[]).find(e=>e.label===dashCmpA);
       const b=(n.history||[]).find(e=>e.label===dashCmpB);
       if(!a||!b)return;
-      const posDiff=a.position-b.position; // lower position is better, so positive diff = improvement
-      list.push({node:n,a,b,posDiff,imprDiff:b.impressions-a.impressions,clicksDiff:b.clicks-a.clicks});
+      
+      const posDiff=a.position-b.position; 
+      
+      if(posDiff > 0) {
+          ups.push({node:n,a,b,posDiff,imprDiff:b.impressions-a.impressions,clicksDiff:b.clicks-a.clicks});
+      } else if(posDiff < 0) {
+          downs.push({node:n,a,b,posDiff,imprDiff:b.impressions-a.impressions,clicksDiff:b.clicks-a.clicks});
+      }
     });
-    list.sort((x,y)=>y.posDiff-x.posDiff);
-    return {ups:list.slice(0,10),downs:list.slice(-10).reverse()};
+    
+    ups.sort((x,y)=>y.posDiff-x.posDiff);
+    downs.sort((x,y)=>x.posDiff-y.posDiff); 
+    
+    return {ups:ups.slice(0,10),downs:downs.slice(0,10)};
   }
   const movers=calcMovers();
 
@@ -1893,10 +1903,22 @@ function renderDashTrend(){
 
   const rows=ns.map(n=>{
     const h=n.history||[];
-    const latest=h.length?h[h.length-1][metric]:n[metric==='impressions'?'impressions':metric]||0;
-    const prev=h.length>1?h[h.length-2][metric]:null;
-    const change=prev!==null?latest-prev:null;
-    return {n,h,latest,prev,change};
+    let valA = null, valB = null;
+
+    // Ambil data spesifik berdasarkan dropdown compare A dan B
+    if(dashCmpA && dashCmpB) {
+        const entryA = h.find(e=>e.label===dashCmpA);
+        const entryB = h.find(e=>e.label===dashCmpB);
+        valA = entryA ? entryA[metric] : null;
+        valB = entryB ? entryB[metric] : null;
+    } else {
+        // Fallback jika baru 1 periode
+        valB = h.length?h[h.length-1][metric]:n[metric==='impressions'?'impressions':metric]||0;
+        valA = h.length>1?h[h.length-2][metric]:null;
+    }
+
+    const change = (valA !== null && valB !== null) ? valB - valA : null;
+    return {n,h,valA,valB,change};
   });
 
   // Sort: biggest improvement first
@@ -1908,17 +1930,22 @@ function renderDashTrend(){
     return b.change-a.change;
   });
 
+  // Header nama bulan dinamis
+  const labelA = dashCmpA || 'Previous';
+  const labelB = dashCmpB || 'Latest';
+
   let html=`<thead><tr>
     <th>Keyword</th>
-    <th class="num">Latest</th>
-    <th class="num">Δ</th>
+    <th class="num" style="color:var(--td);">${esc(labelA)}</th>
+    <th class="num" style="color:var(--t);">${esc(labelB)}</th>
+    <th class="num">Δ Change</th>
     <th>Trend</th>
   </tr></thead><tbody>`;
 
   if(!rows.length){
-    html+='<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--tf);">No data.</td></tr>';
+    html+='<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--tf);">No data.</td></tr>';
   }else{
-    rows.slice(0,30).forEach(({n,h,latest,prev,change})=>{
+    rows.slice(0,30).forEach(({n,h,valA,valB,change})=>{
       const sparkData=h.map(x=>x[metric]).filter(v=>v!=null);
       const spark=sparkData.length>1?renderSparkline(sparkData,isPos):'<span style="color:var(--tf);font-size:9px;">—</span>';
       let badge='';
@@ -1949,7 +1976,8 @@ function renderDashTrend(){
           </div>
           <div class="dash-url">${esc((n.url||'').replace(/^https?:\/\//,''))}</div>
         </td>
-        <td class="num">${fmtV(latest)}</td>
+        <td class="num" style="color:var(--td);">${fmtV(valA)}</td>
+        <td class="num" style="font-weight:600;">${fmtV(valB)}</td>
         <td class="num delta ${chClass}">${fmtCh(change)}</td>
         <td>${spark}</td>
       </tr>`;
@@ -1958,7 +1986,6 @@ function renderDashTrend(){
   html+='</tbody>';
   tbl.innerHTML=html;
 }
-
 function dashSetCmp(slot,label){
   if(slot==='A')dashCmpA=label;
   else dashCmpB=label;
@@ -1990,14 +2017,29 @@ function periodDelete(label){
 function dashCopyTrends(){
   const ns=N();if(!ns.length){toast('No data!',1);return;}
   const metric=(document.getElementById('trendMetric')||{}).value||'position';
-  const lines=['Keyword\tURL\tFunnel\tLatest '+metric+'\tPrevious\tChange'];
+  const labelA = dashCmpA || 'Previous';
+  const labelB = dashCmpB || 'Latest';
+  
+  const lines=[`Keyword\tURL\tFunnel\t${labelA}\t${labelB}\tChange`];
+  
   ns.forEach(n=>{
     const h=n.history||[];
-    const latest=h.length?h[h.length-1][metric]:'';
-    const prev=h.length>1?h[h.length-2][metric]:'';
-    const change=(latest!==''&&prev!=='')?(latest-prev).toFixed(2):'';
-    lines.push([n.keyword,n.url||'',n.funnel.toUpperCase(),latest,prev,change].join('\t'));
+    let valA = '', valB = '';
+    
+    if(dashCmpA && dashCmpB) {
+        const entryA = h.find(e=>e.label===dashCmpA);
+        const entryB = h.find(e=>e.label===dashCmpB);
+        valA = entryA && entryA[metric] != null ? entryA[metric] : '';
+        valB = entryB && entryB[metric] != null ? entryB[metric] : '';
+    } else {
+        valB = h.length ? h[h.length-1][metric] : '';
+        valA = h.length>1 ? h[h.length-2][metric] : '';
+    }
+    
+    const change=(valA!==''&&valB!=='')?(valB-valA).toFixed(2):'';
+    lines.push([n.keyword,n.url||'',n.funnel.toUpperCase(),valA,valB,change].join('\t'));
   });
+  
   copyToClipboard(lines.join('\n'),()=>toast('Trends copied as TSV!'));
 }
 
