@@ -1165,9 +1165,20 @@ function ctxDup() {
 window.linkSourceNode = null;
 function ctxAddLink() {
   if(!ctxNodeId) return;
-  window.linkSourceNode = ctxNodeId; 
-  toast('Tahan tombol SHIFT + KLIK di kotak tujuan.', 2);
+  window.linkSourceNode = ctxNodeId;
+  document.querySelectorAll('.gn-rect').forEach(r => {
+    r.style.filter = r.dataset.id === ctxNodeId ? 'drop-shadow(0 0 8px #a78bfa)' : 'opacity(0.4)';
+  });
+  document.getElementById('gc').style.cursor = 'crosshair';
+  toast('Klik node tujuan untuk membuat link. Tekan Esc untuk batal.', 2);
   closeCtx();
+}
+
+function cancelLinkMode() {
+  window.linkSourceNode = null;
+  document.querySelectorAll('.gn-rect').forEach(r => r.style.filter = '');
+  const gc = document.getElementById('gc');
+  if(gc) gc.style.cursor = '';
 }
 
 function ctxCreateBrief() {
@@ -1459,7 +1470,22 @@ function renderGraph(){
       graphDragOff={x:e.clientX-p.x,y:e.clientY-p.y};
       e.preventDefault();
     });
-    g.addEventListener('click',(e)=>{ if(e.shiftKey){e.stopPropagation();return;} });
+    g.addEventListener('click',(e)=>{
+  if(e.shiftKey){ e.stopPropagation(); return; }
+  if(window.linkSourceNode && window.linkSourceNode !== n.id) {
+    e.stopPropagation();
+    const p = P(); if(!p) return;
+    if(p.links.find(l => l.from === window.linkSourceNode && l.to === n.id)) {
+      toast('Link sudah ada!', 1);
+    } else {
+      p.links.push({ from: window.linkSourceNode, to: n.id });
+      snapshotState(); save(); renderAll();
+      toast('Internal link ditambahkan!');
+    }
+    cancelLinkMode();
+    return;
+  }
+});
     g.addEventListener('dblclick',()=>openEd(n.id));
     g.addEventListener('contextmenu',(e)=>showCtx(n.id,e));
     svg.appendChild(g);
@@ -1533,6 +1559,7 @@ function renderTable(){
     {key:'pageType',lbl:'Type'},
     {key:'keyword',lbl:'Keyword'},
     {key:'url',lbl:'URL'},
+    {key:'docUrl',lbl:'G-Doc Brief'},
     {key:'volume',lbl:'Search Vol'},
     {key:'kd',lbl:'KD'},
     {key:'impressions',lbl:'Impr'},
@@ -1555,6 +1582,7 @@ function renderTable(){
       <td style="font-size:10px;">${ptLabel(n.pageType)}</td>
       <td><strong>${esc(n.keyword)}</strong></td>
       <td class="mono url-c">${n.url?esc(n.url):'--'}</td>
+      <td class="mono url-c">${n.docUrl?`<a href="${esc(n.docUrl)}" target="_blank" style="color:var(--bofu);text-decoration:none;font-size:10px;" title="${esc(n.docUrl)}">📄 Brief</a>`:'--'}</td>
       <td class="mono">${n.volume||'--'}</td>
       <td class="mono">${n.kd||'--'}</td>
       <td class="mono">${n.impressions?n.impressions.toLocaleString():'--'}</td>
@@ -1610,6 +1638,7 @@ function buildRowData(n,ns){
     pageType:ptLabel(n.pageType),
     keyword:n.keyword,
     url:n.url||'',
+    docUrl:n.docUrl||'',
     volume:n.volume||'',
     kd:n.kd||'',
     impressions:n.impressions||'',
@@ -3472,6 +3501,7 @@ document.addEventListener('keydown',(e)=>{
   if(e.key==='Escape'){
     document.querySelectorAll('.mo.active').forEach(m=>m.classList.remove('active'));
     document.querySelector('.shortcuts-help.show')?.classList.remove('show');
+    if(window.linkSourceNode){ cancelLinkMode(); toast('Link mode dibatalkan.'); return; }
     if(graphSelected.size){clearGraphSel();}
     if(searchQ){clearSearch();}
     return;
