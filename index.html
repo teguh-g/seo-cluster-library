@@ -25,6 +25,18 @@
   --tofu:#059669;--tofuBg:rgba(5,150,105,.08);--tofuBd:rgba(5,150,105,.3);
   --danger:#dc2626;--ok:#059669;
 }
+  /* Pastikan header dan isi tabel dashboard sejajar ke kanan */
+.dash-trend-tbl th.num, 
+.dash-trend-tbl td.num {
+  text-align: right !important;
+  padding-right: 15px !important;
+}
+
+.dash-trend-tbl th {
+  font-size: 9px;
+  text-transform: uppercase;
+  color: var(--td);
+}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--t);font-family:var(--f);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
 ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px;}
@@ -1894,112 +1906,85 @@ function renderDashboard(){
   renderDashTrend();
 }
 
-function renderDashTrend(){
-  const tbl=document.getElementById('dashTrendTbl');
-  if(!tbl)return;
-  
-  // 1. Ambil metrik dari dropdown (Position, Clicks, dll)
-  const metric=(document.getElementById('trendMetric')||{}).value||'position';
-  const ns=N();
-  const isPosMetric = metric === 'position';
+function renderDashTrend() {
+  const tbl = document.getElementById('dashTrendTbl');
+  if (!tbl) return;
+  const metric = (document.getElementById('trendMetric') || {}).value || 'position';
+  const ns = N();
+  const isPos = metric === 'position';
 
   const rows = ns.map(n => {
     const h = n.history || [];
     let valA = null, valB = null;
 
-    // 2. Ambil data spesifik berdasarkan Period A dan B yang dipilih di dropdown Compare
-    if(dashCmpA && dashCmpB) {
-        const entryA = h.find(e => e.label === dashCmpA);
-        const entryB = h.find(e => e.label === dashCmpB);
-        valA = entryA ? entryA[metric] : null;
-        valB = entryB ? entryB[metric] : null;
+    if (dashCmpA && dashCmpB) {
+      const entryA = h.find(e => e.label === dashCmpA);
+      const entryB = h.find(e => e.label === dashCmpB);
+      valA = entryA ? entryA[metric] : null;
+      valB = entryB ? entryB[metric] : null;
     } else {
-        // Fallback jika periode belum diset
-        valB = h.length ? h[h.length-1][metric] : (n[metric] || 0);
-        valA = h.length > 1 ? h[h.length-2][metric] : null;
+      valB = h.length ? h[h.length - 1][metric] : (n[metric] || 0);
+      valA = h.length > 1 ? h[h.length - 2][metric] : null;
     }
 
-    // --- Start of New Logic for Inverting Position Conceptual Slope ---
-    let conceptualValA = valA;
-    let conceptualValB = valB;
-    let conceptuallyInvertedHistory = h.map(x => x[metric]);
-
-    if(isPosMetric){
-      // Invert position conceptual slope so Up = better, Down = worse
-      const maxVal = Math.max(101, ...conceptuallyInvertedHistory.filter(v => v !== null));
-      conceptuallyInvertedHistory = conceptuallyInvertedHistory.map(v => v !== null ? (maxVal - v) : null);
-      conceptualValA = valA !== null ? (maxVal - valA) : null;
-      conceptualValB = valB !== null ? (maxVal - valB) : null;
-    }
-    // --- End of New Logic ---
-
-    // 3. Gunakan conceptual values untuk change dan sparkline
-    const change = (conceptualValA !== null && conceptualValB !== null) ? conceptualValB - conceptualValA : null;
-    return { n, h, valA, valB, change, conceptuallyInvertedHistory };
+    const change = (valA !== null && valB !== null) ? valB - valA : null;
+    return { n, h, valA, valB, change };
   });
 
-  // Sorting: Berdasarkan perubahan terbaik
-  rows.sort((a,b) => {
-    if(a.change === null) return 1;
-    if(b.change === null) return -1;
-    // Lower position metric = conceptual increase, higher non-pos metric = conceptual increase.
-    // Conceptual increase is now always change > 0, so b.change - a.change is correct for sorting by improvement.
-    return b.change - a.change;
+  rows.sort((a, b) => {
+    if (a.change === null) return 1;
+    if (b.change === null) return -1;
+    return isPos ? a.change - b.change : b.change - a.change;
   });
 
   const labelA = dashCmpA || 'Period A';
   const labelB = dashCmpB || 'Period B';
 
-  let html=`<thead><tr>
-    <th>Keyword</th>
-    <th class="num" style="color:var(--td); font-size:9px;">${esc(labelA)}</th>
-    <th class="num" style="color:var(--t); font-size:9px;">${esc(labelB)}</th>
-    <th class="num">Δ Change</th>
-    <th>Trend</th>
+  let html = `<thead><tr>
+    <th style="text-align:left;">Keyword</th>
+    <th class="num" style="width:80px;">${esc(labelA)}</th>
+    <th class="num" style="width:80px;">${esc(labelB)}</th>
+    <th class="num" style="width:80px;">Δ Change</th>
+    <th style="text-align:center; width:100px;">Trend</th>
   </tr></thead><tbody>`;
 
-  if(!rows.length){
-    html+='<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--tf);">No data.</td></tr>';
-  } else {
-    rows.slice(0, 30).forEach(({n, h, valA, valB, change, conceptuallyInvertedHistory}) => {
-      // 4. Gunakan inverted history untuk sparkline dan inverted=false
-      const sparkData = conceptuallyInvertedHistory.filter(v => v != null);
-      const spark = sparkData.length > 1 ? renderSparkline(sparkData, false) : '<span style="color:var(--tf);font-size:9px;">—</span>';
-      
-      const fmtV = (v) => {
-        if(v === null || v === undefined) return '--';
-        if(metric === 'ctr') return Number(v).toFixed(2) + '%';
-        if(metric === 'position') return Number(v).toFixed(1);
-        return Math.round(v).toLocaleString();
-      };
+  rows.slice(0, 30).forEach(({ n, h, valA, valB, change }) => {
+    const sparkData = h.map(x => x[metric]).filter(v => v != null);
+    // Kita kirim isPos ke sparkline agar dia tahu kapan harus balik grafik
+    const spark = renderSparkline(sparkData, isPos);
 
-      const chClass=(()=>{
-        if(change===null||change===0)return 'flat';
-        // Now change > 0 always means conceptual up (improved)
-        return change > 0 ? 'up' : 'down';
-      })();
-      
-      let sign = change > 0 ? '+' : '';
+    const fmtV = (v) => {
+      if (v === null || v === undefined) return '--';
+      if (metric === 'ctr') return Number(v).toFixed(2) + '%';
+      if (metric === 'position') return Number(v).toFixed(1);
+      return Math.round(v).toLocaleString();
+    };
 
-      html += `<tr>
-        <td>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <strong>${esc(n.keyword)}</strong>
-            ${n.isNew ? '<span class="badge new">NEW</span>' : ''}
-          </div>
-          <div class="dash-url" style="font-size:9px;">${esc((n.url||'').replace(/^https?:\/\//,''))}</div>
-        </td>
-        <td class="num" style="color:var(--td); opacity:0.8;">${fmtV(valA)}</td>
-        <td class="num" style="font-weight:600;">${fmtV(valB)}</td>
-        <td class="num delta ${chClass}">${sign}${change ? (isPosMetric ? Math.abs(change).toFixed(1) : Math.abs(change)) : '--'}</td>
-        <td>${spark}</td>
-      </tr>`;
-    });
-  }
-  
+    let chClass = 'flat';
+    if (change !== null && change !== 0) {
+      chClass = isPos ? (change < 0 ? 'up' : 'down') : (change > 0 ? 'up' : 'down');
+    }
+    let sign = change > 0 ? '+' : '';
+
+    html += `<tr>
+      <td style="text-align:left;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <strong>${esc(n.keyword)}</strong>
+          ${n.isNew ? '<span class="badge new">NEW</span>' : ''}
+        </div>
+        <div class="dash-url" style="font-size:9px; color:var(--tf);">${esc((n.url || '').replace(/^https?:\/\//, ''))}</div>
+      </td>
+      <td class="num">${fmtV(valA)}</td>
+      <td class="num" style="font-weight:600; color:var(--t);">${fmtV(valB)}</td>
+      <td class="num delta ${chClass}">${sign}${isPos ? change?.toFixed(1) : (change?.toLocaleString() || '--')}</td>
+      <td style="text-align:center; padding-left:10px;">${spark}</td>
+    </tr>`;
+  });
+
   html += '</tbody>';
   tbl.innerHTML = html;
 }
+  
 function dashSetCmp(slot,label){
   if(slot==='A')dashCmpA=label;
   else dashCmpB=label;
@@ -2911,29 +2896,33 @@ function renderCmp(){
   document.getElementById('cmpTable').innerHTML=html;
 }
 
-function renderSparkline(data, inverted, forceColor) {
-  if (!data || data.length < 2) return '<span style="color:var(--tf);font-size:9px;">no data</span>';
+function renderSparkline(data, inverted) {
+  if (!data || data.length < 2) return '<span style="color:var(--tf);font-size:9px;">—</span>';
   const w = 80, h = 22;
   const max = Math.max(...data), min = Math.min(...data);
   const range = max - min || 1;
+  
   const points = data.map((v, i) => {
     const x = (i / (data.length - 1)) * w;
     let y;
     if (inverted) {
-      // Posisi: semakin kecil nilainya (rank 1), semakin tinggi titiknya di grafik
+      // Untuk Posisi: Angka kecil (misal 1) di atas (y=0), angka besar di bawah (y=h)
       y = ((v - min) / range) * h;
     } else {
+      // Untuk Metrik lain: Angka besar di atas (y=0), angka kecil di bawah (y=h)
       y = h - ((v - min) / range) * h;
     }
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(' ');
 
-  // Gunakan forceColor jika dilempar, jika tidak gunakan logika asli
   const last = data[data.length - 1], first = data[0];
+  // Logika warna: jika posisi, mengecil=bagus. Jika lain, membesar=bagus.
   const improving = inverted ? last < first : last > first;
-  const color = forceColor || (last === first ? '#5a6478' : (improving ? '#34d399' : '#ef4444'));
-  
-  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const color = last === first ? '#5a6478' : (improving ? '#34d399' : '#ef4444');
+
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
 }
 
 function cmpExport(){
