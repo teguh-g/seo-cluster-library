@@ -1949,9 +1949,10 @@ function renderDashTrend() {
   </tr></thead><tbody>`;
 
   rows.slice(0, 30).forEach(({ n, h, valA, valB, change }) => {
-    const sparkData = h.map(x => x[metric]).filter(v => v != null);
-    // Kita kirim isPos ke sparkline agar dia tahu kapan harus balik grafik
-    const spark = renderSparkline(sparkData, isPos);
+    
+    // PERBAIKAN: Memaksa grafik HANYA menggambar titik dari Period A ke Period B
+    const sparkData = [valA, valB].filter(v => v !== null && v !== undefined);
+    const spark = sparkData.length > 1 ? renderSparkline(sparkData, isPos) : '<span style="color:var(--tf);font-size:9px;">—</span>';
 
     const fmtV = (v) => {
       if (v === null || v === undefined) return '--';
@@ -1976,7 +1977,7 @@ function renderDashTrend() {
       </td>
       <td class="num">${fmtV(valA)}</td>
       <td class="num" style="font-weight:600; color:var(--t);">${fmtV(valB)}</td>
-      <td class="num delta ${chClass}">${sign}${isPos ? change?.toFixed(1) : (change?.toLocaleString() || '--')}</td>
+      <td class="num delta ${chClass}">${sign}${change ? (isPos ? change.toFixed(1) : Math.round(change).toLocaleString()) : '--'}</td>
       <td style="text-align:center; padding-left:10px;">${spark}</td>
     </tr>`;
   });
