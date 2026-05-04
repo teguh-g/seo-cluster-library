@@ -1817,13 +1817,13 @@ function renderDashboard(){
     </div>`;
   }
 
-  // Trend table with sparklines
+ // Trend table with sparklines
   if(ns.length){
     html+=`<div class="dash-section">
       <div class="dash-h">
         <h4>All Nodes Trend</h4>
         <div style="display:flex;gap:6px;align-items:center;">
-          <select id="trendMetric" onchange="renderDashboard()" style="background:var(--s2);border:1px solid var(--bd);border-radius:4px;color:var(--t);font-size:10px;padding:4px 7px;">
+          <select id="trendMetric" onchange="renderDashTrend()" style="background:var(--s2);border:1px solid var(--bd);border-radius:4px;color:var(--t);font-size:10px;padding:4px 7px;">
             <option value="position">Position</option>
             <option value="impressions">Impressions</option>
             <option value="clicks">Clicks</option>
@@ -1895,77 +1895,81 @@ function renderDashboard(){
 }
 
 function renderDashTrend(){
-  const tbl=document.getElementById('dashTrendTbl');
-  if(!tbl)return;
+  const tbl = document.getElementById('dashTrendTbl');
+  if (!tbl) return;
   
-  // 1. Ambil metrik dari dropdown (Position, Clicks, dll)
-  const metric=(document.getElementById('trendMetric')||{}).value||'position';
-  const ns=N();
+  const metricRaw = (document.getElementById('trendMetric')||{}).value || 'position';
+  const metric = metricRaw.toLowerCase();
   const isPosMetric = metric === 'position';
+  const ns = N();
 
   const rows = ns.map(n => {
     const h = n.history || [];
     let valA = null, valB = null;
 
-    // 2. Ambil data spesifik berdasarkan Period A dan B yang dipilih di dropdown Compare
-    if(dashCmpA && dashCmpB) {
+    if (dashCmpA && dashCmpB) {
         const entryA = h.find(e => e.label === dashCmpA);
         const entryB = h.find(e => e.label === dashCmpB);
         valA = entryA ? entryA[metric] : null;
         valB = entryB ? entryB[metric] : null;
     } else {
-        // Fallback jika periode belum diset
-        valB = h.length ? h[h.length-1][metric] : (n[metric] || 0);
-        valA = h.length > 1 ? h[h.length-2][metric] : null;
+        valB = h.length ? h[h.length - 1][metric] : (n[metric] || 0);
+        valA = h.length > 1 ? h[h.length - 2][metric] : null;
     }
 
     const change = (valA !== null && valB !== null) ? valB - valA : null;
     return { n, h, valA, valB, change };
   });
 
-  // Sorting: Berdasarkan perubahan terbaik
-  rows.sort((a,b) => {
-    if(a.change === null) return 1;
-    if(b.change === null) return -1;
+  // Sorting: Perubahan terbaik selalu di urutan teratas
+  rows.sort((a, b) => {
+    if (a.change === null && b.change === null) return 0;
+    if (a.change === null) return 1;
+    if (b.change === null) return -1;
     return isPosMetric ? a.change - b.change : b.change - a.change;
   });
 
   const labelA = dashCmpA || 'Period A';
   const labelB = dashCmpB || 'Period B';
 
-  let html=`<thead><tr>
-    <th>Keyword</th>
-    <th class="num" style="color:var(--td); font-size:9px;">${esc(labelA)}</th>
-    <th class="num" style="color:var(--t); font-size:9px;">${esc(labelB)}</th>
-    <th class="num">Δ Change</th>
-    <th>Trend</th>
+  let html = `<thead><tr>
+    <th style="text-align:left;">Keyword</th>
+    <th class="num" style="text-align:right; color:var(--td); font-size:9px;">${esc(labelA)}</th>
+    <th class="num" style="text-align:right; color:var(--t); font-size:9px;">${esc(labelB)}</th>
+    <th class="num" style="text-align:right;">Δ Change</th>
+    <th style="text-align:center;">Trend</th>
   </tr></thead><tbody>`;
 
-  if(!rows.length){
-    html+='<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--tf);">No data.</td></tr>';
+  if (!rows.length) {
+    html += '<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--tf);">No data.</td></tr>';
   } else {
-    rows.slice(0, 30).forEach(({n, h, valA, valB, change}) => {
+    rows.slice(0, 30).forEach(({ n, h, valA, valB, change }) => {
       const sparkData = h.map(x => x[metric]).filter(v => v != null);
-      const spark = sparkData.length > 1 ? renderSparkline(sparkData, isPosMetric) : '<span style="color:var(--tf);font-size:9px;">—</span>';
       
       const fmtV = (v) => {
-        if(v === null || v === undefined) return '--';
-        if(metric === 'ctr') return Number(v).toFixed(2) + '%';
-        if(metric === 'position') return Number(v).toFixed(1);
+        if (v === null || v === undefined) return '--';
+        if (metric === 'ctr') return Number(v).toFixed(2) + '%';
+        if (metric === 'position') return Number(v).toFixed(1);
         return Math.round(v).toLocaleString();
       };
 
-      // 3. LOGIKA TREND: Jika posisi turun (angka mengecil), dianggap UP (hijau)
       let chClass = 'flat';
       let sign = change > 0 ? '+' : '';
+      let isImproving = false;
       
       if (change !== null && change !== 0) {
         if (isPosMetric) {
-          chClass = change < 0 ? 'up' : 'down'; // Posisi -15.0 = Hijau
+          chClass = change < 0 ? 'up' : 'down';
+          isImproving = change < 0; // Posisi turun angka = hijau
         } else {
-          chClass = change > 0 ? 'up' : 'down'; // Klik +100 = Hijau
+          chClass = change > 0 ? 'up' : 'down';
+          isImproving = change > 0; // Klik/Impresi naik angka = hijau
         }
       }
+
+      // Paksa warna sparkline agar sinkron 100% dengan teks Delta Change
+      const sparkColor = (change === null || change === 0) ? '#5a6478' : (isImproving ? '#34d399' : '#ef4444');
+      const spark = sparkData.length > 1 ? renderSparkline(sparkData, isPosMetric, sparkColor) : '<span style="color:var(--tf);font-size:9px;">—</span>';
 
       html += `<tr>
         <td>
@@ -1975,10 +1979,10 @@ function renderDashTrend(){
           </div>
           <div class="dash-url" style="font-size:9px;">${esc((n.url||'').replace(/^https?:\/\//,''))}</div>
         </td>
-        <td class="num" style="color:var(--td); opacity:0.8;">${fmtV(valA)}</td>
-        <td class="num" style="font-weight:600;">${fmtV(valB)}</td>
-        <td class="num delta ${chClass}">${sign}${change ? (isPosMetric ? change.toFixed(1) : Math.round(change)) : '--'}</td>
-        <td>${spark}</td>
+        <td class="num" style="text-align:right; color:var(--td); opacity:0.8;">${fmtV(valA)}</td>
+        <td class="num" style="text-align:right; font-weight:600;">${fmtV(valB)}</td>
+        <td class="num delta ${chClass}" style="text-align:right;">${sign}${change !== null ? (isPosMetric ? change.toFixed(1) : Math.round(change)) : '--'}</td>
+        <td style="text-align:center; vertical-align:middle;">${spark}</td>
       </tr>`;
     });
   }
@@ -2897,26 +2901,28 @@ function renderCmp(){
   document.getElementById('cmpTable').innerHTML=html;
 }
 
-function renderSparkline(data,inverted){
-  if(!data||data.length<2)return '<span style="color:var(--tf);font-size:9px;">no data</span>';
-  const w=80,h=22;
-  const max=Math.max(...data),min=Math.min(...data);
-  const range=max-min||1;
-  const points=data.map((v,i)=>{
-    const x=(i/(data.length-1))*w;
+function renderSparkline(data, inverted, forceColor) {
+  if (!data || data.length < 2) return '<span style="color:var(--tf);font-size:9px;">no data</span>';
+  const w = 80, h = 22;
+  const max = Math.max(...data), min = Math.min(...data);
+  const range = max - min || 1;
+  const points = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * w;
     let y;
-    if(inverted){
-      // Position: lower = better, so flip
-      y=((v-min)/range)*h;
-    }else{
-      y=h-((v-min)/range)*h;
+    if (inverted) {
+      // Posisi: semakin kecil nilainya (rank 1), semakin tinggi titiknya di grafik
+      y = ((v - min) / range) * h;
+    } else {
+      y = h - ((v - min) / range) * h;
     }
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(' ');
-  // Color based on trend (last vs first)
-  const last=data[data.length-1],first=data[0];
-  const improving=inverted?last<first:last>first;
-  const color=last===first?'#5a6478':(improving?'#34d399':'#ef4444');
+
+  // Gunakan forceColor jika dilempar, jika tidak gunakan logika asli
+  const last = data[data.length - 1], first = data[0];
+  const improving = inverted ? last < first : last > first;
+  const color = forceColor || (last === first ? '#5a6478' : (improving ? '#34d399' : '#ef4444'));
+  
   return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
 
