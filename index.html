@@ -538,8 +538,9 @@ button{font-family:var(--f);}
     </h3>
     <div class="ig"><label>Funnel</label><select id="aF" onchange="onFC()"><option value="bofu">BOFU</option><option value="mofu">MOFU</option><option value="tofu">TOFU</option></select></div>
     <div class="ig"><label>Page Type</label><select id="aPT"></select></div>
-    <div class="ig"><label>Keyword</label><input type="text" id="aKW" placeholder="kursus bahasa inggris jakarta"></div>
-    <div class="ig"><label>URL</label><input type="text" id="aURL" placeholder="https://golden-course.com/..."></div>
+    <div class="ig"><label>Keyword</label><input type="text" id="eKW"></div>
+    <div class="ig"><label>URL</label><input type="text" id="eURL"></div>
+    <div class="ig"><label>G-Doc Brief Link</label><input type="text" id="eDoc" placeholder="https://docs.google.com/document/d/... "></div>
     <div class="ir3">
       <div class="ig"><label>Vol</label><input type="number" id="aVol" placeholder="1200"></div>
       <div class="ig"><label>KD</label><input type="number" id="aKD" placeholder="35"></div>
@@ -1073,10 +1074,11 @@ function openEd(id){
   const n=N().find(x=>x.id===id);if(!n)return;
   editId=id;
   sv('eF',n.funnel);
-  // Fill page types
   const s=document.getElementById('ePT');s.innerHTML='';
   PT_ALL.forEach(pt=>{s.innerHTML+=`<option value="${pt.v}" ${pt.v===n.pageType?'selected':''}>${pt.l}</option>`;});
-  sv('eKW',n.keyword);sv('eURL',n.url);
+  sv('eKW',n.keyword);
+  sv('eURL',n.url);
+  sv('eDoc',n.docUrl || ''); // <-- Menarik data Doc Link
   sv('eVol',n.volume||'');sv('eKD',n.kd||'');sv('ePos',n.position||'');
   sv('eImpr',n.impressions||'');sv('eClicks',n.clicks||'');sv('eCtr',n.ctr||'');
   sv('eSt',n.status);
@@ -1086,7 +1088,8 @@ function openEd(id){
 }
 function saveEd(){
   const n=N().find(x=>x.id===editId);if(!n)return;
-  n.funnel=gv('eF');n.pageType=gv('ePT');n.keyword=gv('eKW');n.url=gv('eURL');
+  n.funnel=gv('eF');n.pageType=gv('ePT');n.keyword=gv('eKW');
+  n.url=gv('eURL'); n.docUrl=gv('eDoc'); // <-- Menyimpan data Doc Link
   n.volume=int(gv('eVol'));n.kd=int(gv('eKD'));n.position=parseFloat(gv('ePos'))||0;
   n.impressions=int(gv('eImpr'));n.clicks=int(gv('eClicks'));n.ctr=parseFloat(gv('eCtr'))||0;
   n.status=gv('eSt');
@@ -1094,6 +1097,12 @@ function saveEd(){
   if(np&&isDesc(editId,np,N())){toast('Circular!',1);return;}
   n.parentId=np;closeMo();save();renderAll();toast('Updated!');
 }
+
+window.updateDocUrl = function(id, val) {
+  const p = P(); if(!p) return;
+  const n = p.nodes.find(x => x.id === id);
+  if(n) { n.docUrl = val; save(); renderTable(); }
+};
 function delNode(){
   if(!editId)return;
   const p=P();if(!p)return;
@@ -1153,8 +1162,11 @@ function ctxDup() {
   dupSelected();
 }
 
+window.linkSourceNode = null;
 function ctxAddLink() {
-  toast('Select another node using SHIFT+CLICK to add link.', 2);
+  if(!ctxNodeId) return;
+  window.linkSourceNode = ctxNodeId; 
+  toast('Tahan tombol SHIFT + KLIK di kotak tujuan.', 2);
   closeCtx();
 }
 
