@@ -1897,94 +1897,94 @@ function renderDashboard(){
 function renderDashTrend(){
   const tbl=document.getElementById('dashTrendTbl');
   if(!tbl)return;
+  
+  // 1. Ambil metrik dari dropdown (Position, Clicks, dll)
   const metric=(document.getElementById('trendMetric')||{}).value||'position';
   const ns=N();
-  const isPos=metric==='position';
+  const isPosMetric = metric === 'position';
 
-  const rows=ns.map(n=>{
-    const h=n.history||[];
+  const rows = ns.map(n => {
+    const h = n.history || [];
     let valA = null, valB = null;
 
-    // Ambil data spesifik berdasarkan dropdown compare A dan B
+    // 2. Ambil data spesifik berdasarkan Period A dan B yang dipilih di dropdown Compare
     if(dashCmpA && dashCmpB) {
-        const entryA = h.find(e=>e.label===dashCmpA);
-        const entryB = h.find(e=>e.label===dashCmpB);
+        const entryA = h.find(e => e.label === dashCmpA);
+        const entryB = h.find(e => e.label === dashCmpB);
         valA = entryA ? entryA[metric] : null;
         valB = entryB ? entryB[metric] : null;
     } else {
-        // Fallback jika baru 1 periode
-        valB = h.length?h[h.length-1][metric]:n[metric==='impressions'?'impressions':metric]||0;
-        valA = h.length>1?h[h.length-2][metric]:null;
+        // Fallback jika periode belum diset
+        valB = h.length ? h[h.length-1][metric] : (n[metric] || 0);
+        valA = h.length > 1 ? h[h.length-2][metric] : null;
     }
 
     const change = (valA !== null && valB !== null) ? valB - valA : null;
-    return {n,h,valA,valB,change};
+    return { n, h, valA, valB, change };
   });
 
-  // Sort: biggest improvement first
-  rows.sort((a,b)=>{
-    if(a.change===null&&b.change===null)return 0;
-    if(a.change===null)return 1;
-    if(b.change===null)return -1;
-    if(isPos)return a.change-b.change; // for position lower is better
-    return b.change-a.change;
+  // Sorting: Berdasarkan perubahan terbaik
+  rows.sort((a,b) => {
+    if(a.change === null) return 1;
+    if(b.change === null) return -1;
+    return isPosMetric ? a.change - b.change : b.change - a.change;
   });
 
-  // Header nama bulan dinamis
-  const labelA = dashCmpA || 'Previous';
-  const labelB = dashCmpB || 'Latest';
+  const labelA = dashCmpA || 'Period A';
+  const labelB = dashCmpB || 'Period B';
 
   let html=`<thead><tr>
     <th>Keyword</th>
-    <th class="num" style="color:var(--td);">${esc(labelA)}</th>
-    <th class="num" style="color:var(--t);">${esc(labelB)}</th>
+    <th class="num" style="color:var(--td); font-size:9px;">${esc(labelA)}</th>
+    <th class="num" style="color:var(--t); font-size:9px;">${esc(labelB)}</th>
     <th class="num">Δ Change</th>
     <th>Trend</th>
   </tr></thead><tbody>`;
 
   if(!rows.length){
     html+='<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--tf);">No data.</td></tr>';
-  }else{
-    rows.slice(0,30).forEach(({n,h,valA,valB,change})=>{
-      const sparkData=h.map(x=>x[metric]).filter(v=>v!=null);
-      const spark=sparkData.length>1?renderSparkline(sparkData,isPos):'<span style="color:var(--tf);font-size:9px;">—</span>';
-      let badge='';
-      if(n.isNew)badge='<span class="badge new">NEW</span>';
-      const fmtV=(v)=>{
-        if(v===null||v===undefined||v==='')return '--';
-        if(metric==='ctr')return Number(v).toFixed(2)+'%';
-        if(metric==='position')return Number(v).toFixed(1);
+  } else {
+    rows.slice(0, 30).forEach(({n, h, valA, valB, change}) => {
+      const sparkData = h.map(x => x[metric]).filter(v => v != null);
+      const spark = sparkData.length > 1 ? renderSparkline(sparkData, isPosMetric) : '<span style="color:var(--tf);font-size:9px;">—</span>';
+      
+      const fmtV = (v) => {
+        if(v === null || v === undefined) return '--';
+        if(metric === 'ctr') return Number(v).toFixed(2) + '%';
+        if(metric === 'position') return Number(v).toFixed(1);
         return Math.round(v).toLocaleString();
       };
-      const fmtCh=(c)=>{
-        if(c===null)return '--';
-        const sign=c>0?'+':'';
-        if(metric==='ctr')return sign+c.toFixed(2)+'%';
-        if(metric==='position')return sign+c.toFixed(1);
-        return sign+Math.round(c).toLocaleString();
-      };
-      const chClass=(()=>{
-        if(change===null||change===0)return 'flat';
-        if(isPos)return change<0?'up':'down';
-        return change>0?'up':'down';
-      })();
-      html+=`<tr>
+
+      // 3. LOGIKA TREND: Jika posisi turun (angka mengecil), dianggap UP (hijau)
+      let chClass = 'flat';
+      let sign = change > 0 ? '+' : '';
+      
+      if (change !== null && change !== 0) {
+        if (isPosMetric) {
+          chClass = change < 0 ? 'up' : 'down'; // Posisi -15.0 = Hijau
+        } else {
+          chClass = change > 0 ? 'up' : 'down'; // Klik +100 = Hijau
+        }
+      }
+
+      html += `<tr>
         <td>
           <div style="display:flex;align-items:center;gap:6px;">
             <strong>${esc(n.keyword)}</strong>
-            ${badge}
+            ${n.isNew ? '<span class="badge new">NEW</span>' : ''}
           </div>
-          <div class="dash-url">${esc((n.url||'').replace(/^https?:\/\//,''))}</div>
+          <div class="dash-url" style="font-size:9px;">${esc((n.url||'').replace(/^https?:\/\//,''))}</div>
         </td>
-        <td class="num" style="color:var(--td);">${fmtV(valA)}</td>
+        <td class="num" style="color:var(--td); opacity:0.8;">${fmtV(valA)}</td>
         <td class="num" style="font-weight:600;">${fmtV(valB)}</td>
-        <td class="num delta ${chClass}">${fmtCh(change)}</td>
+        <td class="num delta ${chClass}">${sign}${change ? (isPosMetric ? change.toFixed(1) : Math.round(change)) : '--'}</td>
         <td>${spark}</td>
       </tr>`;
     });
   }
-  html+='</tbody>';
-  tbl.innerHTML=html;
+  
+  html += '</tbody>';
+  tbl.innerHTML = html;
 }
 function dashSetCmp(slot,label){
   if(slot==='A')dashCmpA=label;
