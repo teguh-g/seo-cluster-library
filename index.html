@@ -65,6 +65,41 @@
 body{background:var(--bg);color:var(--t);font-family:var(--f);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
 ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px;}
 button{font-family:var(--f);}
+
+/* === CONTEXT MENU === */
+.ctx-menu {
+  position: fixed;
+  background: var(--sf);
+  border: 1px solid var(--bd);
+  border-radius: var(--rs);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 4px 0;
+  min-width: 160px;
+  z-index: 9999;
+  font-size: 12px;
+  font-family: var(--f);
+  color: var(--t);
+}
+.ctx-menu div {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s;
+}
+.ctx-menu div:hover {
+  background: var(--s3);
+}
+.ctx-menu .del { color: #ef4444; }
+.ctx-menu .del:hover { background: rgba(239,68,68,0.1); }
+.ctx-divider {
+  height: 1px !important;
+  background: var(--bd) !important;
+  margin: 4px 0 !important;
+  padding: 0 !important;
+  cursor: default !important;
+}
+  
 /* === HEADER === */
 .hdr{padding:12px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:var(--s1);flex-shrink:0;}
 .hdr h1{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;}
@@ -172,12 +207,6 @@ button{font-family:var(--f);}
 .mo.active{display:flex;}
 .md{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);width:440px;max-height:85vh;overflow-y:auto;padding:18px;}
 .md h3{font-size:14px;margin-bottom:12px;}
-/* Context menu */
-.ctx{position:fixed;background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);padding:4px 0;z-index:999;display:none;min-width:140px;box-shadow:0 8px 24px rgba(0,0,0,.4);}
-.ctx.show{display:block;}
-.ctx-item{padding:6px 14px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .1s;}
-.ctx-item:hover{background:var(--s3);}
-.ctx-item.danger{color:var(--danger);}
 /* Toast */
 .toast{position:fixed;bottom:16px;right:16px;font-weight:600;font-size:11px;padding:8px 16px;border-radius:var(--rs);z-index:2000;transform:translateY(50px);opacity:0;transition:all .2s;}
 .toast.show{transform:translateY(0);opacity:1;}
@@ -464,26 +493,21 @@ button{font-family:var(--f);}
       <span id="syncLbl">Not configured</span>
     </div>
     <span class="sep"></span>
-    <!-- Edit group -->
     <button class="btn btn-g btn-sm" onclick="undoAction()" id="btnUndo" title="Undo (Ctrl+Z)" disabled style="opacity:.4;"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg><span class="lbl">Undo</span></button>
     <span class="sep"></span>
-    <!-- Sync group (accent) -->
     <button class="btn btn-acc btn-sm" onclick="syncPull()" id="btnPull" title="Load from GitHub Gist"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="lbl">Pull</span></button>
     <button class="btn btn-acc btn-sm" onclick="syncPush()" id="btnPush" title="Save to GitHub Gist"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="lbl">Push</span></button>
     <button class="btn btn-g btn-sm" onclick="openSyncMo()" title="Cloud sync settings"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     <span class="sep"></span>
-    <!-- Tools group -->
     <button class="btn btn-g btn-sm" onclick="openGscMo()" title="Import from GSC"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="lbl">GSC</span></button>
     <button class="btn btn-g btn-sm" onclick="openSnapMo()" title="Backup snapshots"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5a2 2 0 0 1 2-2h3l2-2h4l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg><span class="lbl">Snaps</span></button>
     <button class="btn btn-g btn-sm" onclick="checkCannibals()" title="Check keyword cannibalization"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
     <span class="sep"></span>
     <span class="sep"></span>
-    <!-- Export group -->
     <button class="btn btn-g btn-sm" onclick="exportPNG()" title="Export graph as PNG image"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span class="lbl">PNG</span></button>
     <button class="btn btn-g btn-sm" onclick="exportSVG()" title="Export graph as SVG (vector)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg><span class="lbl">SVG</span></button>
     <button class="btn btn-g btn-sm" onclick="window.print()" title="Print / PDF"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></button>
     <span class="sep"></span>
-    <!-- File ops -->
     <button class="btn btn-g btn-sm" onclick="exportAll()" title="Export all data as JSON"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="lbl">Export</span></button>
     <button class="btn btn-g btn-sm" onclick="document.getElementById('impAll').click()" title="Import JSON"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="lbl">Import</span></button>
     <button class="theme-tog" onclick="toggleTheme()" id="btnTheme" title="Toggle theme"><svg class="ic ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
@@ -491,7 +515,6 @@ button{font-family:var(--f);}
   </div>
 </header>
 
-<!-- Cannibalization warning bar -->
 <div class="cb-warn" id="cbWarn" onclick="checkCannibals()">
   <svg class="bd-warn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
   <strong id="cbCount">0</strong> keyword duplicate detected — click to review
@@ -499,7 +522,6 @@ button{font-family:var(--f);}
 
 <div class="layout">
 
-<!-- FOLDERS -->
 <div class="folders">
   <div class="folders-hdr">
     <h3>Projects</h3>
@@ -508,7 +530,6 @@ button{font-family:var(--f);}
   <div class="folder-list" id="folderList"></div>
 </div>
 
-<!-- PANEL -->
 <div class="panel">
   <div class="panel-section" id="addSec">
     <h3>
@@ -597,7 +618,6 @@ button{font-family:var(--f);}
   <div class="tree-wrap" id="treeWrap"></div>
 </div>
 
-<!-- MAIN -->
 <div class="main">
   <div class="tb">
     <div class="tb-l">
@@ -643,7 +663,6 @@ button{font-family:var(--f);}
 </div>
 </div>
 
-<!-- EDIT MODAL -->
 <div class="mo" id="eMo">
   <div class="md">
     <h3>Edit Node</h3>
@@ -665,15 +684,21 @@ button{font-family:var(--f);}
   </div>
 </div>
 
-<!-- CONTEXT MENU -->
-<div class="ctx" id="ctx">
-  <div class="ctx-item" onclick="ctxEdit()">Edit</div>
-  <div class="ctx-item" onclick="ctxAddChild()">Add Child</div>
-  <div class="ctx-item" onclick="ctxDup()">Duplicate (with subtree)</div>
-  <div class="ctx-item danger" onclick="ctxDel()">Delete</div>
+<div id="ctxMenu" class="ctx-menu" style="display: none;">
+  <div onclick="ctxCreateBrief()" style="font-weight:600; color:var(--bl);">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:6px;vertical-align:-2px;">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+    </svg>Create Brief
+  </div>
+  <div class="ctx-divider"></div>
+  <div onclick="ctxEdit()">Edit Node...</div>
+  <div onclick="ctxAddChild()">Add Child Node</div>
+  <div onclick="ctxDup()">Duplicate (with subtree)</div>
+  <div onclick="ctxAddLink()">Add Internal Link</div>
+  <div class="del" onclick="ctxDel()">Delete Node</div>
 </div>
 
-<!-- SYNC SETUP MODAL -->
 <div class="mo" id="syncMo">
   <div class="md" style="max-width:480px;">
     <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>GitHub Gist Cloud Sync</h3>
@@ -710,7 +735,6 @@ button{font-family:var(--f);}
   </div>
 </div>
 
-<!-- SNAPSHOTS MODAL -->
 <div class="mo" id="snapMo">
   <div class="md" style="max-width:520px;">
     <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5a2 2 0 0 1 2-2h3l2-2h4l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg>Backup Snapshots</h3>
@@ -724,7 +748,6 @@ button{font-family:var(--f);}
   </div>
 </div>
 
-<!-- CANNIBALIZATION MODAL -->
 <div class="mo" id="cbMo">
   <div class="md" style="max-width:560px;">
     <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Keyword Cannibalization Check</h3>
@@ -737,7 +760,6 @@ button{font-family:var(--f);}
   </div>
 </div>
 
-<!-- PNG EXPORT MODAL -->
 <div class="mo" id="pngMo">
   <div class="md" style="max-width:420px;">
     <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Export Graph as PNG</h3>
@@ -770,7 +792,6 @@ button{font-family:var(--f);}
   </div>
 </div>
 
-<!-- SHORTCUTS HELP -->
 <div class="shortcuts-help" id="shortcutsHelp">
   <h4>Keyboard Shortcuts <button onclick="document.getElementById('shortcutsHelp').classList.remove('show')">×</button></h4>
   <table>
@@ -790,18 +811,15 @@ button{font-family:var(--f);}
   </table>
 </div>
 
-<!-- GSC IMPORT MODAL -->
 <div class="mo" id="gscMo">
   <div class="md" style="max-width:840px;max-height:90vh;display:flex;flex-direction:column;">
     <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Import from Google Search Console</h3>
 
-    <!-- Source picker -->
     <div class="gsc-src">
       <label class="gsc-src-opt"><input type="radio" name="gscSrc" value="sheet" checked onchange="gscSrcChange()"> Google Sheet URL <span class="gsc-tag">recommended</span></label>
       <label class="gsc-src-opt"><input type="radio" name="gscSrc" value="csv" onchange="gscSrcChange()"> Upload CSV file</label>
     </div>
 
-    <!-- Sheet URL input -->
     <div id="gscSheetSec">
       <div class="ig">
         <label>Saved Sheets <button class="btn btn-g btn-sm" style="float:right;padding:2px 8px;font-size:9px;" onclick="gscSaveCurSheet()" title="Save current URL as preset"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save</button></label>
@@ -818,7 +836,6 @@ button{font-family:var(--f);}
       </div>
     </div>
 
-    <!-- CSV Upload -->
     <div id="gscCsvSec" style="display:none;">
       <div class="ig"><label>Upload CSV file from GSC export</label>
         <input type="file" id="gscCsvFile" accept=".csv" onchange="gscCsvLoad(event)" style="padding:6px;">
@@ -831,11 +848,9 @@ button{font-family:var(--f);}
       <span id="gscStatus" style="font-size:10px;color:var(--td);align-self:center;"></span>
     </div>
 
-    <!-- Data preview -->
     <div id="gscData" style="display:none;flex:1;overflow:hidden;display:none;flex-direction:column;margin-top:14px;">
       <div class="gsc-stats" id="gscStats"></div>
 
-      <!-- Filters -->
       <div class="gsc-filters">
         <input type="text" id="gscSearch" placeholder="Filter URL..." oninput="gscRender()">
         <select id="gscMinImpr" onchange="gscRender()">
@@ -853,7 +868,6 @@ button{font-family:var(--f);}
         </select>
       </div>
 
-      <!-- Data table (scrollable) -->
       <div class="gsc-tbl-wrap">
         <table class="gsc-tbl">
           <thead><tr>
@@ -876,7 +890,6 @@ button{font-family:var(--f);}
         <span id="gscSelCount" style="font-size:10px;color:var(--bofu);font-weight:600;font-family:var(--m);">0 selected</span>
       </div>
 
-      <!-- Import settings -->
       <div class="gsc-import-cfg">
         <div class="ig"><label>Add to project</label>
           <select id="gscTarget">
@@ -907,7 +920,6 @@ button{font-family:var(--f);}
   </div>
 </div>
 
-<!-- COMPARISON MODAL -->
 <div class="mo" id="cmpMo">
   <div class="md" style="max-width:780px;max-height:90vh;display:flex;flex-direction:column;">
     <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Trend &amp; Comparison</h3>
@@ -949,7 +961,6 @@ button{font-family:var(--f);}
 let projects=[]; // [{id,name,nodes:[],links:[]}]
 let activeProj=null;
 let editId=null;
-let ctxNodeId=null;
 let dragId=null;
 let graphDragId=null;
 let graphDragOff={x:0,y:0};
@@ -1095,36 +1106,85 @@ function delNode(){
 function closeMo(){document.getElementById('eMo').classList.remove('active');editId=null;}
 
 // === CONTEXT MENU ===
-function showCtx(id,e){
-  e.preventDefault();e.stopPropagation();
-  ctxNodeId=id;
-  const m=document.getElementById('ctx');
-  m.style.left=e.clientX+'px';m.style.top=e.clientY+'px';m.classList.add('show');
+let ctxNodeId = null;
+
+function showCtx(id, e) {
+  e.preventDefault(); e.stopPropagation();
+  ctxNodeId = id;
+  const m = document.getElementById('ctxMenu');
+  if(!m) return;
+  m.style.left = e.clientX + 'px';
+  m.style.top = e.clientY + 'px';
+  m.style.display = 'block';
 }
-function hideCtx(){document.getElementById('ctx').classList.remove('show');ctxNodeId=null;}
-function ctxEdit(){if(ctxNodeId)openEd(ctxNodeId);hideCtx();}
-function ctxAddChild(){
-  if(!ctxNodeId)return;
-  const n=N().find(x=>x.id===ctxNodeId);
-  if(n){sv('aPar',n.id);document.getElementById('aKW').focus();}
-  hideCtx();
+
+function closeCtx() {
+  const m = document.getElementById('ctxMenu');
+  if(m) m.style.display = 'none';
 }
-function ctxDel(){
-  if(!ctxNodeId)return;
-  const p=P();if(!p)return;
-  const n=p.nodes.find(x=>x.id===ctxNodeId);
-  p.nodes.filter(x=>x.parentId===ctxNodeId).forEach(x=>x.parentId=n?n.parentId:null);
-  p.nodes=p.nodes.filter(x=>x.id!==ctxNodeId);
-  p.links=p.links.filter(l=>l.from!==ctxNodeId&&l.to!==ctxNodeId);
-  hideCtx();save();renderAll();toast('Deleted.');
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.ctx-menu')) closeCtx();
+});
+
+function ctxEdit() { if(ctxNodeId) openEd(ctxNodeId); closeCtx(); }
+
+function ctxAddChild() {
+  if(!ctxNodeId) return;
+  const n = N().find(x => x.id === ctxNodeId);
+  if(n) { sv('aPar', n.id); document.getElementById('aKW').focus(); }
+  closeCtx();
 }
-function ctxDup(){
-  if(!ctxNodeId)return;
-  graphSelected=new Set([ctxNodeId]);
-  hideCtx();
+
+function ctxDel() {
+  if(!ctxNodeId) return;
+  const p = P(); if(!p) return;
+  const n = p.nodes.find(x => x.id === ctxNodeId);
+  p.nodes.filter(x => x.parentId === ctxNodeId).forEach(x => x.parentId = n ? n.parentId : null);
+  p.nodes = p.nodes.filter(x => x.id !== ctxNodeId);
+  p.links = p.links.filter(l => l.from !== ctxNodeId && l.to !== ctxNodeId);
+  closeCtx(); save(); renderAll(); toast('Deleted.');
+}
+
+function ctxDup() {
+  if(!ctxNodeId) return;
+  graphSelected = new Set([ctxNodeId]);
+  closeCtx();
   dupSelected();
 }
-document.addEventListener('click',hideCtx);
+
+function ctxAddLink() {
+  toast('Select another node using SHIFT+CLICK to add link.', 2);
+  closeCtx();
+}
+
+function ctxCreateBrief() {
+  if(!ctxNodeId) return;
+  const pData = P(); if(!pData) return;
+  const n = pData.nodes.find(x => x.id === ctxNodeId);
+  if(!n) return;
+
+  const baseUrl = 'https://teguh-g.github.io/seo-brief-generator/'; 
+  const params = new URLSearchParams();
+  
+  params.append('kw', n.keyword);
+  if(n.funnel) params.append('funnel', n.funnel);
+  if(n.pageType) params.append('type', ptLabel(n.pageType));
+
+  if(n.parentId) {
+    const parentNode = pData.nodes.find(x => x.id === n.parentId);
+    if(parentNode) params.append('cluster', parentNode.keyword);
+  }
+
+  const outgoingLink = pData.links.find(l => l.from === n.id);
+  if(outgoingLink) {
+    const targetNode = pData.nodes.find(x => x.id === outgoingLink.to);
+    if(targetNode) params.append('anchor', targetNode.keyword);
+  }
+
+  window.open(`${baseUrl}?${params.toString()}`, '_blank');
+  closeCtx();
+}
 
 // === DRAG (TREE) ===
 function dragStart(id,e){dragId=id;e.dataTransfer.effectAllowed='move';e.target.closest('.tn-h').classList.add('dragging');}
@@ -1231,7 +1291,7 @@ function quickDel(id){
 }
 
 function tgl(btn){btn.classList.toggle('open');const c=btn.closest('.tn').querySelector('.tc');if(c)c.classList.toggle('open');}
-
+  
 // === GRAPH ===
 function renderGraph(){
   const gc=document.getElementById('gc');
@@ -1389,7 +1449,7 @@ function renderGraph(){
     });
     g.addEventListener('click',(e)=>{ if(e.shiftKey){e.stopPropagation();return;} });
     g.addEventListener('dblclick',()=>openEd(n.id));
-    g.addEventListener('contextmenu',(e)=>{ctxNode=n.id;showCtx(n.id,e);});
+    g.addEventListener('contextmenu',(e)=>showCtx(n.id,e));
     svg.appendChild(g);
   });
 
@@ -3042,7 +3102,7 @@ function delSelected(){
 function dupSelected(){
   if(!graphSelected.size){
     // try to duplicate single node from context
-    if(ctxNode){dupSingle(ctxNode);return;}
+    if(ctxNodeId){dupSingle(ctxNodeId);return;}
     toast('No nodes selected!',1);return;
   }
   const p=P();if(!p)return;
@@ -3091,9 +3151,6 @@ function dupSingle(id){
   graphSelected=new Set([id]);
   dupSelected();
 }
-
-// Right-click duplicate (extends ctx menu)
-let ctxNode=null;
 
 // Setup graph mouse events for rectangle selection
 function setupGraphMouseEvents(){
