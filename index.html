@@ -393,6 +393,10 @@ button{font-family:var(--f);}
 
 /* === GRAPH MULTI-SELECT === */
 .gc{position:relative;cursor:default;user-select:none;}
+.gc-zoom{position:absolute;bottom:14px;right:14px;display:flex;gap:4px;z-index:20;}
+.gc-zoom button{width:28px;height:28px;background:var(--s2);border:1px solid var(--bd2);border-radius:var(--rs);color:var(--t);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;}
+.gc-zoom button:hover{background:var(--s3);border-color:var(--bofu);color:var(--bofu);}
+.gc-zoom .zoom-lbl{font-size:10px;font-family:var(--m);color:var(--td);align-self:center;min-width:36px;text-align:center;}
 .gc.selecting{cursor:crosshair;}
 .gc-rect-sel{position:absolute;border:1.5px dashed var(--bofu);background:rgba(74,144,255,.08);pointer-events:none;z-index:10;display:none;}
 .gc-rect-sel.show{display:block;}
@@ -648,6 +652,12 @@ button{font-family:var(--f);}
       <button class="btn btn-g btn-sm" onclick="clearGraphSel()" title="Deselect (Esc)">Clear</button>
     </div>
     <div class="gc-rect-sel" id="gcRectSel"></div>
+    <div class="gc-zoom">
+      <button onclick="zoomGraph(-0.1)" title="Zoom out (Ctrl+Scroll)">−</button>
+      <span class="zoom-lbl" id="zoomLbl">100%</span>
+      <button onclick="zoomGraph(0.1)" title="Zoom in (Ctrl+Scroll)">+</button>
+      <button onclick="zoomReset()" title="Reset zoom" style="font-size:10px;width:auto;padding:0 6px;">Reset</button>
+    </div>
     <div class="es" id="gEmpty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--tf)" stroke-width="1.5"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg><h4>Cluster Map</h4><p>Add nodes to visualize.</p></div>
   </div>
   <div class="tv" id="tv"></div>
@@ -672,6 +682,8 @@ button{font-family:var(--f);}
     <div class="ig"><label>Keyword</label><input type="text" id="eKW"></div>
     <div class="ig"><label>URL</label><input type="text" id="eURL"></div>
     <div class="ig"><label>G-Doc Brief Link</label><input type="text" id="eDoc" placeholder="https://docs.google.com/document/d/..."></div>
+    <div class="ig"><label>Brief Status</label><select id="eBriefStatus"><option value="">— Belum ada —</option><option value="not-started">Not Started</option><option value="in-progress">In Progress</option><option value="done">Done</option><option value="published">Published</option></select></div>
+    <div style="font-size:10px;color:var(--td);text-transform:uppercase;
     <div style="font-size:10px;color:var(--td);text-transform:uppercase;letter-spacing:.6px;margin:8px 0 4px;font-weight:600;">Research / Planning</div>
     <div class="ir3"><div class="ig"><label>Search Vol</label><input type="number" id="eVol" placeholder="from Ahrefs/Semrush"></div><div class="ig"><label>KD</label><input type="number" id="eKD"></div><div class="ig"><label>Position</label><input type="number" id="ePos" step="0.1"></div></div>
     <div style="font-size:10px;color:var(--td);text-transform:uppercase;letter-spacing:.6px;margin:8px 0 4px;font-weight:600;">GSC Metrics</div>
@@ -697,7 +709,7 @@ button{font-family:var(--f);}
   <div onclick="ctxEdit()">Edit Node...</div>
   <div onclick="ctxAddChild()">Add Child Node</div>
   <div onclick="ctxDup()">Duplicate (with subtree)</div>
-  <div onclick="ctxAddLink()">Add Internal Link</div>
+  <div onclick="ctxAddLink()" id="ctxLinkBtn">Add Internal Link</div>
   <div class="del" onclick="ctxDel()">Delete Node</div>
 </div>
 
@@ -1010,6 +1022,26 @@ function renameFolder(id,e){
   save();renderAll();
 }
 
+function dupFolder(id,e){
+  e.stopPropagation();
+  const p=projects.find(x=>x.id===id);if(!p)return;
+  const copy=JSON.parse(JSON.stringify(p));
+  copy.id=uid();
+  copy.name=p.name+' (copy)';
+  // Reset history & GSC data, keep structure
+  copy.nodes=copy.nodes.map(n=>({...n,id:uid(),history:[],impressions:0,clicks:0,ctr:0,position:0,isNew:false}));
+  // Fix parent refs
+  const idMap={};
+  p.nodes.forEach((n,i)=>idMap[n.id]=copy.nodes[i].id);
+  copy.nodes.forEach(n=>{if(n.parentId)n.parentId=idMap[n.parentId]||null;});
+  copy.links=p.links.map(l=>({from:idMap[l.from]||l.from,to:idMap[l.to]||l.to}));
+  projects.push(copy);
+  activeProj=copy.id;
+  graphPositions={};
+  snapshotState();save();renderAll();
+  toast('Project duplicated!');
+}
+
 function delFolder(id,e){
   e.stopPropagation();
   if(!confirm('Delete project and all nodes?'))return;
@@ -1025,9 +1057,10 @@ function renderFolders(){
     <div class="folder-item ${p.id===activeProj?'active':''}" onclick="selFolder('${p.id}')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
       <span class="f-name">${esc(p.name)}</span>
-      <span class="f-count">${p.nodes.length}</span>
+      <span class="f-count" title="BOFU / MOFU / TOFU">${p.nodes.filter(n=>n.funnel==='bofu').length}/${p.nodes.filter(n=>n.funnel==='mofu').length}/${p.nodes.filter(n=>n.funnel==='tofu').length}</span>
       <span class="f-actions">
         <button onclick="renameFolder('${p.id}',event)" title="Rename"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button onclick="dupFolder('${p.id}',event)" title="Duplicate project"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
         <button onclick="delFolder('${p.id}',event)" title="Delete"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
       </span>
     </div>
@@ -1079,7 +1112,8 @@ function openEd(id){
   PT_ALL.forEach(pt=>{s.innerHTML+=`<option value="${pt.v}" ${pt.v===n.pageType?'selected':''}>${pt.l}</option>`;});
   sv('eKW',n.keyword);
   sv('eURL',n.url);
-  sv('eDoc',n.docUrl || ''); // <-- Menarik data Doc Link
+  sv('eDoc',n.docUrl || '');
+  sv('eBriefStatus',n.briefStatus||'');
   sv('eVol',n.volume||'');sv('eKD',n.kd||'');sv('ePos',n.position||'');
   sv('eImpr',n.impressions||'');sv('eClicks',n.clicks||'');sv('eCtr',n.ctr||'');
   sv('eSt',n.status);
@@ -1090,7 +1124,7 @@ function openEd(id){
 function saveEd(){
   const n=N().find(x=>x.id===editId);if(!n)return;
   n.funnel=gv('eF');n.pageType=gv('ePT');n.keyword=gv('eKW');
-  n.url=gv('eURL'); n.docUrl=gv('eDoc'); // <-- Menyimpan data Doc Link
+  n.url=gv('eURL'); n.docUrl=gv('eDoc'); n.briefStatus=gv('eBriefStatus');
   n.volume=int(gv('eVol'));n.kd=int(gv('eKD'));n.position=parseFloat(gv('ePos'))||0;
   n.impressions=int(gv('eImpr'));n.clicks=int(gv('eClicks'));n.ctr=parseFloat(gv('eCtr'))||0;
   n.status=gv('eSt');
@@ -1126,6 +1160,14 @@ function showCtx(id, e) {
   m.style.left = e.clientX + 'px';
   m.style.top = e.clientY + 'px';
   m.style.display = 'block';
+  // Disable link mode kalau bukan graph view
+  const linkBtn = document.getElementById('ctxLinkBtn');
+  if(linkBtn) {
+    const isGraph = curView === 'graph';
+    linkBtn.style.opacity = isGraph ? '' : '0.4';
+    linkBtn.style.pointerEvents = isGraph ? '' : 'none';
+    linkBtn.title = isGraph ? '' : 'Hanya tersedia di Graph view';
+  }
 }
 
 function closeCtx() {
@@ -1292,6 +1334,7 @@ function rnTN(node,allNodes){
         <span class="sd sd-${node.status}"></span>
         <span class="fb fb-${node.funnel}">${node.funnel}</span>
         <span class="tn-kw">${esc(node.keyword)}</span>
+        ${node.url?`<span title="Has URL" style="width:5px;height:5px;border-radius:50%;background:#4a90ff;display:inline-block;flex-shrink:0;"></span>`:''}
         ${node.volume?`<span class="tn-meta">${node.volume}</span>`:''}
         <span class="tn-acts">
           <button onclick="event.stopPropagation();openEd('${node.id}')" title="Edit"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
@@ -1568,6 +1611,7 @@ function renderTable(){
     {key:'keyword',lbl:'Keyword'},
     {key:'url',lbl:'URL'},
     {key:'docUrl',lbl:'G-Doc Brief'},
+    {key:'briefStatus',lbl:'Brief Status'},
     {key:'volume',lbl:'Search Vol'},
     {key:'kd',lbl:'KD'},
     {key:'impressions',lbl:'Impr'},
@@ -1591,6 +1635,7 @@ function renderTable(){
       <td><strong>${esc(n.keyword)}</strong></td>
       <td class="mono url-c">${n.url?esc(n.url):'--'}</td>
       <td class="mono url-c">${n.docUrl?`<a href="${esc(n.docUrl)}" target="_blank" style="color:var(--bofu);text-decoration:none;font-size:10px;" title="${esc(n.docUrl)}">📄 Brief</a>`:'--'}</td>
+      <td style="font-size:10px;">${n.briefStatus?`<span style="padding:1px 6px;border-radius:3px;font-size:9px;font-weight:600;font-family:var(--m);background:${{'not-started':'rgba(90,100,120,.2)','in-progress':'rgba(245,158,11,.15)','done':'rgba(52,211,153,.15)','published':'rgba(74,144,255,.15)'}[n.briefStatus]||'var(--s2)'};color:${{'not-started':'var(--tf)','in-progress':'var(--mofu)','done':'var(--tofu)','published':'var(--bofu)'}[n.briefStatus]||'var(--td)'}">${n.briefStatus}</span>`:'--'}</td>
       <td class="mono">${n.volume||'--'}</td>
       <td class="mono">${n.kd||'--'}</td>
       <td class="mono">${n.impressions?n.impressions.toLocaleString():'--'}</td>
@@ -1647,6 +1692,7 @@ function buildRowData(n,ns){
     keyword:n.keyword,
     url:n.url||'',
     docUrl:n.docUrl||'',
+    briefStatus:n.briefStatus||'',
     volume:n.volume||'',
     kd:n.kd||'',
     impressions:n.impressions||'',
@@ -2430,10 +2476,29 @@ function applySearch(){
       const desc=allDesc(n.id,ns);
       showByDescendant=desc.some(d=>nodeMatches(d));
     }
-    if(m){el.classList.remove('hidden');el.classList.add('match-highlight');}
+    if(m){el.classList.remove('hidden');el.classList.add('match-highlight');el.addEventListener('click',()=>focusGraphNode(id),{once:true});}
     else if(showByDescendant){el.classList.remove('hidden');el.classList.remove('match-highlight');}
     else{el.classList.add('hidden');el.classList.remove('match-highlight');}
   });
+}
+
+  function focusGraphNode(id){
+  if(curView!=='graph')return;
+  const pos=graphPositions[id];if(!pos)return;
+  const gc=document.getElementById('gc');if(!gc)return;
+  // Scroll graph ke node
+  const w=gc.clientWidth,h=gc.clientHeight;
+  const nodeW=200;
+  gc.scrollLeft=pos.x-(w/2)+(nodeW/2);
+  gc.scrollTop=pos.y-(h/2)+31;
+  // Flash highlight
+  const rect=document.querySelector(`.gn-rect[data-id="${id}"]`);
+  if(rect){
+    const orig=rect.getAttribute('stroke');
+    rect.setAttribute('stroke','#a78bfa');
+    rect.setAttribute('stroke-width','3');
+    setTimeout(()=>{rect.setAttribute('stroke',orig);rect.setAttribute('stroke-width','1.5');},1200);
+  }
 }
 
 function allDesc(id,ns){
@@ -3101,10 +3166,27 @@ function cmpExport(){
 // === GRAPH MULTI-SELECT & DRAG ===
 let graphSelected=new Set();
 let isRectSelecting=false;
+let graphZoom=1;
 let isMultiDragging=false;
 let rectSelStart={x:0,y:0};
 let multiDragStart={x:0,y:0};
 let nodeStartPos={};
+
+function zoomGraph(delta){
+  graphZoom=Math.min(2,Math.max(0.3,graphZoom+delta));
+  applyZoom();
+}
+function zoomReset(){
+  graphZoom=1;
+  applyZoom();
+}
+function applyZoom(){
+  const svg=document.querySelector('#gc svg');
+  if(!svg)return;
+  svg.style.transform=`scale(${graphZoom})`;
+  svg.style.transformOrigin='top left';
+  document.getElementById('zoomLbl').textContent=Math.round(graphZoom*100)+'%';
+}
 
 function clearGraphSel(){
   graphSelected.clear();
@@ -3276,6 +3358,13 @@ function setupGraphMouseEvents(){
       renderGraph();
     }
   });
+
+  gc.addEventListener('wheel',(e)=>{
+    if(e.ctrlKey){
+      e.preventDefault();
+      zoomGraph(e.deltaY<0?0.1:-0.1);
+    }
+  },{passive:false});
 
   document.addEventListener('mouseup',(e)=>{
     if(isPanning){
