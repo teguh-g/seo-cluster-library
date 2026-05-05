@@ -3402,6 +3402,12 @@ function setupGraphMouseEvents(){
         graphSelected.forEach(sid=>{
           if(graphPositions[sid])nodeStartPos[sid]={...graphPositions[sid]};
         });
+      } else if(graphSelected.has(id)&&graphSelected.size===1){
+        // Single selected node drag — normal behavior
+        graphDragId=id;
+        const p=graphPositions[id];
+        if(p)graphDragOff={x:e.clientX-p.x,y:e.clientY-p.y};
+        e.preventDefault();
       }
       return;
     }
