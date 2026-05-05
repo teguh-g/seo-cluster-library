@@ -1505,6 +1505,10 @@ svg.setAttribute('width',maxW);svg.setAttribute('height',maxH);
 svg.style.width=maxW+'px';svg.style.height=maxH+'px';
 svg.style.display='block';
 
+  
+  // Cache width untuk lasso/rect select
+  ns.forEach(n=>{if(graphPositions[n.id])graphPositions[n.id]._w=widths[n.id]||200;});
+
   // Edges (Parent-Child)
   ns.forEach(n=>{
     if(n.parentId&&graphPositions[n.parentId]&&graphPositions[n.id]){
@@ -3427,71 +3431,13 @@ function setupGraphMouseEvents(){
   let isPanning=false;
   let panStart={x:0,y:0};
   let panScrollStart={x:0,y:0};
-
-  let isLasso=false;
-  let lassoPoints=[];
-  let lassoEl=null;
-
+  let isRectSel=false;
+  let rectStart={x:0,y:0};
   let isMultiDragging=false;
   let multiDragStart={x:0,y:0};
   let nodeStartPos={};
 
-  function pointInPolygon(pt,polygon){
-    let inside=false;
-    const n=polygon.length;
-    let j=n-1;
-    for(let i=0;i<n;i++){
-      const xi=polygon[i].x,yi=polygon[i].y;
-      const xj=polygon[j].x,yj=polygon[j].y;
-      if(((yi>pt.y)!==(yj>pt.y))&&(pt.x<(xj-xi)*(pt.y-yi)/(yj-yi)+xi))inside=!inside;
-      j=i;
-    }
-    return inside;
-  }
-
-  function startLasso(e){
-    isLasso=true;
-    lassoPoints=[];
-    const svg=gc.querySelector('svg');
-    if(!svg)return;
-    lassoEl=document.createElementNS('http://www.w3.org/2000/svg','path');
-    lassoEl.setAttribute('fill','rgba(74,144,255,0.08)');
-    lassoEl.setAttribute('stroke','#4a90ff');
-    lassoEl.setAttribute('stroke-width',1.5/graphZoom);
-    lassoEl.setAttribute('stroke-dasharray',`${6/graphZoom},${3/graphZoom}`);
-    lassoEl.setAttribute('pointer-events','none');
-    svg.appendChild(lassoEl);
-    const pt=mouseToGraph(e);
-    lassoPoints.push(pt);
-    gc.classList.add('selecting');
-  }
-
-  function updateLasso(e){
-    if(!isLasso||!lassoEl)return;
-    const pt=mouseToGraph(e);
-    lassoPoints.push(pt);
-    const d=lassoPoints.map((p,i)=>`${i===0?'M':'L'}${p.x},${p.y}`).join(' ')+' Z';
-    lassoEl.setAttribute('d',d);
-  }
-
-  function finishLasso(){
-    if(!isLasso)return;
-    isLasso=false;
-    gc.classList.remove('selecting');
-    if(lassoEl){lassoEl.remove();lassoEl=null;}
-    if(lassoPoints.length<3){lassoPoints=[];return;}
-    N().forEach(n=>{
-      const pos=graphPositions[n.id];if(!pos)return;
-      const cx=pos.x+((widths&&widths[n.id])||200)/2;
-      const cy=pos.y+31;
-      if(pointInPolygon({x:cx,y:cy},lassoPoints))graphSelected.add(n.id);
-    });
-    lassoPoints=[];
-    document.querySelectorAll('.gn-rect').forEach(r=>{
-      r.classList.toggle('gn-selected',graphSelected.has(r.dataset.id));
-    });
-    updateGraphSelToolbar();
-  }
+  const selBox=document.getElementById('gcRectSel');
 
   gc.addEventListener('mousedown',(e)=>{
     if(e.button!==0)return;
@@ -3516,16 +3462,27 @@ function setupGraphMouseEvents(){
     }
 
     if(e.ctrlKey||e.metaKey){
-      // Ctrl+drag = pan
       isPanning=true;
       panStart={x:e.clientX,y:e.clientY};
       panScrollStart={x:gc.scrollLeft,y:gc.scrollTop};
       gc.style.cursor='grabbing';
       e.preventDefault();
     }else{
-      // drag kosong = lasso select
+      // Rectangle select
+      isRectSel=true;
+      clearGraphSel();
+      const gcRect=gc.getBoundingClientRect();
+      rectStart={
+        x:e.clientX-gcRect.left+gc.scrollLeft,
+        y:e.clientY-gcRect.top+gc.scrollTop
+      };
+      selBox.style.left=rectStart.x+'px';
+      selBox.style.top=rectStart.y+'px';
+      selBox.style.width='0px';
+      selBox.style.height='0px';
+      selBox.classList.add('show');
+      gc.classList.add('selecting');
       e.preventDefault();
-      startLasso(e);
     }
   });
 
@@ -3533,8 +3490,18 @@ function setupGraphMouseEvents(){
     if(isPanning){
       gc.scrollLeft=panScrollStart.x-(e.clientX-panStart.x);
       gc.scrollTop=panScrollStart.y-(e.clientY-panStart.y);
-    }else if(isLasso){
-      updateLasso(e);
+    }else if(isRectSel){
+      const gcRect=gc.getBoundingClientRect();
+      const cx=e.clientX-gcRect.left+gc.scrollLeft;
+      const cy=e.clientY-gcRect.top+gc.scrollTop;
+      const x=Math.min(rectStart.x,cx);
+      const y=Math.min(rectStart.y,cy);
+      const w=Math.abs(cx-rectStart.x);
+      const h=Math.abs(cy-rectStart.y);
+      selBox.style.left=x+'px';
+      selBox.style.top=y+'px';
+      selBox.style.width=w+'px';
+      selBox.style.height=h+'px';
     }else if(isMultiDragging){
       const cur=mouseToGraph(e);
       const dx=cur.x-multiDragStart.x;
@@ -3542,8 +3509,24 @@ function setupGraphMouseEvents(){
       Object.keys(nodeStartPos).forEach(id=>{
         graphPositions[id]={x:nodeStartPos[id].x+dx,y:nodeStartPos[id].y+dy};
         const g=document.querySelector(`g.gn-group[data-id="${id}"]`);
-        if(g) g.setAttribute('transform',`translate(${dx},${dy})`);
+        if(g)g.setAttribute('transform',`translate(${dx},${dy})`);
       });
+    }
+  });
+
+  document.addEventListener('mousemove',(e)=>{
+    if(isRectSel){
+      const gcRect=gc.getBoundingClientRect();
+      const cx=e.clientX-gcRect.left+gc.scrollLeft;
+      const cy=e.clientY-gcRect.top+gc.scrollTop;
+      const x=Math.min(rectStart.x,cx);
+      const y=Math.min(rectStart.y,cy);
+      const w=Math.abs(cx-rectStart.x);
+      const h=Math.abs(cy-rectStart.y);
+      selBox.style.left=x+'px';
+      selBox.style.top=y+'px';
+      selBox.style.width=w+'px';
+      selBox.style.height=h+'px';
     }
   });
 
@@ -3553,7 +3536,33 @@ function setupGraphMouseEvents(){
 
   document.addEventListener('mouseup',()=>{
     if(isPanning){isPanning=false;gc.style.cursor='';}
-    if(isLasso)finishLasso();
+    if(isRectSel){
+      isRectSel=false;
+      gc.classList.remove('selecting');
+      selBox.classList.remove('show');
+      // Hit-test semua node terhadap rectangle
+      const rx=parseFloat(selBox.style.left);
+      const ry=parseFloat(selBox.style.top);
+      const rw=parseFloat(selBox.style.width);
+      const rh=parseFloat(selBox.style.height);
+      if(rw>4&&rh>4){
+        N().forEach(n=>{
+          const pos=graphPositions[n.id];if(!pos)return;
+          const nw=pos._w||200;
+          const nh=62;
+          // Node center dalam koordinat SVG/canvas
+          const ncx=pos.x+nw/2;
+          const ncy=pos.y+nh/2;
+          if(ncx>=rx&&ncx<=rx+rw&&ncy>=ry&&ncy<=ry+rh){
+            graphSelected.add(n.id);
+          }
+        });
+        document.querySelectorAll('.gn-rect').forEach(r=>{
+          r.classList.toggle('gn-selected',graphSelected.has(r.dataset.id));
+        });
+        updateGraphSelToolbar();
+      }
+    }
     if(isMultiDragging){
       isMultiDragging=false;
       renderGraph();
