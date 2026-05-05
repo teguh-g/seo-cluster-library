@@ -1056,7 +1056,7 @@ function bulkAdd(){
   const lines=gv('bKW').split('\n').map(l=>l.trim()).filter(Boolean);if(!lines.length)return;
   const f=gv('bF'),pt=gv('bPT'),par=gv('bPar')||null;
   lines.forEach(kw=>{p.nodes.push({id:uid(),keyword:kw,url:'',funnel:f,pageType:pt,volume:0,kd:0,position:0,status:'draft',parentId:par});});
-  sv('bKW','');save();renderAll();toast(lines.length+' added!');
+  sv('bKW','');sv('aDoc','');save();renderAll();toast(lines.length+' added!');
 }
 
 // === LINKS ===
@@ -1187,6 +1187,13 @@ function ctxCreateBrief() {
   const pData = P(); if(!pData) return;
   const n = pData.nodes.find(x => x.id === ctxNodeId);
   if(!n) return;
+
+  // Kalau sudah ada brief, langsung buka
+  if(n.docUrl && n.docUrl.trim()) {
+    window.open(n.docUrl, '_blank');
+    closeCtx();
+    return;
+  }
 
   const baseUrl = 'https://teguh-g.github.io/seo-brief-generator/'; 
   const params = new URLSearchParams();
@@ -1660,11 +1667,11 @@ function copyTable(mode){
     if(!tblSelected.size){toast('No rows selected!',1);return;}
     rows=rows.filter(n=>tblSelected.has(n.id));
   }
-  const headers=['Funnel','Type','Keyword','URL','Search Vol','KD','Impr','Clicks','CTR%','Pos','Status','Parent','Links'];
+  const headers=['Funnel','Type','Keyword','URL','G-Doc Brief','Search Vol','KD','Impr','Clicks','CTR%','Pos','Status','Parent','Links'];
   const lines=[headers.join('\t')];
   rows.forEach(n=>{
     const d=buildRowData(n,ns);
-    lines.push([d.funnel,d.pageType,d.keyword,d.url,d.volume,d.kd,d.impressions,d.clicks,d.ctr,d.position,d.status,d.parent,d.links].map(v=>String(v).replace(/\t/g,' ').replace(/\n/g,' ')).join('\t'));
+    lines.push([d.funnel,d.pageType,d.keyword,d.url,d.docUrl,d.volume,d.kd,d.impressions,d.clicks,d.ctr,d.position,d.status,d.parent,d.links].map(v=>String(v).replace(/\t/g,' ').replace(/\n/g,' ')).join('\t'));
   });
   const text=lines.join('\n');
   copyToClipboard(text,()=>{
@@ -2189,11 +2196,11 @@ function expCSV(){
   const ns=N();if(!ns.length){toast('No data!',1);return;}
   function parKW(id){const n=ns.find(x=>x.id===id);return n?n.keyword:'';}
   function nLinks(id){return L().filter(l=>l.from===id||l.to===id).map(l=>{const oid=l.from===id?l.to:l.from;const o=ns.find(x=>x.id===oid);return o?o.keyword:'';}).join(' | ');}
-  const hdr=['Funnel Stage','Page Type','Target Keyword','URL','Search Volume','KD','Current Position','Status','Parent Keyword','Internal Links'];
+  const hdr=['Funnel Stage','Page Type','Target Keyword','URL','G-Doc Brief','Search Volume','KD','Current Position','Status','Parent Keyword','Internal Links'];
   const rows=[hdr.join(',')];
   const ord={bofu:0,mofu:1,tofu:2};
   [...ns].sort((a,b)=>(ord[a.funnel]||0)-(ord[b.funnel]||0)).forEach(n=>{
-    rows.push([n.funnel.toUpperCase(),q(ptLabel(n.pageType)),q(n.keyword),q(n.url),n.volume||'',n.kd||'',n.position||'',n.status,q(n.parentId?parKW(n.parentId):''),q(nLinks(n.id))].join(','));
+    rows.push([n.funnel.toUpperCase(),q(ptLabel(n.pageType)),q(n.keyword),q(n.url),q(n.docUrl||''),n.volume||'',n.kd||'',n.position||'',n.status,q(n.parentId?parKW(n.parentId):''),q(nLinks(n.id))].join(','));
   });
   const p=P();
   dl((p?p.name:'cluster')+'.csv','\uFEFF'+rows.join('\n'),'text/csv;charset=utf-8');
@@ -3200,12 +3207,14 @@ function setupGraphMouseEvents(){
   if(!gc||gc.dataset.boundGraph)return;
   gc.dataset.boundGraph='1';
 
+  let isPanning=false;
+  let panStart={x:0,y:0};
+  let panScrollStart={x:0,y:0};
+
   gc.addEventListener('mousedown',(e)=>{
-    // Only handle left button on empty area (not on a node, not on toolbar)
     if(e.button!==0)return;
     if(e.target.closest('.gc-toolbar'))return;
     if(e.target.closest('g.gn-group')){
-      // Maybe start multi-drag if clicking on selected node
       const g=e.target.closest('g.gn-group');
       const id=g.dataset.id;
       if(graphSelected.has(id)&&graphSelected.size>1){
@@ -3219,23 +3228,37 @@ function setupGraphMouseEvents(){
       }
       return;
     }
-    // Empty area: start rect selection
-    if(!e.shiftKey)clearGraphSel();
-    isRectSelecting=true;
-    const rect=gc.getBoundingClientRect();
-    rectSelStart={x:e.clientX-rect.left+gc.scrollLeft,y:e.clientY-rect.top+gc.scrollTop};
-    const sel=document.getElementById('gcRectSel');
-    sel.style.left=rectSelStart.x+'px';
-    sel.style.top=rectSelStart.y+'px';
-    sel.style.width='0px';
-    sel.style.height='0px';
-    sel.classList.add('show');
-    gc.classList.add('selecting');
+    // Empty area: pan (default) atau rect select (shift)
+    if(e.shiftKey){
+      // Shift+drag = rect select
+      isRectSelecting=true;
+      const rect=gc.getBoundingClientRect();
+      rectSelStart={x:e.clientX-rect.left+gc.scrollLeft,y:e.clientY-rect.top+gc.scrollTop};
+      const sel=document.getElementById('gcRectSel');
+      sel.style.left=rectSelStart.x+'px';
+      sel.style.top=rectSelStart.y+'px';
+      sel.style.width='0px';
+      sel.style.height='0px';
+      sel.classList.add('show');
+      gc.classList.add('selecting');
+    } else {
+      // Normal drag = pan
+      isPanning=true;
+      panStart={x:e.clientX,y:e.clientY};
+      panScrollStart={x:gc.scrollLeft,y:gc.scrollTop};
+      gc.style.cursor='grabbing';
+      clearGraphSel();
+    }
     e.preventDefault();
   });
 
   gc.addEventListener('mousemove',(e)=>{
-    if(isRectSelecting){
+    if(isPanning){
+      const dx=e.clientX-panStart.x;
+      const dy=e.clientY-panStart.y;
+      gc.scrollLeft=panScrollStart.x-dx;
+      gc.scrollTop=panScrollStart.y-dy;
+    } else if(isRectSelecting){
       const rect=gc.getBoundingClientRect();
       const cx=e.clientX-rect.left+gc.scrollLeft;
       const cy=e.clientY-rect.top+gc.scrollTop;
@@ -3244,7 +3267,7 @@ function setupGraphMouseEvents(){
       sel.style.top=Math.min(rectSelStart.y,cy)+'px';
       sel.style.width=Math.abs(cx-rectSelStart.x)+'px';
       sel.style.height=Math.abs(cy-rectSelStart.y)+'px';
-    }else if(isMultiDragging){
+    } else if(isMultiDragging){
       const dx=e.clientX-multiDragStart.x;
       const dy=e.clientY-multiDragStart.y;
       Object.keys(nodeStartPos).forEach(id=>{
@@ -3255,10 +3278,13 @@ function setupGraphMouseEvents(){
   });
 
   document.addEventListener('mouseup',(e)=>{
+    if(isPanning){
+      isPanning=false;
+      gc.style.cursor='';
+    }
     if(isRectSelecting){
       const sel=document.getElementById('gcRectSel');
       const r1=sel.getBoundingClientRect();
-      // Find nodes inside rect
       document.querySelectorAll('g.gn-group').forEach(g=>{
         const r2=g.getBoundingClientRect();
         if(r2.left<r1.right&&r2.right>r1.left&&r2.top<r1.bottom&&r2.bottom>r1.top){
@@ -3268,7 +3294,6 @@ function setupGraphMouseEvents(){
       sel.classList.remove('show');
       isRectSelecting=false;
       gc.classList.remove('selecting');
-      // Update visual
       document.querySelectorAll('.gn-rect').forEach(r=>{
         const nid=r.dataset.id;
         r.classList.toggle('gn-selected',graphSelected.has(nid));
@@ -3472,7 +3497,7 @@ function expXLSX(){
   function parKW(id){const n=ns.find(x=>x.id===id);return n?n.keyword:'';}
   function nLinks(id){return L().filter(l=>l.from===id||l.to===id).map(l=>{const oid=l.from===id?l.to:l.from;const o=ns.find(x=>x.id===oid);return o?o.keyword:'';}).join(' | ');}
   // Build TSV (Tab-separated) which Excel/Sheets parses cleanly
-  const hdr=['Funnel','Page Type','Keyword','URL','Volume','KD','Position','Status','Parent','Internal Links'];
+  const hdr=['Funnel','Page Type','Keyword','URL','G-Doc Brief','Volume','KD','Position','Status','Parent','Internal Links'];
   const ord={bofu:0,mofu:1,tofu:2};
   const rows=[hdr.join('\t')];
   [...ns].sort((a,b)=>(ord[a.funnel]||0)-(ord[b.funnel]||0)).forEach(n=>{
@@ -3481,6 +3506,7 @@ function expXLSX(){
       ptLabel(n.pageType),
       n.keyword,
       n.url||'',
+      n.docUrl||'',
       n.volume||'',
       n.kd||'',
       n.position||'',
