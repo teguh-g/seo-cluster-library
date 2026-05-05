@@ -549,7 +549,7 @@ button{font-family:var(--f);}
     <div class="ig"><label>URL</label><input type="text" id="aURL"></div>
     <div class="ig"><label>G-Doc Brief Link</label><input type="text" id="aDoc" placeholder="https://docs.google.com/document/d/... "></div>
     <div class="ir3">
-      <div class="ig"><label>Vol</label><input type="number" id="aVol"
+      <div class="ig"><label>Vol</label><input type="number" id="aVol" placeholder="1200"></div>
       <div class="ig"><label>KD</label><input type="number" id="aKD" placeholder="35"></div>
       <div class="ig"><label>Pos</label><input type="number" id="aPos" placeholder="8"></div>
     </div>
@@ -704,7 +704,6 @@ button{font-family:var(--f);}
     <div class="ig"><label>URL</label><input type="text" id="eURL"></div>
     <div class="ig"><label>G-Doc Brief Link</label><input type="text" id="eDoc" placeholder="https://docs.google.com/document/d/..."></div>
     <div class="ig"><label>Notes</label><textarea id="eNotes" placeholder="Target audience, brief summary, catatan strategi..." style="min-height:72px;font-family:var(--f);font-size:11px;"></textarea></div>
-    <div style="font-size:10px;color:var(--td);text-transform:uppercase;
     <div style="font-size:10px;color:var(--td);text-transform:uppercase;letter-spacing:.6px;margin:8px 0 4px;font-weight:600;">Research / Planning</div>
     <div class="ir3"><div class="ig"><label>Search Vol</label><input type="number" id="eVol" placeholder="from Ahrefs/Semrush"></div><div class="ig"><label>KD</label><input type="number" id="eKD"></div><div class="ig"><label>Position</label><input type="number" id="ePos" step="0.1"></div></div>
     <div style="font-size:10px;color:var(--td);text-transform:uppercase;letter-spacing:.6px;margin:8px 0 4px;font-weight:600;">GSC Metrics</div>
@@ -3434,6 +3433,8 @@ function setupGraphMouseEvents(){
       clearGraphSel();
       e.preventDefault();
     }
+  });
+
   gc.addEventListener('mousemove',(e)=>{
     if(isPanning){
       const dx=e.clientX-panStart.x;
@@ -3493,7 +3494,7 @@ function setupGraphMouseEvents(){
       });
       updateGraphSelToolbar();
     }
-    if(isMultiDragging){
+   if(isMultiDragging){
       isMultiDragging=false;
       save();
     }
