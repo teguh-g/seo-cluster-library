@@ -3556,10 +3556,9 @@ function setupGraphMouseEvents(){
     if(isLasso)finishLasso();
     if(isMultiDragging){
       isMultiDragging=false;
-      // Rerender sekali saat drag selesai (bukan saat drag berlangsung)
       renderGraph();
       save();
-    }}
+    }
     graphDragId=null;
   });
 }
