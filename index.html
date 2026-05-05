@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SEO Cluster Library</title>
+<meta name="author" content="Teguh Gunawan, S.Li.">
+<meta name="description" content="SEO Cluster Library — keyword cluster management tool by Teguh Gunawan, S.Li.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230b0e13'/><circle cx='16' cy='8' r='4' fill='%234a90ff'/><circle cx='6' cy='24' r='4' fill='%2334d399'/><circle cx='26' cy='24' r='4' fill='%23f59e0b'/><line x1='16' y1='12' x2='6' y2='20' stroke='%234a90ff' stroke-width='1.5' opacity='0.6'/><line x1='16' y1='12' x2='26' y2='20' stroke='%234a90ff' stroke-width='1.5' opacity='0.6'/><line x1='6' y1='24' x2='26' y2='24' stroke='%2334d399' stroke-width='1.5' opacity='0.4'/></svg>">  
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -69,7 +72,7 @@ button{font-family:var(--f);}
 /* === CONTEXT MENU === */
 .ctx-menu {
   position: fixed;
-  background: var(--sf);
+  background: var(--s2);
   border: 1px solid var(--bd);
   border-radius: var(--rs);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -665,6 +668,20 @@ button{font-family:var(--f);}
     <div class="es" id="gEmpty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--tf)" stroke-width="1.5"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg><h4>Cluster Map</h4><p>Add nodes to visualize.</p></div>
   </div>
   <div class="tv" id="tv"></div>
+  <div id="tblBulkBar" style="display:none;position:sticky;bottom:0;padding:8px 16px;background:var(--s2);border-top:1px solid var(--bofuBd);align-items:center;gap:8px;font-size:11px;z-index:10;">
+    <span id="tblBulkCount" style="color:var(--bofu);font-weight:600;font-family:var(--m);"></span>
+    <select id="tblBulkStatus" style="background:var(--s1);border:1px solid var(--bd);border-radius:4px;color:var(--t);font-size:10px;padding:4px 7px;outline:none;">
+      <option value="">Set status...</option>
+      <option value="draft">Draft</option>
+      <option value="in-progress">In Progress</option>
+      <option value="done">Done</option>
+      <option value="published">Published</option>
+      <option value="needs-update">Needs Update</option>
+      <option value="delete">⚠ Delete</option>
+    </select>
+    <button class="btn btn-p btn-sm" onclick="applyTblBulk()">Apply</button>
+    <button class="btn btn-g btn-sm" onclick="tblSelected.clear();updateCopySelBtn();document.querySelectorAll('.dt tbody tr').forEach(tr=>{tr.classList.remove('sel');const cb=tr.querySelector('input[type=checkbox]');if(cb)cb.checked=false;});document.getElementById('tblSelAll').checked=false;">Clear</button>
+  </div>
   <div class="dv" id="dv" style="display:none;"></div>
   <div class="sb">
     <div class="st">Nodes: <span id="sT">0</span></div>
@@ -1731,6 +1748,33 @@ function updateCopySelBtn(){
   }else{
     btn.style.display='none';
   }
+  const bar=document.getElementById('tblBulkBar');
+  if(!bar)return;
+  if(tblSelected.size>0){
+    bar.style.display='flex';
+    document.getElementById('tblBulkCount').textContent=tblSelected.size+' selected';
+  }else{
+    bar.style.display='none';
+  }
+}
+
+function applyTblBulk(){
+  const val=document.getElementById('tblBulkStatus').value;
+  if(!val){toast('Pilih action dulu!',1);return;}
+  const p=P();if(!p)return;
+  if(val==='delete'){
+    if(!confirm(`Delete ${tblSelected.size} node(s)?`))return;
+    p.nodes.filter(n=>tblSelected.has(n.id)).forEach(n=>{
+      p.nodes.filter(x=>x.parentId===n.id).forEach(x=>x.parentId=n.parentId);
+    });
+    p.nodes=p.nodes.filter(n=>!tblSelected.has(n.id));
+    p.links=p.links.filter(l=>!tblSelected.has(l.from)&&!tblSelected.has(l.to));
+  }else{
+    p.nodes.forEach(n=>{if(tblSelected.has(n.id))n.status=val;});
+  }
+  tblSelected.clear();
+  snapshotState();save();renderAll();
+  toast('Applied!');
 }
 
 // === SMART COPY ===
