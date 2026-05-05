@@ -189,7 +189,7 @@ button{font-family:var(--f);}
 .vt button{background:none;border:none;color:var(--td);font-family:var(--f);font-size:10px;font-weight:500;padding:5px 10px;cursor:pointer;transition:all .12s;}
 .vt button.active{background:var(--bofu);color:#fff;}
 /* Graph */
-.gc{flex:1;overflow:auto;position:relative;cursor:grab;}.gc:active{cursor:grabbing;}
+.gc{flex:1;overflow:auto;position:relative;cursor:grab;width:100%;box-sizing:border-box;}.gc:active{cursor:grabbing;}
 .gc svg{display:block;}
 /* Table */
 .tv{flex:1;overflow:auto;padding:12px 16px;display:none;}.tv.active{display:block;}
@@ -275,6 +275,14 @@ button{font-family:var(--f);}
 .tb-r .btn{position:relative;}
 .tb-r .badge{position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;font-size:8px;font-weight:700;padding:1px 4px;border-radius:6px;font-family:var(--m);}
 
+ .gc-lasso-path {
+  position:absolute;
+  top:0;left:0;
+  width:100%;height:100%;
+  pointer-events:none;
+  z-index:100;
+}
+  
 /* === SNAPSHOTS MODAL === */
 .snap-list{max-height:300px;overflow-y:auto;border:1px solid var(--bd);border-radius:var(--rs);}
 .snap-item{padding:9px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;font-size:11px;cursor:pointer;transition:background .12s;}
@@ -1468,13 +1476,14 @@ function renderGraph(){
   ns.filter(n=>!graphPositions[n.id]).forEach(n=>{graphPositions[n.id]={x:sx,y:40};sx+=(widths[n.id]||200)+gapX;});
 
   const allPos=ns.map(n=>graphPositions[n.id]).filter(Boolean);
-  const maxW=Math.max(800,...allPos.map(p=>p.x+(widths[ns.find(n=>graphPositions[n.id]===p)?.id]||200)+60));
-  const maxH=Math.max(400,...allPos.map(p=>p.y+nodeH+60));
+  const maxW=Math.max(8000,...allPos.map(p=>p.x+(widths[ns.find(n=>graphPositions[n.id]===p)?.id]||200)+200));
+const maxH=Math.max(6000,...allPos.map(p=>p.y+nodeH+200));
 
-  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svg.setAttribute('viewBox',`0 0 ${maxW} ${maxH}`);
-  svg.setAttribute('width',maxW);svg.setAttribute('height',maxH);
-  svg.style.minWidth=maxW+'px';svg.style.minHeight=maxH+'px';
+const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+svg.setAttribute('viewBox',`0 0 ${maxW} ${maxH}`);
+svg.setAttribute('width',maxW);svg.setAttribute('height',maxH);
+svg.style.width=maxW+'px';svg.style.height=maxH+'px';
+svg.style.display='block';
 
   // Edges (Parent-Child)
   ns.forEach(n=>{
@@ -1580,13 +1589,14 @@ function renderGraph(){
     `;
     
     g.addEventListener('mousedown',(e)=>{
-      if(e.button!==0)return;
-      if(graphSelected.has(n.id)&&graphSelected.size>1)return;
-      if(e.shiftKey){ e.stopPropagation(); toggleGraphNode(n.id,true); return; }
-      graphDragId=n.id;
-      graphDragOff={x:e.clientX-p.x,y:e.clientY-p.y};
-      e.preventDefault();
-    });
+  if(e.button!==0)return;
+  if(graphSelected.has(n.id)&&graphSelected.size>1)return;
+  if(e.shiftKey){ e.stopPropagation(); toggleGraphNode(n.id,true); return; }
+  graphDragId=n.id;
+  const gpt=mouseToGraph(e);
+  graphDragOff={x:gpt.x-p.x, y:gpt.y-p.y};
+  e.preventDefault();
+});
     g.addEventListener('click',(e)=>{
   if(e.shiftKey){ e.stopPropagation(); return; }
   if(window.linkSourceNode && window.linkSourceNode !== n.id) {
@@ -1644,9 +1654,11 @@ function renderGraph(){
     }
     // Handling Node Drag
     if(!graphDragId)return;
-    const p=graphPositions[graphDragId];if(!p)return;
-    p.x=e.clientX-graphDragOff.x;p.y=e.clientY-graphDragOff.y;
-    renderGraph();
+const p=graphPositions[graphDragId];if(!p)return;
+const gpt=mouseToGraph(e);
+p.x=gpt.x-graphDragOff.x;
+p.y=gpt.y-graphDragOff.y;
+renderGraph();
   });
   
   svg.addEventListener('mouseup',()=>{
@@ -3377,6 +3389,15 @@ function dupSingle(id){
   dupSelected();
 }
 
+function mouseToGraph(e) {
+  const gc = document.getElementById('gc');
+  const rect = gc.getBoundingClientRect();
+  return {
+    x: (e.clientX - rect.left + gc.scrollLeft) / graphZoom,
+    y: (e.clientY - rect.top  + gc.scrollTop)  / graphZoom
+  };
+}
+  
 // Setup graph mouse events for rectangle selection
 function setupGraphMouseEvents(){
   const gc=document.getElementById('gc');
@@ -3387,45 +3408,97 @@ function setupGraphMouseEvents(){
   let panStart={x:0,y:0};
   let panScrollStart={x:0,y:0};
 
+  let isLasso=false;
+  let lassoPoints=[];
+  let lassoEl=null;
+
+  let isMultiDragging=false;
+  let multiDragStart={x:0,y:0};
+  let nodeStartPos={};
+
+  function pointInPolygon(pt,polygon){
+    let inside=false;
+    const n=polygon.length;
+    let j=n-1;
+    for(let i=0;i<n;i++){
+      const xi=polygon[i].x,yi=polygon[i].y;
+      const xj=polygon[j].x,yj=polygon[j].y;
+      if(((yi>pt.y)!==(yj>pt.y))&&(pt.x<(xj-xi)*(pt.y-yi)/(yj-yi)+xi))inside=!inside;
+      j=i;
+    }
+    return inside;
+  }
+
+  function startLasso(e){
+    isLasso=true;
+    lassoPoints=[];
+    const svg=gc.querySelector('svg');
+    if(!svg)return;
+    lassoEl=document.createElementNS('http://www.w3.org/2000/svg','path');
+    lassoEl.setAttribute('fill','rgba(74,144,255,0.08)');
+    lassoEl.setAttribute('stroke','#4a90ff');
+    lassoEl.setAttribute('stroke-width',1.5/graphZoom);
+    lassoEl.setAttribute('stroke-dasharray',`${6/graphZoom},${3/graphZoom}`);
+    lassoEl.setAttribute('pointer-events','none');
+    svg.appendChild(lassoEl);
+    const pt=mouseToGraph(e);
+    lassoPoints.push(pt);
+    gc.classList.add('selecting');
+  }
+
+  function updateLasso(e){
+    if(!isLasso||!lassoEl)return;
+    const pt=mouseToGraph(e);
+    lassoPoints.push(pt);
+    const d=lassoPoints.map((p,i)=>`${i===0?'M':'L'}${p.x},${p.y}`).join(' ')+' Z';
+    lassoEl.setAttribute('d',d);
+  }
+
+  function finishLasso(){
+    if(!isLasso)return;
+    isLasso=false;
+    gc.classList.remove('selecting');
+    if(lassoEl){lassoEl.remove();lassoEl=null;}
+    if(lassoPoints.length<3){lassoPoints=[];return;}
+    N().forEach(n=>{
+      const pos=graphPositions[n.id];if(!pos)return;
+      const cx=pos.x+((widths&&widths[n.id])||200)/2;
+      const cy=pos.y+31;
+      if(pointInPolygon({x:cx,y:cy},lassoPoints))graphSelected.add(n.id);
+    });
+    lassoPoints=[];
+    document.querySelectorAll('.gn-rect').forEach(r=>{
+      r.classList.toggle('gn-selected',graphSelected.has(r.dataset.id));
+    });
+    updateGraphSelToolbar();
+  }
+
   gc.addEventListener('mousedown',(e)=>{
     if(e.button!==0)return;
     if(e.target.closest('.gc-toolbar'))return;
-    if(e.target.closest('g.gn-group')){
-      const g=e.target.closest('g.gn-group');
-      const id=g.dataset.id;
+    if(e.target.closest('.gc-zoom'))return;
+
+    const gNode=e.target.closest('g.gn-group');
+    if(gNode){
+      const id=gNode.dataset.id;
+      if(e.shiftKey){e.stopPropagation();toggleGraphNode(id,true);return;}
       if(graphSelected.has(id)&&graphSelected.size>1){
         e.preventDefault();
         isMultiDragging=true;
-        multiDragStart={x:e.clientX,y:e.clientY};
+        multiDragStart=mouseToGraph(e);
         nodeStartPos={};
         graphSelected.forEach(sid=>{
           if(graphPositions[sid])nodeStartPos[sid]={...graphPositions[sid]};
         });
-      } else if(graphSelected.has(id)&&graphSelected.size===1){
-        // Single selected node drag — normal behavior
-        graphDragId=id;
-        const p=graphPositions[id];
-        if(p)graphDragOff={x:e.clientX-p.x,y:e.clientY-p.y};
-        e.preventDefault();
+        return;
       }
       return;
     }
-    // Empty area: pan (default) atau rect select (shift)
+
     if(e.shiftKey){
-      // Shift+drag = rect select
-      isRectSelecting=true;
-      const rect=gc.getBoundingClientRect();
-      rectSelStart={x:e.clientX-rect.left+gc.scrollLeft,y:e.clientY-rect.top+gc.scrollTop};
-      const sel=document.getElementById('gcRectSel');
-      sel.style.left=rectSelStart.x+'px';
-      sel.style.top=rectSelStart.y+'px';
-      sel.style.width='0px';
-      sel.style.height='0px';
-      sel.classList.add('show');
-      gc.classList.add('selecting');
       e.preventDefault();
-    } else {
-      // Normal drag = pan
+      startLasso(e);
+    }else{
       isPanning=true;
       panStart={x:e.clientX,y:e.clientY};
       panScrollStart={x:gc.scrollLeft,y:gc.scrollTop};
@@ -3437,26 +3510,14 @@ function setupGraphMouseEvents(){
 
   gc.addEventListener('mousemove',(e)=>{
     if(isPanning){
-      const dx=e.clientX-panStart.x;
-      const dy=e.clientY-panStart.y;
-      gc.scrollLeft=panScrollStart.x-dx;
-      gc.scrollTop=panScrollStart.y-dy;
-    } else if(isRectSelecting){
-      const rect=gc.getBoundingClientRect();
-      const cx=e.clientX-rect.left+gc.scrollLeft;
-      const cy=e.clientY-rect.top+gc.scrollTop;
-      const sel=document.getElementById('gcRectSel');
-      const x=Math.min(rectSelStart.x,cx);
-      const y=Math.min(rectSelStart.y,cy);
-      const w=Math.abs(cx-rectSelStart.x);
-      const h=Math.abs(cy-rectSelStart.y);
-      sel.style.left=x+'px';
-      sel.style.top=y+'px';
-      sel.style.width=w+'px';
-      sel.style.height=h+'px';
-    } else if(isMultiDragging){
-      const dx=e.clientX-multiDragStart.x;
-      const dy=e.clientY-multiDragStart.y;
+      gc.scrollLeft=panScrollStart.x-(e.clientX-panStart.x);
+      gc.scrollTop=panScrollStart.y-(e.clientY-panStart.y);
+    }else if(isLasso){
+      updateLasso(e);
+    }else if(isMultiDragging){
+      const cur=mouseToGraph(e);
+      const dx=cur.x-multiDragStart.x;
+      const dy=cur.y-multiDragStart.y;
       Object.keys(nodeStartPos).forEach(id=>{
         graphPositions[id]={x:nodeStartPos[id].x+dx,y:nodeStartPos[id].y+dy};
       });
@@ -3465,39 +3526,14 @@ function setupGraphMouseEvents(){
   });
 
   gc.addEventListener('wheel',(e)=>{
-    if(e.ctrlKey){
-      e.preventDefault();
-      zoomGraph(e.deltaY<0?0.1:-0.1);
-    }
+    if(e.ctrlKey){e.preventDefault();zoomGraph(e.deltaY<0?0.1:-0.1);}
   },{passive:false});
 
-  document.addEventListener('mouseup',(e)=>{
-    if(isPanning){
-      isPanning=false;
-      gc.style.cursor='';
-    }
-    if(isRectSelecting){
-      const sel=document.getElementById('gcRectSel');
-      const r1=sel.getBoundingClientRect();
-      document.querySelectorAll('g.gn-group').forEach(g=>{
-        const r2=g.getBoundingClientRect();
-        if(r2.left<r1.right&&r2.right>r1.left&&r2.top<r1.bottom&&r2.bottom>r1.top){
-          graphSelected.add(g.dataset.id);
-        }
-      });
-      sel.classList.remove('show');
-      isRectSelecting=false;
-      gc.classList.remove('selecting');
-      document.querySelectorAll('.gn-rect').forEach(r=>{
-        const nid=r.dataset.id;
-        r.classList.toggle('gn-selected',graphSelected.has(nid));
-      });
-      updateGraphSelToolbar();
-    }
-   if(isMultiDragging){
-      isMultiDragging=false;
-      save();
-    }
+  document.addEventListener('mouseup',()=>{
+    if(isPanning){isPanning=false;gc.style.cursor='';}
+    if(isLasso)finishLasso();
+    if(isMultiDragging){isMultiDragging=false;save();}
+    graphDragId=null;
   });
 }
 
