@@ -1473,7 +1473,27 @@ function renderGraph(){
     if(!graphPositions[r.id]){layoutNode(r.id,sx,40);sx+=calcW(r.id)+gapX*3;}
     else{const ch=getCh(r.id);ch.forEach(c=>{if(!graphPositions[c.id])layoutNode(c.id,sx,graphPositions[r.id].y+nodeH+gapY);});}
   });
-  ns.filter(n=>!graphPositions[n.id]).forEach(n=>{graphPositions[n.id]={x:sx,y:40};sx+=(widths[n.id]||200)+gapX;});
+  ns.filter(n=>!graphPositions[n.id]).forEach(n=>{
+    // Kalau punya parent yang sudah punya posisi, taruh di bawah/samping parent
+    if(n.parentId&&graphPositions[n.parentId]){
+      const pp=graphPositions[n.parentId];
+      const pw=widths[n.parentId]||200;
+      // Cari siblings yang sudah ter-layout untuk avoid overlap
+      const siblings=ns.filter(s=>s.parentId===n.parentId&&graphPositions[s.id]&&s.id!==n.id);
+      const rightmostSibling=siblings.reduce((max,s)=>{
+        const sx2=(graphPositions[s.id]?.x||0)+(widths[s.id]||200);
+        return sx2>max?sx2:max;
+      },pp.x);
+      graphPositions[n.id]={
+        x:siblings.length?rightmostSibling+gapX:pp.x,
+        y:pp.y+nodeH+gapY
+      };
+    }else{
+      // Root node tanpa posisi — taruh di kanan konten yang ada
+      graphPositions[n.id]={x:sx,y:40};
+      sx+=(widths[n.id]||200)+gapX;
+    }
+  });
 
   const allPos=ns.map(n=>graphPositions[n.id]).filter(Boolean);
   const maxW=Math.max(8000,...allPos.map(p=>p.x+(widths[ns.find(n=>graphPositions[n.id]===p)?.id]||200)+200));
@@ -3495,16 +3515,17 @@ function setupGraphMouseEvents(){
       return;
     }
 
-    if(e.shiftKey){
-      e.preventDefault();
-      startLasso(e);
-    }else{
+    if(e.ctrlKey||e.metaKey){
+      // Ctrl+drag = pan
       isPanning=true;
       panStart={x:e.clientX,y:e.clientY};
       panScrollStart={x:gc.scrollLeft,y:gc.scrollTop};
       gc.style.cursor='grabbing';
-      clearGraphSel();
       e.preventDefault();
+    }else{
+      // drag kosong = lasso select
+      e.preventDefault();
+      startLasso(e);
     }
   });
 
@@ -3520,8 +3541,9 @@ function setupGraphMouseEvents(){
       const dy=cur.y-multiDragStart.y;
       Object.keys(nodeStartPos).forEach(id=>{
         graphPositions[id]={x:nodeStartPos[id].x+dx,y:nodeStartPos[id].y+dy};
+        const g=document.querySelector(`g.gn-group[data-id="${id}"]`);
+        if(g) g.setAttribute('transform',`translate(${dx},${dy})`);
       });
-      renderGraph();
     }
   });
 
@@ -3532,7 +3554,12 @@ function setupGraphMouseEvents(){
   document.addEventListener('mouseup',()=>{
     if(isPanning){isPanning=false;gc.style.cursor='';}
     if(isLasso)finishLasso();
-    if(isMultiDragging){isMultiDragging=false;save();}
+    if(isMultiDragging){
+      isMultiDragging=false;
+      // Rerender sekali saat drag selesai (bukan saat drag berlangsung)
+      renderGraph();
+      save();
+    }}
     graphDragId=null;
   });
 }
