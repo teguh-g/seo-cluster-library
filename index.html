@@ -401,7 +401,7 @@ button{font-family:var(--f);}
 .gc-zoom button:hover{background:var(--s3);border-color:var(--bofu);color:var(--bofu);}
 .gc-zoom .zoom-lbl{font-size:10px;font-family:var(--m);color:var(--td);align-self:center;min-width:36px;text-align:center;}
 .gc.selecting{cursor:crosshair;}
-.gc-rect-sel{position:absolute;border:1.5px dashed var(--bofu);background:rgba(74,144,255,.08);pointer-events:none;z-index:10;display:none;}
+.gc-rect-sel{position:absolute;border:1.5px dashed var(--bofu);background:rgba(74,144,255,.08);pointer-events:none;z-index:100;display:none;min-width:2px;min-height:2px;}
 .gc-rect-sel.show{display:block;}
 .gc svg .gn-rect.gn-selected{stroke:var(--bofu);stroke-width:2.5;}
 .gc svg .gn-group{cursor:move;}
@@ -3424,6 +3424,7 @@ function setupGraphMouseEvents(){
       sel.style.height='0px';
       sel.classList.add('show');
       gc.classList.add('selecting');
+      e.preventDefault();
     } else {
       // Normal drag = pan
       isPanning=true;
@@ -3431,10 +3432,8 @@ function setupGraphMouseEvents(){
       panScrollStart={x:gc.scrollLeft,y:gc.scrollTop};
       gc.style.cursor='grabbing';
       clearGraphSel();
+      e.preventDefault();
     }
-    e.preventDefault();
-  });
-
   gc.addEventListener('mousemove',(e)=>{
     if(isPanning){
       const dx=e.clientX-panStart.x;
@@ -3446,10 +3445,14 @@ function setupGraphMouseEvents(){
       const cx=e.clientX-rect.left+gc.scrollLeft;
       const cy=e.clientY-rect.top+gc.scrollTop;
       const sel=document.getElementById('gcRectSel');
-      sel.style.left=Math.min(rectSelStart.x,cx)+'px';
-      sel.style.top=Math.min(rectSelStart.y,cy)+'px';
-      sel.style.width=Math.abs(cx-rectSelStart.x)+'px';
-      sel.style.height=Math.abs(cy-rectSelStart.y)+'px';
+      const x=Math.min(rectSelStart.x,cx);
+      const y=Math.min(rectSelStart.y,cy);
+      const w=Math.abs(cx-rectSelStart.x);
+      const h=Math.abs(cy-rectSelStart.y);
+      sel.style.left=x+'px';
+      sel.style.top=y+'px';
+      sel.style.width=w+'px';
+      sel.style.height=h+'px';
     } else if(isMultiDragging){
       const dx=e.clientX-multiDragStart.x;
       const dy=e.clientY-multiDragStart.y;
