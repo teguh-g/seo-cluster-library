@@ -3541,16 +3541,16 @@ function setupGraphMouseEvents(){
       gc.classList.remove('selecting');
       selBox.classList.remove('show');
       // Hit-test semua node terhadap rectangle
-      const rx=parseFloat(selBox.style.left);
-      const ry=parseFloat(selBox.style.top);
-      const rw=parseFloat(selBox.style.width);
-      const rh=parseFloat(selBox.style.height);
+      // Konversi rect ke graph coordinates (bagi graphZoom)
+      const rx=parseFloat(selBox.style.left)/graphZoom;
+      const ry=parseFloat(selBox.style.top)/graphZoom;
+      const rw=parseFloat(selBox.style.width)/graphZoom;
+      const rh=parseFloat(selBox.style.height)/graphZoom;
       if(rw>4&&rh>4){
         N().forEach(n=>{
           const pos=graphPositions[n.id];if(!pos)return;
           const nw=pos._w||200;
           const nh=62;
-          // Node center dalam koordinat SVG/canvas
           const ncx=pos.x+nw/2;
           const ncy=pos.y+nh/2;
           if(ncx>=rx&&ncx<=rx+rw&&ncy>=ry&&ncy<=ry+rh){
