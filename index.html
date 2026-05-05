@@ -157,7 +157,7 @@ button{font-family:var(--f);}
 .tn-h:hover{background:var(--s3);}
 .tn-exp{width:16px;height:16px;display:flex;align-items:center;justify-content:center;border:none;background:none;color:var(--td);cursor:pointer;transition:transform .15s;flex-shrink:0;}
 .tn-exp.open{transform:rotate(90deg);}.tn-exp.hide{visibility:hidden;}
-.sd{width:5px;height:5px;border-radius:50%;flex-shrink:0;}.sd-published{background:var(--ok);}.sd-draft{background:var(--tf);}.sd-needs-update{background:var(--mofu);}
+.sd{width:5px;height:5px;border-radius:50%;flex-shrink:0;}.sd-published{background:var(--ok);}.sd-draft{background:var(--tf);}.sd-in-progress{background:#a78bfa;}.sd-done{background:var(--bofu);}.sd-needs-update{background:var(--mofu);}
 .fb{font-family:var(--m);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:1px 5px;border-radius:3px;flex-shrink:0;}
 .fb-bofu{background:var(--bofuBg);color:var(--bofu);border:1px solid var(--bofuBd);}
 .fb-mofu{background:var(--mofuBg);color:var(--mofu);border:1px solid var(--mofuBd);}
@@ -552,7 +552,7 @@ button{font-family:var(--f);}
     </div>
     <div class="ir">
       <div class="ig"><label>Parent</label><select id="aPar"><option value="">-- Root --</option></select></div>
-      <div class="ig"><label>Status</label><select id="aSt"><option value="draft">Draft</option><option value="published">Published</option><option value="needs-update">Perlu Update</option></select></div>
+      <div class="ig"><label>Status</label><select id="aSt"><option value="draft">Draft</option><option value="in-progress">In Progress</option><option value="done">Done</option><option value="published">Published</option><option value="needs-update">Needs Update</option></select></div>
     </div>
     <button class="btn btn-p" onclick="addNode()">Add Node</button>
   </div>
@@ -599,8 +599,10 @@ button{font-family:var(--f);}
       <span class="sf-chip bofu" data-filter="funnel" data-val="bofu" onclick="toggleFilter(this)">BOFU</span>
       <span class="sf-chip mofu" data-filter="funnel" data-val="mofu" onclick="toggleFilter(this)">MOFU</span>
       <span class="sf-chip tofu" data-filter="funnel" data-val="tofu" onclick="toggleFilter(this)">TOFU</span>
-      <span class="sf-chip published" data-filter="status" data-val="published" onclick="toggleFilter(this)">Pub</span>
       <span class="sf-chip draft" data-filter="status" data-val="draft" onclick="toggleFilter(this)">Draft</span>
+      <span class="sf-chip" data-filter="status" data-val="in-progress" onclick="toggleFilter(this)" style="border-color:var(--bd);">WIP</span>
+      <span class="sf-chip" data-filter="status" data-val="done" onclick="toggleFilter(this)" style="border-color:var(--bd);">Done</span>
+      <span class="sf-chip published" data-filter="status" data-val="published" onclick="toggleFilter(this)">Pub</span>
       <span class="sf-chip needs-update" data-filter="status" data-val="needs-update" onclick="toggleFilter(this)">Update</span>
     </div>
   </div>
@@ -608,9 +610,11 @@ button{font-family:var(--f);}
     <span class="count" id="bulkCount">0 selected</span>
     <select id="bulkAction">
       <option value="">Bulk action...</option>
-      <option value="status:published">Set: Published</option>
       <option value="status:draft">Set: Draft</option>
-      <option value="status:needs-update">Set: Needs update</option>
+      <option value="status:in-progress">Set: In Progress</option>
+      <option value="status:done">Set: Done</option>
+      <option value="status:published">Set: Published</option>
+      <option value="status:needs-update">Set: Needs Update</option>
       <option value="funnel:bofu">Move to BOFU</option>
       <option value="funnel:mofu">Move to MOFU</option>
       <option value="funnel:tofu">Move to TOFU</option>
@@ -682,19 +686,25 @@ button{font-family:var(--f);}
     <div class="ig"><label>Keyword</label><input type="text" id="eKW"></div>
     <div class="ig"><label>URL</label><input type="text" id="eURL"></div>
     <div class="ig"><label>G-Doc Brief Link</label><input type="text" id="eDoc" placeholder="https://docs.google.com/document/d/..."></div>
-    <div class="ig"><label>Brief Status</label><select id="eBriefStatus"><option value="">— Belum ada —</option><option value="not-started">Not Started</option><option value="in-progress">In Progress</option><option value="done">Done</option><option value="published">Published</option></select></div>
+    <div class="ig"><label>Notes</label><textarea id="eNotes" placeholder="Target audience, brief summary, catatan strategi..." style="min-height:72px;font-family:var(--f);font-size:11px;"></textarea></div>
     <div style="font-size:10px;color:var(--td);text-transform:uppercase;
     <div style="font-size:10px;color:var(--td);text-transform:uppercase;letter-spacing:.6px;margin:8px 0 4px;font-weight:600;">Research / Planning</div>
     <div class="ir3"><div class="ig"><label>Search Vol</label><input type="number" id="eVol" placeholder="from Ahrefs/Semrush"></div><div class="ig"><label>KD</label><input type="number" id="eKD"></div><div class="ig"><label>Position</label><input type="number" id="ePos" step="0.1"></div></div>
     <div style="font-size:10px;color:var(--td);text-transform:uppercase;letter-spacing:.6px;margin:8px 0 4px;font-weight:600;">GSC Metrics</div>
     <div class="ir3"><div class="ig"><label>Impressions</label><input type="number" id="eImpr" placeholder="0"></div><div class="ig"><label>Clicks</label><input type="number" id="eClicks" placeholder="0"></div><div class="ig"><label>CTR (%)</label><input type="number" id="eCtr" step="0.01" placeholder="0"></div></div>
-    <div class="ir"><div class="ig"><label>Parent</label><select id="ePar"></select></div><div class="ig"><label>Status</label><select id="eSt"><option value="draft">Draft</option><option value="published">Published</option><option value="needs-update">Perlu Update</option></select></div></div>
+    <div class="ir"><div class="ig"><label>Parent</label><select id="ePar"></select></div><div class="ig"><label>Status</label><select id="eSt"><option value="draft">Draft</option><option value="in-progress">In Progress</option><option value="done">Done</option><option value="published">Published</option><option value="needs-update">Needs Update</option></select></div></div>
     <div class="btn-row">
       <button class="btn btn-d btn-sm" onclick="delNode()">Delete</button>
       <div style="flex:1"></div>
       <button class="btn btn-g btn-sm" onclick="closeMo()">Cancel</button>
       <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="saveEd()">Save</button>
     </div>
+  </div>
+</div>
+
+<div id="linkCtxMenu" class="ctx-menu" style="display:none;">
+  <div onclick="removeLinkCtx()" class="del">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:6px;vertical-align:-2px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Remove Link
   </div>
 </div>
 
@@ -1113,7 +1123,7 @@ function openEd(id){
   sv('eKW',n.keyword);
   sv('eURL',n.url);
   sv('eDoc',n.docUrl || '');
-  sv('eBriefStatus',n.briefStatus||'');
+  document.getElementById('eNotes').value=n.notes||'';
   sv('eVol',n.volume||'');sv('eKD',n.kd||'');sv('ePos',n.position||'');
   sv('eImpr',n.impressions||'');sv('eClicks',n.clicks||'');sv('eCtr',n.ctr||'');
   sv('eSt',n.status);
@@ -1124,7 +1134,8 @@ function openEd(id){
 function saveEd(){
   const n=N().find(x=>x.id===editId);if(!n)return;
   n.funnel=gv('eF');n.pageType=gv('ePT');n.keyword=gv('eKW');
-  n.url=gv('eURL'); n.docUrl=gv('eDoc'); n.briefStatus=gv('eBriefStatus');
+  n.url=gv('eURL'); n.docUrl=gv('eDoc');
+  n.notes=document.getElementById('eNotes').value.trim();
   n.volume=int(gv('eVol'));n.kd=int(gv('eKD'));n.position=parseFloat(gv('ePos'))||0;
   n.impressions=int(gv('eImpr'));n.clicks=int(gv('eClicks'));n.ctr=parseFloat(gv('eCtr'))||0;
   n.status=gv('eSt');
@@ -1176,7 +1187,7 @@ function closeCtx() {
 }
 
 document.addEventListener('click', (e) => {
-  if (!e.target.closest('.ctx-menu')) closeCtx();
+  if (!e.target.closest('.ctx-menu')) { closeCtx(); closeLinkCtx(); }
 });
 
 function ctxEdit() { if(ctxNodeId) openEd(ctxNodeId); closeCtx(); }
@@ -1215,6 +1226,29 @@ function ctxAddLink() {
   document.getElementById('gc').style.cursor = 'crosshair';
   toast('Klik node tujuan untuk membuat link. Tekan Esc untuk batal.', 2);
   closeCtx();
+}
+
+let ctxLinkFrom=null,ctxLinkTo=null;
+function showLinkCtx(from,to,e){
+  ctxLinkFrom=from;ctxLinkTo=to;
+  const m=document.getElementById('linkCtxMenu');
+  m.style.left=e.clientX+'px';
+  m.style.top=e.clientY+'px';
+  m.style.display='block';
+}
+function closeLinkCtx(){
+  document.getElementById('linkCtxMenu').style.display='none';
+  ctxLinkFrom=null;ctxLinkTo=null;
+}
+function removeLinkCtx(){
+  if(!ctxLinkFrom||!ctxLinkTo)return;
+  const p=P();if(!p)return;
+  const fn=p.nodes.find(x=>x.id===ctxLinkFrom);
+  const tn=p.nodes.find(x=>x.id===ctxLinkTo);
+  if(!confirm(`Remove link?\n\n${fn?.keyword} → ${tn?.keyword}`))return;
+  p.links=p.links.filter(l=>!(l.from===ctxLinkFrom&&l.to===ctxLinkTo));
+  closeLinkCtx();snapshotState();save();renderAll();
+  toast('Link removed.');
 }
 
 function cancelLinkMode() {
@@ -1292,6 +1326,7 @@ function renderAll(){
   renderStats();
   const p=P();
   document.getElementById('projName').textContent=p?p.name:'No project selected';
+  document.title=p?`${p.name} — SEO Cluster Library`:'SEO Cluster Library';
   applySearch();
   updateCannibalWarn();
 }
@@ -1378,7 +1413,7 @@ function renderGraph(){
   em.style.display='none';
 
   const cols={bofu:'#4a90ff',mofu:'#f59e0b',tofu:'#34d399'};
-  const stCols={published:'#34d399',draft:'#5a6478','needs-update':'#f59e0b'};
+  const stCols={published:'#34d399',draft:'#5a6478','in-progress':'#a78bfa',done:'#4a90ff','needs-update':'#f59e0b'};
 
   const canvas=document.createElement('canvas');const ctx2=canvas.getContext('2d');
   ctx2.font='600 12px DM Sans';
@@ -1463,6 +1498,21 @@ function renderGraph(){
       arr.setAttribute('points',`${ax},${ay} ${ax-ah*Math.cos(angle-0.4)},${ay-ah*Math.sin(angle-0.4)} ${ax-ah*Math.cos(angle+0.4)},${ay-ah*Math.sin(angle+0.4)}`);
       arr.setAttribute('fill','#a78bfa'); arr.setAttribute('opacity','0.7');
       svg.appendChild(arr);
+
+      // Clickable hit area untuk context menu
+      const hitLine=mkSVG('line');
+      hitLine.setAttribute('x1',x1);hitLine.setAttribute('y1',y1);
+      hitLine.setAttribute('x2',x2);hitLine.setAttribute('y2',y2);
+      hitLine.setAttribute('stroke','transparent');
+      hitLine.setAttribute('stroke-width','12');
+      hitLine.style.cursor='pointer';
+      hitLine.addEventListener('mouseenter',()=>{line.setAttribute('stroke-width','3');});
+      hitLine.addEventListener('mouseleave',()=>{line.setAttribute('stroke-width','1.5');});
+      hitLine.addEventListener('contextmenu',(e)=>{
+        e.preventDefault();e.stopPropagation();
+        showLinkCtx(l.from,l.to,e);
+      });
+      svg.appendChild(hitLine);
     }
   });
 
@@ -1611,7 +1661,8 @@ function renderTable(){
     {key:'keyword',lbl:'Keyword'},
     {key:'url',lbl:'URL'},
     {key:'docUrl',lbl:'G-Doc Brief'},
-    {key:'briefStatus',lbl:'Brief Status'},
+    {key:'notes',lbl:'Notes'},
+    
     {key:'volume',lbl:'Search Vol'},
     {key:'kd',lbl:'KD'},
     {key:'impressions',lbl:'Impr'},
@@ -1635,7 +1686,7 @@ function renderTable(){
       <td><strong>${esc(n.keyword)}</strong></td>
       <td class="mono url-c">${n.url?esc(n.url):'--'}</td>
       <td class="mono url-c">${n.docUrl?`<a href="${esc(n.docUrl)}" target="_blank" style="color:var(--bofu);text-decoration:none;font-size:10px;" title="${esc(n.docUrl)}">📄 Brief</a>`:'--'}</td>
-      <td style="font-size:10px;">${n.briefStatus?`<span style="padding:1px 6px;border-radius:3px;font-size:9px;font-weight:600;font-family:var(--m);background:${{'not-started':'rgba(90,100,120,.2)','in-progress':'rgba(245,158,11,.15)','done':'rgba(52,211,153,.15)','published':'rgba(74,144,255,.15)'}[n.briefStatus]||'var(--s2)'};color:${{'not-started':'var(--tf)','in-progress':'var(--mofu)','done':'var(--tofu)','published':'var(--bofu)'}[n.briefStatus]||'var(--td)'}">${n.briefStatus}</span>`:'--'}</td>
+      <td style="font-size:10px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(n.notes||'')}">${n.notes?esc(n.notes):'--'}</td>
       <td class="mono">${n.volume||'--'}</td>
       <td class="mono">${n.kd||'--'}</td>
       <td class="mono">${n.impressions?n.impressions.toLocaleString():'--'}</td>
@@ -1692,7 +1743,7 @@ function buildRowData(n,ns){
     keyword:n.keyword,
     url:n.url||'',
     docUrl:n.docUrl||'',
-    briefStatus:n.briefStatus||'',
+    notes:n.notes||'',
     volume:n.volume||'',
     kd:n.kd||'',
     impressions:n.impressions||'',
