@@ -544,7 +544,7 @@ button{font-family:var(--f);}
 <div class="layout">
 
 <div class="folders">
-  <div class="folders-hdr panel-section-header" onclick="toggleSection(this)">
+  <div class="folders-hdr panel-section-header" onclick="toggleSection(this.closest('.folders'))">
     <h3>Projects</h3>
     <div style="display:flex;gap:6px;align-items:center;">
       <button class="btn btn-g btn-sm" onclick="event.stopPropagation();addFolder()">+ New</button>
@@ -562,8 +562,7 @@ button{font-family:var(--f);}
         Add Node
       </h3>
       <button class="collapse-btn">▾</button>
-    </div><!-- end panel-section-body -->
-  </div><!-- end addSec -->
+    </div>
     <div class="panel-section-body">
     <div class="ig"><label>Funnel</label><select id="aF" onchange="onFC()"><option value="bofu">BOFU</option><option value="mofu">MOFU</option><option value="tofu">TOFU</option></select></div>
     <div class="ig"><label>Page Type</label><select id="aPT"></select></div>
@@ -579,8 +578,9 @@ button{font-family:var(--f);}
       <div class="ig"><label>Parent</label><select id="aPar"><option value="">-- Root --</option></select></div>
       <div class="ig"><label>Status</label><select id="aSt"><option value="draft">Draft</option><option value="in-progress">In Progress</option><option value="done">Done</option><option value="published">Published</option><option value="needs-update">Needs Update</option></select></div>
     </div>
-    <button class="btn btn-p" onclick="addNode()">Add Node</button>
-  </div>
+     <button class="btn btn-p" onclick="addNode()">Add Node</button>
+    </div><!-- end panel-section-body -->
+  </div><!-- end addSec -->
 
   <div class="panel-section">
     <h3>
@@ -1123,7 +1123,11 @@ function onFC(){
 }
 // === Toogle Section ===
   function toggleSection(el){
-  el.classList.toggle('collapsed');
+  // Support folders sidebar (parent .folders) dan panel-section
+  const target = el.classList.contains('panel-section') ? el :
+                 el.classList.contains('folders') ? el :
+                 el.closest('.panel-section') || el.closest('.folders') || el;
+  target.classList.toggle('collapsed');
 }
 
 // === ADD NODE ===
