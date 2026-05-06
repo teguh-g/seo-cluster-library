@@ -125,6 +125,12 @@ button{font-family:var(--f);}
 .folder-item:hover .f-actions{display:flex;}
 .f-actions button{background:none;border:none;color:var(--td);cursor:pointer;padding:2px;}
 .f-actions button:hover{color:var(--danger);}
+.panel-section.collapsed .panel-section-body{display:none;}
+.panel-section-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+.panel-section-header:hover h3{color:var(--t);}
+.collapse-btn{background:none;border:none;color:var(--td);cursor:pointer;padding:2px 4px;font-size:14px;line-height:1;border-radius:3px;transition:transform .2s;}
+.panel-section.collapsed .collapse-btn{transform:rotate(-90deg);}
+  
 /* === PANEL === */
 .panel{border-right:1px solid var(--bd);display:flex;flex-direction:column;background:var(--s1);overflow-y:auto;overflow-x:hidden;}
 .panel-section{padding:14px 16px;border-bottom:1px solid var(--bd);flex-shrink:0;}
@@ -538,19 +544,26 @@ button{font-family:var(--f);}
 <div class="layout">
 
 <div class="folders">
-  <div class="folders-hdr">
+  <div class="folders-hdr panel-section-header" onclick="toggleSection(this)">
     <h3>Projects</h3>
-    <button class="btn btn-g btn-sm" onclick="addFolder()">+ New</button>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <button class="btn btn-g btn-sm" onclick="event.stopPropagation();addFolder()">+ New</button>
+      <button class="collapse-btn">▾</button>
+    </div>
   </div>
-  <div class="folder-list" id="folderList"></div>
-</div>
+  <div class="folder-list panel-section-body" id="folderList"></div>
 
 <div class="panel">
   <div class="panel-section" id="addSec">
-    <h3>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8m-4-4h8"/></svg>
-      Add Node
-    </h3>
+    <div class="panel-section-header" onclick="toggleSection(this.closest('.panel-section'))">
+      <h3 style="margin-bottom:0;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8m-4-4h8"/></svg>
+        Add Node
+      </h3>
+      <button class="collapse-btn">▾</button>
+    </div><!-- end panel-section-body -->
+  </div><!-- end addSec -->
+    <div class="panel-section-body">
     <div class="ig"><label>Funnel</label><select id="aF" onchange="onFC()"><option value="bofu">BOFU</option><option value="mofu">MOFU</option><option value="tofu">TOFU</option></select></div>
     <div class="ig"><label>Page Type</label><select id="aPT"></select></div>
     <div class="ig"><label>Keyword</label><input type="text" id="aKW"></div>
@@ -1106,6 +1119,10 @@ function onFC(){
   const f=gv('aF'),s=document.getElementById('aPT');
   s.innerHTML='';
   PT_ALL.filter(pt=>(PT_MAP[f]||[]).includes(pt.v)).forEach(pt=>{s.innerHTML+=`<option value="${pt.v}">${pt.l}</option>`;});
+}
+// === Toogle Section ===
+  function toggleSection(el){
+  el.classList.toggle('collapsed');
 }
 
 // === ADD NODE ===
