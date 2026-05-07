@@ -1150,7 +1150,12 @@ function addFolder(){
   save();renderAll();
 }
 
-function selFolder(id){activeProj=id;graphPositions={};renderAll();}
+function selFolder(id){
+  activeProj=id;
+  const p=projects.find(x=>x.id===id);
+  graphPositions=p&&p._gpos?JSON.parse(JSON.stringify(p._gpos)):{};
+  renderAll();
+}
 
 function renameFolder(id,e){
   e.stopPropagation();
@@ -1774,8 +1779,17 @@ svg.style.display='block';
 
   gc.appendChild(svg);
 
+  // Simpan graphPositions ke project data supaya persist antar switch
+  const pData2=P();
+  if(pData2){
+    pData2._gpos={};
+    ns.forEach(n=>{if(graphPositions[n.id])pData2._gpos[n.id]={...graphPositions[n.id]};});
+  }
+
   // General Drag Handlers
   svg.addEventListener('mousemove',(e)=>{
+
+  
     // Handling Sticky Note Drag
     if(graphDragNoteId) {
        const nt = P().notes.find(x => x.id === graphDragNoteId);
@@ -1798,6 +1812,12 @@ renderGraph();
   
   svg.addEventListener('mouseup',()=>{
      if(graphDragNoteId) { save(); graphDragNoteId = null; }
+     if(graphDragId){
+       // Persist posisi setelah drag
+       const pD=P();
+       if(pD){pD._gpos=pD._gpos||{};ns.forEach(n=>{if(graphPositions[n.id])pD._gpos[n.id]={...graphPositions[n.id]};});}
+       save();
+     }
      graphDragId=null;
   });
   svg.addEventListener('mouseleave',()=>{
@@ -3676,6 +3696,8 @@ function setupGraphMouseEvents(){
     }
     if(isMultiDragging){
       isMultiDragging=false;
+      const pD=P();
+      if(pD){pD._gpos=pD._gpos||{};N().forEach(n=>{if(graphPositions[n.id])pD._gpos[n.id]={...graphPositions[n.id]};});}
       renderGraph();
       save();
     }
