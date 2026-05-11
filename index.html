@@ -1630,6 +1630,22 @@ function renderGraph(){
     }
   });
 
+  // Hitung node mana yang harus disembunyikan (children ke-6+ dari parent yang collapsed,
+  // plus semua descendant-nya supaya subtree-nya juga hilang)
+  const hiddenNodes=new Set();
+  function hideSubtree(nid){
+    hiddenNodes.add(nid);
+    getChAll(nid).forEach(c=>hideSubtree(c.id));
+  }
+  ns.forEach(n=>{
+    if(collapsedParents.has(n.id)){
+      const all=getChAll(n.id);
+      if(all.length>GRAPH_CHILD_LIMIT){
+        all.slice(GRAPH_CHILD_LIMIT).forEach(c=>hideSubtree(c.id));
+      }
+    }
+  });
+
   const roots=ns.filter(n=>!n.parentId||!ns.find(x=>x.id===n.parentId));
   let sx=40;
   roots.forEach(r=>{
@@ -1674,6 +1690,7 @@ svg.style.display='block';
 
   // Edges (Parent-Child)
   ns.forEach(n=>{
+    if(hiddenNodes.has(n.id))return;
     if(n.parentId&&graphPositions[n.parentId]&&graphPositions[n.id]){
       const pp=graphPositions[n.parentId],cp=graphPositions[n.id];
       const pw=widths[n.parentId]||200,cw=widths[n.id]||200;
@@ -1694,6 +1711,7 @@ svg.style.display='block';
 
   // Internal Links
   L().forEach(l=>{
+    if(hiddenNodes.has(l.from)||hiddenNodes.has(l.to))return;
     const fp=graphPositions[l.from],tp=graphPositions[l.to];
     if(fp&&tp){
       const fw=widths[l.from]||200,tw=widths[l.to]||200;
@@ -1730,6 +1748,7 @@ svg.style.display='block';
 
   // Render Nodes
   ns.forEach(n=>{
+    if(hiddenNodes.has(n.id))return;
     const p=graphPositions[n.id];if(!p)return;
     const w=widths[n.id]||200;
     const col=cols[n.funnel]||'#8892a4';
@@ -1880,10 +1899,20 @@ svg.style.display='block';
   gc.appendChild(svg);
 
   // Simpan graphPositions ke project data supaya persist antar switch
+  // PENTING: untuk node yang sedang hidden, JANGAN hapus posisinya dari _gpos —
+  // pakai posisi lama yang sudah tersimpan supaya saat expand kembali, layoutnya konsisten
   const pData2=P();
   if(pData2){
+    const prevGpos=pData2._gpos||{};
     pData2._gpos={};
-    ns.forEach(n=>{if(graphPositions[n.id])pData2._gpos[n.id]={...graphPositions[n.id]};});
+    ns.forEach(n=>{
+      if(graphPositions[n.id]){
+        pData2._gpos[n.id]={...graphPositions[n.id]};
+      }else if(prevGpos[n.id]){
+        // Node hidden — preserve posisi lama
+        pData2._gpos[n.id]={...prevGpos[n.id]};
+      }
+    });
   }
 
   // General Drag Handlers
