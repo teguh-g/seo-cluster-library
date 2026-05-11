@@ -20,12 +20,12 @@
   --r:10px;--rs:6px;--f:'DM Sans',sans-serif;--m:'Space Mono',monospace;
 }
 [data-theme="light"]{
-  --bg:#fafafa;--s1:#ffffff;--s2:#f3f4f6;--s3:#e5e7eb;
-  --bd:#d1d5db;--bd2:#9ca3af;
-  --t:#111827;--td:#4b5563;--tf:#9ca3af;
-  --bofu:#2563eb;--bofuBg:rgba(37,99,235,.08);--bofuBd:rgba(37,99,235,.3);
-  --mofu:#d97706;--mofuBg:rgba(217,119,6,.08);--mofuBd:rgba(217,119,6,.3);
-  --tofu:#059669;--tofuBg:rgba(5,150,105,.08);--tofuBd:rgba(5,150,105,.3);
+  --bg:#ffffff;--s1:#ffffff;--s2:#f7f8fa;--s3:#eef1f5;
+  --bd:#e5e8ed;--bd2:#c8cdd6;
+  --t:#0f1419;--td:#5e6773;--tf:#9aa3af;
+  --bofu:#2563eb;--bofuBg:rgba(37,99,235,.06);--bofuBd:rgba(37,99,235,.22);
+  --mofu:#d97706;--mofuBg:rgba(217,119,6,.06);--mofuBd:rgba(217,119,6,.22);
+  --tofu:#059669;--tofuBg:rgba(5,150,105,.06);--tofuBd:rgba(5,150,105,.22);
   --danger:#dc2626;--ok:#059669;
 }
   /* Pastikan header dan isi tabel dashboard sejajar ke kanan */
@@ -327,13 +327,36 @@ button{font-family:var(--f);}
 .theme-tog:hover{border-color:var(--bd2);color:var(--t);}
 
 /* Light mode minor adjustments */
-[data-theme="light"] body{background:linear-gradient(180deg,#fafafa 0%,#f3f4f6 100%);}
-[data-theme="light"] .gc{background:#fafafa;}
-[data-theme="light"] .gc svg rect[fill="#141820"]{fill:#fff !important;}
-[data-theme="light"] .gc svg text[fill="#e4e8f0"]{fill:#111827 !important;}
-[data-theme="light"] .gc svg text[fill="#5a6478"]{fill:#6b7280 !important;}
-[data-theme="light"] ::-webkit-scrollbar-thumb{background:#d1d5db;}
-[data-theme="light"] ::-webkit-scrollbar-thumb:hover{background:#9ca3af;}
+[data-theme="light"] body{background:#ffffff;}
+[data-theme="light"] .gc{background:#ffffff;}
+[data-theme="light"] .hdr{background:#ffffff;border-bottom-color:#eef1f5;}
+[data-theme="light"] .folders,
+[data-theme="light"] .panel{background:#ffffff;}
+[data-theme="light"] .tb,
+[data-theme="light"] .sb{background:#ffffff;}
+[data-theme="light"] .folder-item.active{background:#f7f8fa;}
+[data-theme="light"] .tn-h{background:#ffffff;}
+[data-theme="light"] .tn-h:hover{background:#f7f8fa;}
+[data-theme="light"] .ig input,
+[data-theme="light"] .ig select,
+[data-theme="light"] .ig textarea{background:#ffffff;}
+[data-theme="light"] .ig input:focus,
+[data-theme="light"] .ig textarea:focus{background:#ffffff;box-shadow:0 0 0 3px rgba(37,99,235,.08);}
+[data-theme="light"] .dash-section,
+[data-theme="light"] .dash-stat{background:#ffffff;border-color:#eef1f5;}
+[data-theme="light"] .period-card{background:#f7f8fa;border-color:#eef1f5;}
+[data-theme="light"] .dash-trend-tbl th,
+[data-theme="light"] .cmp-tbl th,
+[data-theme="light"] .gsc-tbl th{background:#f7f8fa;}
+[data-theme="light"] .gc svg rect[fill="#141820"]{fill:#ffffff !important;stroke-opacity:.9;}
+[data-theme="light"] .gc svg text[fill="#e4e8f0"]{fill:#0f1419 !important;}
+[data-theme="light"] .gc svg text[fill="#5a6478"]{fill:#5e6773 !important;}
+[data-theme="light"] ::-webkit-scrollbar-thumb{background:#dde1e7;border-radius:3px;}
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover{background:#c8cdd6;}
+[data-theme="light"] .btn-g{background:#ffffff;border-color:#e5e8ed;color:#0f1419;box-shadow:0 1px 2px rgba(15,20,25,.04);}
+[data-theme="light"] .btn-g:hover{background:#f7f8fa;border-color:#2563eb;color:#2563eb;box-shadow:0 1px 3px rgba(37,99,235,.1);}
+[data-theme="light"] .tn{box-shadow:0 1px 2px rgba(15,20,25,.03);}
+[data-theme="light"] .md{box-shadow:0 12px 40px rgba(15,20,25,.12);}
 
 /* Help tooltip */
 .shortcuts-help{position:fixed;bottom:50px;right:20px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);padding:14px 18px;font-size:11px;color:var(--td);z-index:1500;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4);}
@@ -1117,6 +1140,8 @@ let graphDragId=null;
 let graphDragOff={x:0,y:0};
 let graphPositions={};
 let curView='graph';
+const GRAPH_CHILD_LIMIT=5; // auto-collapse children di graph kalau lebih dari ini
+let collapsedParents=new Set(); // parent IDs yang childrennya di-collapse di graph
 
 const PT_MAP={
   bofu:['landing-page','product-page','article-bofu','article-comparison','article-pricing'],
@@ -1296,6 +1321,8 @@ function delNode(){
   p.nodes.filter(x=>x.parentId===editId).forEach(x=>x.parentId=n?n.parentId:null);
   p.nodes=p.nodes.filter(x=>x.id!==editId);
   p.links=p.links.filter(l=>l.from!==editId&&l.to!==editId);
+  collapsedParents.delete(editId);
+  if(p._autoCollapseInit)delete p._autoCollapseInit[editId];
   closeMo();save();renderAll();toast('Deleted.');
 }
 function closeMo(){document.getElementById('eMo').classList.remove('active');editId=null;}
@@ -1561,7 +1588,16 @@ function renderGraph(){
   const widths={};
   ns.forEach(n=>{widths[n.id]=Math.max(180,ctx2.measureText(n.keyword).width+padX*2+40);});
 
-  function getCh(pid){return ns.filter(n=>n.parentId===pid);}
+// Semua children (untuk count, deteksi punya anak, dll)
+  function getChAll(pid){return ns.filter(n=>n.parentId===pid);}
+  // Visible children (respect collapsed state — yang dipakai untuk layout & render)
+  function getCh(pid){
+    const all=getChAll(pid);
+    if(collapsedParents.has(pid)&&all.length>GRAPH_CHILD_LIMIT){
+      return all.slice(0,GRAPH_CHILD_LIMIT);
+    }
+    return all;
+  }
   function calcW(nid){
     const ch=getCh(nid);
     if(!ch.length)return widths[nid]||200;
@@ -1582,6 +1618,17 @@ function renderGraph(){
       });
     }
   }
+
+  // Auto-collapse parent baru yang punya >5 children (first time only)
+  // Pakai marker _autoCollapseInit untuk tau parent mana yang sudah pernah di-evaluate
+  if(!P()._autoCollapseInit)P()._autoCollapseInit={};
+  ns.forEach(n=>{
+    const totalCh=getChAll(n.id).length;
+    if(totalCh>GRAPH_CHILD_LIMIT&&!P()._autoCollapseInit[n.id]){
+      collapsedParents.add(n.id);
+      P()._autoCollapseInit[n.id]=true;
+    }
+  });
 
   const roots=ns.filter(n=>!n.parentId||!ns.find(x=>x.id===n.parentId));
   let sx=40;
@@ -1755,6 +1802,59 @@ svg.style.display='block';
 });
     g.addEventListener('dblclick',()=>openEd(n.id));
     g.addEventListener('contextmenu',(e)=>showCtx(n.id,e));
+    svg.appendChild(g);
+  });
+
+  // Render "+N more" buttons untuk parent yang childrennya di-collapse
+  ns.forEach(n=>{
+    const allCh=getChAll(n.id);
+    if(allCh.length<=GRAPH_CHILD_LIMIT)return;
+    const isCollapsed=collapsedParents.has(n.id);
+    const pos=graphPositions[n.id];if(!pos)return;
+    const pw=widths[n.id]||200;
+    const hiddenCount=allCh.length-GRAPH_CHILD_LIMIT;
+    const btnW=isCollapsed?96:80;
+    const btnH=22;
+    const btnX=pos.x+pw/2-btnW/2;
+    const btnY=pos.y+nodeH+8;
+    const isDark=document.documentElement.getAttribute('data-theme')!=='light';
+    const btnBg=isDark?'#1a1f2b':'#f7f8fa';
+    const btnBd=isDark?'#3d4860':'#e5e8ed';
+    const btnTxt=isDark?'#e4e8f0':'#0f1419';
+    const accent=cols[n.funnel]||'#4a90ff';
+    const label=isCollapsed?`+${hiddenCount} more`:`− collapse`;
+    const g=mkSVG('g');
+    g.classList.add('gn-more');
+    g.dataset.parent=n.id;
+    g.style.cursor='pointer';
+    g.innerHTML=`
+      <rect x="${btnX}" y="${btnY}" width="${btnW}" height="${btnH}" rx="11"
+        fill="${btnBg}" stroke="${btnBd}" stroke-width="1"/>
+      <circle cx="${btnX+10}" cy="${btnY+btnH/2}" r="2.5" fill="${accent}"/>
+      <text x="${btnX+btnW/2+5}" y="${btnY+btnH/2+4}" fill="${btnTxt}"
+        font-size="10" font-family="Space Mono" font-weight="600" text-anchor="middle">${label}</text>
+    `;
+    g.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      if(collapsedParents.has(n.id))collapsedParents.delete(n.id);
+      else collapsedParents.add(n.id);
+      // Mark sebagai user-touched supaya ga ke-reset oleh auto-collapse
+      if(!P()._autoCollapseInit)P()._autoCollapseInit={};
+      P()._autoCollapseInit[n.id]=true;
+      // Bersihkan posisi children yang sebelumnya hidden supaya relayout
+      if(!collapsedParents.has(n.id)){
+        getChAll(n.id).slice(GRAPH_CHILD_LIMIT).forEach(c=>{
+          delete graphPositions[c.id];
+        });
+      }
+      renderGraph();
+    });
+    g.addEventListener('mouseenter',()=>{
+      g.querySelector('rect').setAttribute('stroke',accent);
+    });
+    g.addEventListener('mouseleave',()=>{
+      g.querySelector('rect').setAttribute('stroke',btnBd);
+    });
     svg.appendChild(g);
   });
 
