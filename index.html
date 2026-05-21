@@ -923,6 +923,7 @@ body.panel-collapsed .panel {
   <div class="ctx-divider"></div>
   <div onclick="ctxEdit()">Edit Node...</div>
   <div onclick="ctxAddChild()">Add Child Node</div>
+  <div onclick="ctxExpandAi()" id="ctxExpandBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;margin-right:6px;vertical-align:-2px;"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6l2.1 2.1m0-12.8l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>Expand with AI</div>
   <div onclick="ctxDup()">Duplicate (with subtree)</div>
   <div onclick="ctxAddLink()" id="ctxLinkBtn">Add Internal Link</div>
   <div class="del" onclick="ctxDel()">Delete Node</div>
@@ -4882,6 +4883,126 @@ function autoLayoutGraph(){
   if(pD){pD._gpos=pD._gpos||{};N().forEach(n=>{if(graphPositions[n.id])pD._gpos[n.id]={...graphPositions[n.id]};});}
   save();
   toast('Tata letak dirapikan!');
+}
+  // === AI: EXPAND KEYWORD (generate turunan dari 1 node) ===
+let aiExpandParentId=null; // node yang lagi di-expand
+
+function ctxExpandAi(){
+  if(!ctxNodeId){closeCtx();return;}
+  if(!aiIsConfigured()){toast('Setup AI dulu (klik icon AI di header)',1);openAiMo();closeCtx();return;}
+  aiExpandKeyword(ctxNodeId);
+  closeCtx();
+}
+
+async function aiExpandKeyword(nodeId){
+  const p=P();if(!p)return;
+  const node=p.nodes.find(n=>n.id===nodeId);if(!node)return;
+
+  const check=aiCanRequest();
+  if(!check.ok){toast(check.reason,1);return;}
+
+  aiExpandParentId=nodeId;
+  aiBusy=true;updateAiStatusUI();
+  toast(`AI generating keyword turunan untuk "${node.keyword}"...`);
+
+  const langMap={id:'Bahasa Indonesia',en:'English',mix:'mixed Indonesian/English'};
+  const lang=langMap[aiCfg.language]||'Bahasa Indonesia';
+  // Konteks: sibling & existing children biar ga duplikat
+  const existingChildren=p.nodes.filter(n=>n.parentId===nodeId).map(n=>n.keyword);
+  const allKw=p.nodes.map(n=>n.keyword.toLowerCase());
+
+  const prompt=`You are an SEO keyword researcher. Generate long-tail keyword ideas (children) for a parent topic.
+
+PARENT KEYWORD: "${node.keyword}" (funnel: ${node.funnel.toUpperCase()}, type: ${ptLabel(node.pageType)})
+KEYWORD LANGUAGE: ${lang}
+EXISTING CHILDREN (do NOT repeat these): ${existingChildren.length?existingChildren.join(', '):'(none yet)'}
+
+TASK: Generate 8-12 NEW long-tail keyword ideas that are sub-topics of the parent. Mix funnels (some informational, some comparison, some transactional) where it makes sense. Avoid duplicating existing children or anything too generic.
+
+For each, decide funnel (bofu/mofu/tofu) and pageType from: ${PT_ALL.map(p=>p.v).join(', ')}.
+
+Return ONLY a valid JSON array, no markdown:
+[{"keyword":"...","funnel":"tofu","pageType":"article-how-to","confidence":0.8,"reasoning":"max 8 words"}]`;
+
+  try{
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${aiCfg.model}:generateContent?key=${aiCfg.apiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.7,maxOutputTokens:8192}})
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||('HTTP '+res.status));}
+    const data=await res.json();
+    const txt=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+    if(!txt)throw new Error('Empty response');
+    const usage=data.usageMetadata||{};
+    aiRecordRequest(usage.promptTokenCount||0,usage.candidatesTokenCount||0);
+
+    let results=aiParseResponse(txt);
+    if(!Array.isArray(results))throw new Error('Format AI tidak sesuai');
+
+    // Filter duplikat: persis sama ATAU mirip (kata-kata sama walau beda urutan)
+    const seenSigs=allKw.map(kwSignature); // signature semua keyword existing
+    const acceptedSigs=[]; // signature keyword baru yang udah diterima (cegah AI usul 2 variasi mirip sekaligus)
+    results=results.filter(r=>{
+      if(!r.keyword)return false;
+      const kwLower=r.keyword.toLowerCase().trim();
+      if(allKw.includes(kwLower))return false; // persis sama
+      const sig=kwSignature(r.keyword);
+      // Tolak kalau mirip dengan existing
+      if(seenSigs.some(s=>sigSimilar(s,sig)))return false;
+      // Tolak kalau mirip dengan keyword baru lain yang udah diterima di batch ini
+      if(acceptedSigs.some(s=>sigSimilar(s,sig)))return false;
+      acceptedSigs.push(sig);
+      return true;
+    });
+    if(!results.length)throw new Error('AI ga kasih keyword baru (semua duplikat/mirip)');
+
+    // Bangun preview rows — semua nempel ke parent ini
+    aiPreviewRows=results.map(r=>{
+      const rule=ruleClassify(r.keyword);
+      const aiFunnel=(r.funnel||rule.funnel).toLowerCase();
+      const validPt=PT_ALL.some(pt=>pt.v===r.pageType)?r.pageType:rule.pageType;
+      return {
+        keyword:r.keyword,funnel:aiFunnel,pageType:validPt,
+        ruleFunnel:rule.funnel,rulePageType:rule.pageType,
+        suggestedParent:nodeId,suggestedParentLabel:node.keyword,
+        confidence:typeof r.confidence==='number'?r.confidence:0.6,
+        reasoning:r.reasoning||'',
+        agree:(aiFunnel===rule.funnel),selected:true,hasAi:true
+      };
+    });
+    aiRenderPreview();
+    document.getElementById('aiPrevMo').classList.add('active');
+    toast(`${aiPreviewRows.length} keyword turunan dari AI. Review & apply.`);
+  }catch(e){
+    toast('AI expand error: '+e.message,1);
+  }finally{
+    aiBusy=false;updateAiStatusUI();
+  }
+
+  // === AI: DETEKSI KEYWORD MIRIP ===
+// Stopwords ID/EN yang sering jadi pengganggu (diabaikan saat banding)
+const KW_STOPWORDS=new Set(['yang','untuk','dan','di','ke','dari','dengan','the','for','and','to','of','a','an','in','on']);
+function kwSignature(keyword){
+  // Pecah jadi kata, buang stopword, ambil akar kata sederhana, lalu sort → set kata
+  return keyword.toLowerCase()
+    .replace(/[^\w\s]/g,' ')          // buang tanda baca
+    .split(/\s+/)
+    .filter(w=>w&&!KW_STOPWORDS.has(w))
+    .map(w=>w.replace(/(nya|kah|lah|s)$/,'')) // akar kata kasar (buang akhiran umum)
+    .sort();
+}
+function sigSimilar(a,b){
+  // a, b = array kata (signature). Mirip kalau set kata-nya sama persis,
+  // atau salah satu superset kecil dari yang lain (selisih max 0 kata penting)
+  if(!a.length||!b.length)return false;
+  const setA=new Set(a),setB=new Set(b);
+  // Hitung irisan
+  let common=0;
+  setA.forEach(w=>{if(setB.has(w))common++;});
+  const maxLen=Math.max(setA.size,setB.size);
+  // Mirip kalau ≥90% kata sama (praktis: semua kata penting sama, beda urutan saja)
+  return (common/maxLen)>=0.9;
+}
 }
 // === INIT ===
 loadTheme();
