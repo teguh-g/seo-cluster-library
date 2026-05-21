@@ -1297,10 +1297,22 @@ function sigSimilar(a,b){
 // AI auto-mapping state
 const AI_KEY='seo-cluster-ai';
 let aiCfg={provider:'gemini',model:'gemini-2.5-flash',apiKey:'',language:'id'};
-let aiUsage={date:'',rpdUsed:0,rpmWindow:[],inTokens:0,outTokens:0,totalReq:0,totalIn:0,totalOut:0};
+// Usage sekarang per-key+model: aiUsageMap[keyId][model] = {date,rpdUsed,rpmWindow,inTokens,outTokens,totalReq,totalIn,totalOut}
+let aiUsageMap={};
 let aiPreviewRows=[]; // hasil mapping yang sedang di-preview
 let aiBusy=false;
-
+// helper: id pendek dari API key (jangan simpan key utuh sbg id biar aman di UI)
+function aiKeyId(key){key=key||aiCfg.apiKey;if(!key)return 'none';let h=0;for(let i=0;i<key.length;i++){h=((h<<5)-h+key.charCodeAt(i))|0;}return 'k'+Math.abs(h);}
+// helper: ambil objek usage utk key+model aktif (auto-buat kalau belum ada, auto-reset harian)
+function aiU(){
+  const kid=aiKeyId();const m=aiCfg.model;
+  if(!aiUsageMap[kid])aiUsageMap[kid]={};
+  if(!aiUsageMap[kid][m])aiUsageMap[kid][m]={date:'',rpdUsed:0,rpmWindow:[],inTokens:0,outTokens:0,totalReq:0,totalIn:0,totalOut:0};
+  const u=aiUsageMap[kid][m];
+  const today=new Date(Date.now()-8*3600*1000).toISOString().split('T')[0];
+  if(u.date!==today){u.date=today;u.rpdUsed=0;u.rpmWindow=[];u.inTokens=0;u.outTokens=0;}
+  return u;
+}
 const PT_MAP={
   bofu:['landing-page','product-page','article-bofu','article-comparison','article-pricing'],
   mofu:['article-consideration','article-comparison','article-pricing','article-how-to','article-listicle'],
