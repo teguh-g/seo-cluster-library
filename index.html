@@ -584,7 +584,45 @@ body.panel-collapsed .panel {
   transition: opacity .15s; z-index: 200;
 }
 .sidebar-toggle-btn:hover .kbhint { opacity: 1; }
-  
+
+/* === AI AUTO-MAP === */
+.ai-st{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--td);font-family:var(--m);padding:0 10px;border-right:1px solid var(--bd);margin-right:6px;cursor:pointer;}
+.ai-st .sd{width:6px;height:6px;border-radius:50%;}
+.ai-st.off .sd{background:var(--tf);}
+.ai-st.on .sd{background:var(--bofu);box-shadow:0 0 6px var(--bofu);}
+.ai-st.busy .sd{background:var(--mofu);animation:pulse 1s infinite;}
+.ai-st.warn .sd{background:var(--danger);}
+.ai-st:hover{color:var(--t);}
+
+/* AI settings modal */
+.ai-quota-row{display:flex;align-items:center;gap:8px;font-size:10px;margin-bottom:6px;font-family:var(--m);color:var(--td);}
+.ai-quota-bar{flex:1;height:8px;background:var(--s2);border-radius:4px;overflow:hidden;}
+.ai-quota-fill{height:100%;background:var(--bofu);border-radius:4px;transition:width .3s;}
+.ai-quota-fill.warn{background:var(--danger);}
+.ai-quota-lbl{flex:0 0 90px;}
+.ai-quota-val{flex:0 0 70px;text-align:right;color:var(--t);font-weight:600;}
+
+/* AI preview modal */
+.ai-prev-tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.ai-prev-tbl th{position:sticky;top:0;background:var(--s2);text-align:left;padding:7px 8px;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--td);border-bottom:1px solid var(--bd);font-weight:600;z-index:1;}
+.ai-prev-tbl td{padding:6px 8px;border-bottom:1px solid var(--bd);color:var(--t);vertical-align:middle;}
+.ai-prev-tbl tr:hover td{background:var(--s2);}
+.ai-prev-tbl select{background:var(--s1);border:1px solid var(--bd);border-radius:4px;color:var(--t);font-size:10px;padding:3px 5px;outline:none;width:100%;max-width:130px;}
+.ai-prev-tbl .ai-kw{font-weight:600;}
+.ai-prev-cb{width:28px;padding-left:8px !important;}
+.ai-prev-cb input{accent-color:var(--bofu);cursor:pointer;}
+.ai-conf{display:inline-flex;gap:1px;vertical-align:middle;}
+.ai-conf i{width:5px;height:5px;border-radius:50%;background:var(--bd2);display:inline-block;}
+.ai-conf i.on{background:var(--bofu);}
+.ai-rule-tag{font-size:8px;font-family:var(--m);font-weight:700;padding:1px 4px;border-radius:3px;margin-left:4px;}
+.ai-rule-tag.agree{background:rgba(52,211,153,.15);color:var(--ok);}
+.ai-rule-tag.disagree{background:rgba(245,158,11,.15);color:var(--mofu);}
+.ai-rule-hint{font-size:9px;color:var(--tf);font-family:var(--m);margin-top:2px;}
+.ai-prev-tbl tr.disagree-row td{background:rgba(245,158,11,.05);}
+.ai-prev-meta{display:flex;gap:14px;padding:8px 12px;background:var(--s2);border-radius:var(--rs);font-size:10px;color:var(--td);font-family:var(--m);margin-bottom:10px;flex-wrap:wrap;}
+.ai-prev-meta strong{color:var(--bofu);}
+.ai-prev-bulk{display:flex;gap:6px;align-items:center;margin:8px 0;flex-wrap:wrap;}
+.ai-prev-bulk .spacer{flex:1;}  
 </style>
 </head>
 <body>
@@ -631,6 +669,12 @@ body.panel-collapsed .panel {
     <button class="btn btn-acc btn-sm" onclick="syncPull()" id="btnPull" title="Load from GitHub Gist"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="lbl">Pull</span></button>
     <button class="btn btn-acc btn-sm" onclick="syncPush()" id="btnPush" title="Save to GitHub Gist"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="lbl">Push</span></button>
     <button class="btn btn-g btn-sm" onclick="openSyncMo()" title="Cloud sync settings"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <span class="sep"></span>
+    <div class="ai-st off" id="aiSt" onclick="openAiMo()" title="AI auto-mapping settings">
+      <span class="sd"></span>
+      <span id="aiLbl">AI: off</span>
+    </div>
+    <span class="sep"></span>
     <span class="sep"></span>
     <button class="btn btn-g btn-sm" onclick="openGscMo()" title="Import from GSC"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="lbl">GSC</span></button>
     <button class="btn btn-g btn-sm" onclick="openSnapMo()" title="Backup snapshots"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5a2 2 0 0 1 2-2h3l2-2h4l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg><span class="lbl">Snaps</span></button>
@@ -706,6 +750,10 @@ body.panel-collapsed .panel {
       <div class="ig"><label>Parent</label><select id="bPar"><option value="">Root</option></select></div>
     </div>
     <button class="btn btn-p" onclick="bulkAdd()">Bulk Add</button>
+    <button class="btn btn-g btn-sm" id="btnAutoMap" onclick="aiAutoMap()" disabled style="opacity:.4;width:100%;margin-top:6px;justify-content:center;" title="Setup AI dulu (klik icon AI di header)">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1H1a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><circle cx="8.5" cy="13.5" r="1"/><circle cx="15.5" cy="13.5" r="1"/></svg>
+      <span class="lbl">Auto-Map with AI</span>
+    </button>
   </div>
 
   <div class="panel-section">
@@ -872,7 +920,84 @@ body.panel-collapsed .panel {
   <div onclick="ctxAddLink()" id="ctxLinkBtn">Add Internal Link</div>
   <div class="del" onclick="ctxDel()">Delete Node</div>
 </div>
+<div class="mo" id="aiMo">
+  <div class="md" style="max-width:480px;">
+    <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1H1a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/></svg>AI Auto-Mapping</h3>
+    <div class="sync-modal-body">
+      <div style="margin-bottom:10px;">Mapping keyword otomatis pakai Gemini. API key disimpan lokal di browser ini saja.</div>
 
+      <div class="ig"><label>Model</label>
+        <select id="aiModel">
+          <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite (tercepat)</option>
+          <option value="gemini-2.5-flash">Gemini 2.5 Flash (balanced)</option>
+          <option value="gemini-2.5-pro">Gemini 2.5 Pro (terbaik)</option>
+          <option value="gemini-3-flash-preview">Gemini 3 Flash (preview)</option>
+          <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash-Lite (preview)</option>
+        </select>
+      </div>
+      <div class="ig"><label>API Key (Google AI Studio)</label><input type="password" id="aiApiKey" placeholder="AIzaSy..."></div>
+      <div class="ig"><label>Default bahasa keyword</label>
+        <select id="aiLang">
+          <option value="id">Bahasa Indonesia</option>
+          <option value="en">English</option>
+          <option value="mix">Mixed</option>
+        </select>
+      </div>
+
+      <hr>
+      <div style="font-weight:600;color:var(--t);margin-bottom:8px;">Quota hari ini</div>
+      <div class="ai-quota-row">
+        <span class="ai-quota-lbl">Requests</span>
+        <div class="ai-quota-bar"><div class="ai-quota-fill" id="aiQuotaFill" style="width:0%;"></div></div>
+        <span class="ai-quota-val" id="aiQuotaVal">0 / 20</span>
+      </div>
+      <div class="ai-quota-row">
+        <span class="ai-quota-lbl">Tokens in/out</span>
+        <span style="font-family:var(--m);color:var(--t);" id="aiTokVal">0 / 0</span>
+      </div>
+      <div class="ai-quota-row">
+        <span class="ai-quota-lbl">All-time req</span>
+        <span style="font-family:var(--m);color:var(--t);" id="aiTotalVal">0</span>
+      </div>
+
+      <hr>
+      <div style="font-weight:600;color:var(--t);margin-bottom:6px;">Cara setup:</div>
+      <div class="step">Buka <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> → Create API Key → copy</div>
+      <div class="step">Paste di atas → pilih model → Save</div>
+      <div style="font-size:10px;color:var(--tf);margin-top:8px;">⚠ Free tier dibatasi quota harian (RPD). Cek limit di dashboard AI Studio kamu.</div>
+    </div>
+
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-d btn-sm" onclick="aiDisconnect()">Disconnect</button>
+      <button class="btn btn-g btn-sm" onclick="aiTestConnection()" id="aiTestBtn">Test</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-g btn-sm" onclick="closeAiMo()">Cancel</button>
+      <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="aiSaveCfg()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="mo" id="aiPrevMo">
+  <div class="md" style="max-width:880px;max-height:90vh;display:flex;flex-direction:column;">
+    <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1H1a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/></svg>AI Mapping Preview</h3>
+    <div class="ai-prev-meta" id="aiPrevMeta"></div>
+    <div class="ai-prev-bulk">
+      <button class="btn btn-g btn-sm" onclick="aiPrevSelectAll(true)">Select all</button>
+      <button class="btn btn-g btn-sm" onclick="aiPrevSelectAll(false)">Deselect all</button>
+      <button class="btn btn-g btn-sm" onclick="aiPrevSelectAgree()">Only agreed (AI=Rule)</button>
+      <div class="spacer"></div>
+      <span id="aiPrevCount" style="font-size:10px;color:var(--bofu);font-weight:600;font-family:var(--m);">0 selected</span>
+    </div>
+    <div style="flex:1;overflow:auto;border:1px solid var(--bd);border-radius:var(--rs);">
+      <table class="ai-prev-tbl" id="aiPrevTable"></table>
+    </div>
+    <div class="btn-row" style="margin-top:12px;flex-shrink:0;">
+      <div style="flex:1"></div>
+      <button class="btn btn-g btn-sm" onclick="closeAiPrevMo()">Cancel</button>
+      <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="aiApplyPreview()" id="aiApplyBtn">Apply Selected →</button>
+    </div>
+  </div>
+</div>
 <div class="mo" id="syncMo">
   <div class="md" style="max-width:480px;">
     <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>GitHub Gist Cloud Sync</h3>
@@ -1142,6 +1267,13 @@ let graphPositions={};
 let curView='graph';
 const GRAPH_CHILD_LIMIT=5; // auto-collapse children di graph kalau lebih dari ini
 let collapsedParents=new Set(); // parent IDs yang childrennya di-collapse di graph
+
+// AI auto-mapping state
+const AI_KEY='seo-cluster-ai';
+let aiCfg={provider:'gemini',model:'gemini-2.5-flash',apiKey:'',language:'id'};
+let aiUsage={date:'',rpdUsed:0,rpmWindow:[],inTokens:0,outTokens:0,totalReq:0,totalIn:0,totalOut:0};
+let aiPreviewRows=[]; // hasil mapping yang sedang di-preview
+let aiBusy=false;
 
 const PT_MAP={
   bofu:['landing-page','product-page','article-bofu','article-comparison','article-pricing'],
@@ -4297,7 +4429,122 @@ document.addEventListener('keydown', function(eSB) {
   if ((eSB.ctrlKey || eSB.metaKey) && eSB.key === '[') { eSB.preventDefault(); collapseFolders(); }
   if ((eSB.ctrlKey || eSB.metaKey) && eSB.key === ']') { eSB.preventDefault(); collapsePanel(); }
 });
-  
+
+  // === AI: CONFIG & USAGE ===
+function loadAiCfg(){
+  try{
+    const d=localStorage.getItem(AI_KEY);
+    if(d){const parsed=JSON.parse(d);aiCfg={...aiCfg,...parsed.cfg};aiUsage={...aiUsage,...parsed.usage};}
+  }catch(e){}
+  const today=new Date(Date.now()-8*3600*1000).toISOString().split('T')[0];
+  if(aiUsage.date!==today){aiUsage.date=today;aiUsage.rpdUsed=0;aiUsage.rpmWindow=[];aiUsage.inTokens=0;aiUsage.outTokens=0;}
+  updateAiStatusUI();
+}
+function saveAiCfgStore(){try{localStorage.setItem(AI_KEY,JSON.stringify({cfg:aiCfg,usage:aiUsage}));}catch(e){}}
+function aiIsConfigured(){return !!(aiCfg.apiKey&&aiCfg.apiKey.length>10);}
+function aiRpmCurrent(){const now=Date.now();aiUsage.rpmWindow=aiUsage.rpmWindow.filter(ts=>now-ts<60000);return aiUsage.rpmWindow.length;}
+function aiRpmLimit(){return {'gemini-2.5-pro':5,'gemini-2.5-flash':10,'gemini-2.5-flash-lite':15,'gemini-3-flash-preview':10,'gemini-3.1-flash-lite-preview':15}[aiCfg.model]||10;}
+function aiRpdLimit(){return 20;}
+function aiCanRequest(){
+  if(!aiIsConfigured())return {ok:false,reason:'Setup API key dulu'};
+  if(aiUsage.rpdUsed>=aiRpdLimit())return {ok:false,reason:`Quota harian habis (${aiUsage.rpdUsed}/${aiRpdLimit()})`};
+  if(aiRpmCurrent()>=aiRpmLimit())return {ok:false,reason:`Tunggu sebentar — RPM throttle (${aiRpmCurrent()}/${aiRpmLimit()})`};
+  return {ok:true};
+}
+function aiRecordRequest(inTok,outTok){
+  aiUsage.rpdUsed++;aiUsage.rpmWindow.push(Date.now());
+  aiUsage.inTokens+=inTok||0;aiUsage.outTokens+=outTok||0;
+  aiUsage.totalReq++;aiUsage.totalIn+=inTok||0;aiUsage.totalOut+=outTok||0;
+  saveAiCfgStore();updateAiStatusUI();
+}
+function updateAiStatusUI(){
+  const el=document.getElementById('aiSt');if(!el)return;
+  const lbl=document.getElementById('aiLbl');
+  el.classList.remove('off','on','busy','warn');
+  if(aiBusy){el.classList.add('busy');lbl.textContent='AI processing...';}
+  else if(!aiIsConfigured()){el.classList.add('off');lbl.textContent='AI: off';}
+  else if(aiUsage.rpdUsed>=aiRpdLimit()){el.classList.add('warn');lbl.textContent=`AI: ${aiUsage.rpdUsed}/${aiRpdLimit()} (limit)`;}
+  else {el.classList.add('on');lbl.textContent=`AI: ${aiUsage.rpdUsed}/${aiRpdLimit()}`;}
+  const btn=document.getElementById('btnAutoMap');
+  if(btn){
+    if(aiIsConfigured()){btn.disabled=false;btn.style.opacity='';btn.title='Auto-map keywords with AI';}
+    else{btn.disabled=true;btn.style.opacity='.4';btn.title='Setup AI dulu (klik icon AI di header)';}
+  }
+}
+
+// === AI: SETTINGS MODAL ===
+function openAiMo(){
+  document.getElementById('aiModel').value=aiCfg.model;
+  document.getElementById('aiApiKey').value=aiCfg.apiKey;
+  document.getElementById('aiLang').value=aiCfg.language;
+  aiRenderQuota();
+  document.getElementById('aiMo').classList.add('active');
+}
+function closeAiMo(){document.getElementById('aiMo').classList.remove('active');}
+function aiRenderQuota(){
+  const pct=Math.min(100,(aiUsage.rpdUsed/aiRpdLimit())*100);
+  const fill=document.getElementById('aiQuotaFill');
+  if(fill){fill.style.width=pct+'%';fill.classList.toggle('warn',aiUsage.rpdUsed>=aiRpdLimit());}
+  const qv=document.getElementById('aiQuotaVal');if(qv)qv.textContent=`${aiUsage.rpdUsed} / ${aiRpdLimit()}`;
+  const tv=document.getElementById('aiTokVal');if(tv)tv.textContent=`${aiUsage.inTokens.toLocaleString()} / ${aiUsage.outTokens.toLocaleString()}`;
+  const tot=document.getElementById('aiTotalVal');if(tot)tot.textContent=aiUsage.totalReq.toLocaleString();
+}
+function aiSaveCfg(){
+  aiCfg.model=document.getElementById('aiModel').value;
+  aiCfg.apiKey=document.getElementById('aiApiKey').value.trim();
+  aiCfg.language=document.getElementById('aiLang').value;
+  saveAiCfgStore();updateAiStatusUI();closeAiMo();
+  toast(aiIsConfigured()?'AI configured!':'API key kosong — AI masih off',aiIsConfigured()?0:1);
+}
+function aiDisconnect(){
+  if(!confirm('Disconnect AI? API key akan dihapus dari browser ini.'))return;
+  aiCfg.apiKey='';saveAiCfgStore();updateAiStatusUI();closeAiMo();toast('AI disconnected.');
+}
+async function aiTestConnection(){
+  const key=document.getElementById('aiApiKey').value.trim();
+  const model=document.getElementById('aiModel').value;
+  if(!key){toast('Masukin API key dulu!',1);return;}
+  const btn=document.getElementById('aiTestBtn');btn.disabled=true;btn.textContent='Testing...';
+  try{
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:'Reply with just: OK'}]}]})
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||('HTTP '+res.status));}
+    toast('Connection OK! Model jalan.');
+  }catch(e){toast('Test failed: '+e.message,1);}
+  finally{btn.disabled=false;btn.textContent='Test';}
+}
+
+// === AI: RULE ENGINE (second opinion, jalan instant di browser) ===
+const AI_RULES={
+  funnel:{
+    bofu:[/\bbeli\b/,/\bharga\b/,/\bjual\b/,/\bmurah\b/,/\bpromo\b/,/\bdiskon\b/,/\border\b/,/\bbuy\b/,/\bprice\b/,/\bcheap\b/,/\bbest\b.*\b(buy|deal)\b/,/\bcoupon\b/,/\bsewa\b/,/\bpesan\b/],
+    mofu:[/\bvs\b/,/\bversus\b/,/\bperbandingan\b/,/\bbanding/,/\breview\b/,/\bulasan\b/,/\bterbaik\b/,/\brekomendasi\b/,/\bbest\b/,/\btop \d/,/\bcompare/,/\balternatif\b/,/\balternative/],
+    tofu:[/\bapa itu\b/,/\bcara\b/,/\bbagaimana\b/,/\bkenapa\b/,/\bpengertian\b/,/\bwhat is\b/,/\bhow to\b/,/\bwhy\b/,/\btips\b/,/\bpanduan\b/,/\bguide\b/,/\btutorial\b/,/\bcontoh\b/,/\bjenis\b/,/\bmanfaat\b/]
+  },
+  pageType:[
+    {re:/\bvs\b|\bversus\b|\bperbandingan\b|\bbanding|\bcompare/,t:'article-comparison'},
+    {re:/\bharga\b|\bbiaya\b|\bprice\b|\bcost\b|\bpricing\b|\btarif\b/,t:'article-pricing'},
+    {re:/\bcara\b|\bhow to\b|\btutorial\b|\bpanduan\b|\blangkah\b/,t:'article-how-to'},
+    {re:/\b\d+\s|(terbaik|rekomendasi|daftar|list|top)\b/,t:'article-listicle'},
+    {re:/\bapa itu\b|\bpengertian\b|\bwhat is\b|\bdefinisi\b|\barti\b/,t:'article-glossary'},
+    {re:/\bbeli\b|\bjual\b|\border\b|\bbuy\b/,t:'article-bofu'}
+  ]
+};
+function ruleClassify(keyword){
+  const k=' '+keyword.toLowerCase()+' ';
+  // funnel
+  let funnel='tofu';
+  if(AI_RULES.funnel.bofu.some(re=>re.test(k)))funnel='bofu';
+  else if(AI_RULES.funnel.mofu.some(re=>re.test(k)))funnel='mofu';
+  else if(AI_RULES.funnel.tofu.some(re=>re.test(k)))funnel='tofu';
+  // pageType
+  let pageType=null;
+  for(const r of AI_RULES.pageType){if(r.re.test(k)){pageType=r.t;break;}}
+  if(!pageType)pageType=funnel==='bofu'?'article-bofu':funnel==='mofu'?'article-consideration':'article-informational';
+  return {funnel,pageType};
+}
 // === INIT ===
 loadTheme();
 loadSidebarState();
