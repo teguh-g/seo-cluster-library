@@ -608,8 +608,8 @@ body.panel-collapsed .panel {
 .ai-prev-tbl td{padding:9px 8px;border-bottom:1px solid var(--bd);color:var(--t);vertical-align:top;}
 .ai-prev-tbl tr:hover td{background:var(--s2);}
 .ai-prev-tbl select{background:var(--s1);border:1px solid var(--bd);border-radius:4px;color:var(--t);font-size:10px;padding:5px 6px;outline:none;width:100%;min-width:84px;max-width:150px;cursor:pointer;}
-.ai-prev-tbl td:nth-child(5) select{max-width:220px;min-width:140px;}
-.ai-prev-tbl td:nth-child(5){min-width:150px;}
+.ai-prev-tbl td:nth-child(5) select{max-width:none;min-width:180px;width:auto;text-overflow:ellipsis;}
+.ai-prev-tbl td:nth-child(5){min-width:200px;width:auto;}
 .ai-prev-tbl select:hover{border-color:var(--bd2);}
 .ai-prev-tbl select:focus{border-color:var(--bofu);}
 .ai-prev-tbl th{padding:9px 8px;}
@@ -985,7 +985,7 @@ body.panel-collapsed .panel {
 </div>
 
 <div class="mo" id="aiPrevMo">
-  <div class="md" style="max-width:880px;max-height:90vh;display:flex;flex-direction:column;">
+  <div class="md" style="max-width:1000px;width:94vw;max-height:90vh;display:flex;flex-direction:column;">
     <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1H1a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/></svg>AI Mapping Preview</h3>
     <div class="ai-prev-meta" id="aiPrevMeta"></div>
     <div class="ai-prev-bulk">
@@ -4608,6 +4608,21 @@ function aiParseResponse(text){
   if(start>=0&&end>start)t=t.slice(start,end+1);
   return JSON.parse(t);
 }
+
+  // === AI: CACHE (opsi B — invalid kalau tree berubah) ===
+let aiCache={}; // key: hash(tree+keyword) → hasil mapping 1 keyword
+
+function aiTreeSignature(ns){
+  // Signature ringkas dari struktur tree: id+funnel+pageType+parent tiap node
+  return ns.map(n=>`${n.id}:${n.funnel}:${n.pageType}:${n.parentId||'_'}`).sort().join('|');
+}
+function aiCacheKey(treeSig,keyword){
+  // Hash sederhana (cukup buat dedupe lokal)
+  const s=treeSig+'##'+keyword.toLowerCase().trim();
+  let h=0;
+  for(let i=0;i<s.length;i++){h=((h<<5)-h+s.charCodeAt(i))|0;}
+  return 'c'+h;
+}
   // === AI: MAIN AUTO-MAP CALLER ===
 async function aiAutoMap(){
   const p=P();
@@ -4627,31 +4642,60 @@ async function aiAutoMap(){
   const ruleResults={};
   lines.forEach(kw=>{ruleResults[kw]=ruleClassify(kw);});
 
+  // 1b. Cek cache (opsi B): pisahkan keyword yang udah ada di cache vs yang perlu fetch
+  const treeSig=aiTreeSignature(p.nodes);
+  const cachedResults={}; // kw → hasil AI dari cache
+  const toFetch=[]; // keyword yang belum di-cache
+  lines.forEach(kw=>{
+    const ck=aiCacheKey(treeSig,kw);
+    if(aiCache[ck]){cachedResults[kw]=aiCache[ck];}
+    else{toFetch.push(kw);}
+  });
+
   try{
-    const prompt=aiBuildPrompt(lines,p.nodes,p.name);
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${aiCfg.model}:generateContent?key=${aiCfg.apiKey}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        contents:[{parts:[{text:prompt}]}],
-        generationConfig:{temperature:0.2,maxOutputTokens:8192}
-      })
-    });
-    if(!res.ok){
-      const e=await res.json().catch(()=>({}));
-      throw new Error(e.error?.message||('HTTP '+res.status));
+    let aiResults=[];
+    // Cuma fetch kalau ada keyword yang belum di-cache
+    if(toFetch.length){
+      const prompt=aiBuildPrompt(toFetch,p.nodes,p.name);
+      const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${aiCfg.model}:generateContent?key=${aiCfg.apiKey}`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          contents:[{parts:[{text:prompt}]}],
+          generationConfig:{temperature:0.2,maxOutputTokens:8192}
+        })
+      });
+      if(!res.ok){
+        const e=await res.json().catch(()=>({}));
+        throw new Error(e.error?.message||('HTTP '+res.status));
+      }
+      const data=await res.json();
+      const txt=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+      if(!txt)throw new Error('Empty response dari AI');
+
+      // Track token usage
+      const usage=data.usageMetadata||{};
+      aiRecordRequest(usage.promptTokenCount||0,usage.candidatesTokenCount||0);
+
+      try{aiResults=aiParseResponse(txt);}
+      catch(pe){throw new Error('Gagal parse JSON dari AI. Coba lagi.');}
+      if(!Array.isArray(aiResults))throw new Error('Format AI tidak sesuai (bukan array)');
+
+      // Simpan hasil fetch ke cache
+      aiResults.forEach(r=>{
+        if(r.keyword){const ck=aiCacheKey(treeSig,r.keyword);aiCache[ck]=r;}
+      });
     }
-    const data=await res.json();
-    const txt=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
-    if(!txt)throw new Error('Empty response dari AI');
 
-    // Track token usage
-    const usage=data.usageMetadata||{};
-    aiRecordRequest(usage.promptTokenCount||0,usage.candidatesTokenCount||0);
-
-    let aiResults;
-    try{aiResults=aiParseResponse(txt);}
-    catch(pe){throw new Error('Gagal parse JSON dari AI. Coba lagi.');}
-    if(!Array.isArray(aiResults))throw new Error('Format AI tidak sesuai (bukan array)');
+    // Gabung hasil cache + hasil fetch jadi satu daftar aiResults lengkap
+    Object.values(cachedResults).forEach(r=>{
+      if(!aiResults.find(x=>x.keyword&&r.keyword&&x.keyword.toLowerCase()===r.keyword.toLowerCase())){
+        aiResults.push(r);
+      }
+    });
+    if(toFetch.length<lines.length){
+      const fromCache=lines.length-toFetch.length;
+      toast(`${fromCache} dari cache, ${toFetch.length} fetch baru.`);
+    }
 
     // Gabung AI + Rule jadi preview rows
     aiPreviewRows=lines.map(kw=>{
