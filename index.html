@@ -608,6 +608,8 @@ body.panel-collapsed .panel {
 .ai-prev-tbl td{padding:9px 8px;border-bottom:1px solid var(--bd);color:var(--t);vertical-align:top;}
 .ai-prev-tbl tr:hover td{background:var(--s2);}
 .ai-prev-tbl select{background:var(--s1);border:1px solid var(--bd);border-radius:4px;color:var(--t);font-size:10px;padding:5px 6px;outline:none;width:100%;min-width:84px;max-width:150px;cursor:pointer;}
+.ai-prev-tbl td:nth-child(5) select{max-width:220px;min-width:140px;}
+.ai-prev-tbl td:nth-child(5){min-width:150px;}
 .ai-prev-tbl select:hover{border-color:var(--bd2);}
 .ai-prev-tbl select:focus{border-color:var(--bofu);}
 .ai-prev-tbl th{padding:9px 8px;}
@@ -846,6 +848,7 @@ body.panel-collapsed .panel {
     </div>
     <div class="gc-rect-sel" id="gcRectSel"></div>
     <div class="gc-zoom">
+      <button onclick="autoLayoutGraph()" title="Rapihin tata letak (auto-arrange)" style="font-size:10px;width:auto;padding:0 8px;gap:4px;">⊞ Layout</button>
       <button onclick="zoomGraph(-0.1)" title="Zoom out (Ctrl+Scroll)">−</button>
       <span class="zoom-lbl" id="zoomLbl">100%</span>
       <button onclick="zoomGraph(0.1)" title="Zoom in (Ctrl+Scroll)">+</button>
@@ -4820,6 +4823,22 @@ function aiApplyPreview(){
   snapshotState();save();renderAll();
   toast(`${created} node ditambahkan dari AI mapping!`);
 } 
+
+  // === AUTO LAYOUT GRAPH ===
+function autoLayoutGraph(){
+  const p=P();if(!p){toast('No project!',1);return;}
+  if(!p.nodes.length){toast('Belum ada node.',1);return;}
+  if(!confirm('Rapihin ulang tata letak graph? Posisi manual node akan di-reset.'))return;
+  // Reset semua posisi → biar layoutNode susun dari awal
+  graphPositions={};
+  if(p._gpos)p._gpos={};
+  renderGraph();
+  // Persist posisi baru
+  const pD=P();
+  if(pD){pD._gpos=pD._gpos||{};N().forEach(n=>{if(graphPositions[n.id])pD._gpos[n.id]={...graphPositions[n.id]};});}
+  save();
+  toast('Tata letak dirapikan!');
+}
 // === INIT ===
 loadTheme();
 loadSidebarState();
