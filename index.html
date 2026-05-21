@@ -4545,6 +4545,240 @@ function ruleClassify(keyword){
   if(!pageType)pageType=funnel==='bofu'?'article-bofu':funnel==='mofu'?'article-consideration':'article-informational';
   return {funnel,pageType};
 }
+  // === AI: BUILD CONTEXT & PROMPT ===
+function aiBuildTree(ns){
+  // Bangun representasi tree ringkas untuk dikirim ke AI
+  const byId={};ns.forEach(n=>byId[n.id]=n);
+  const roots=ns.filter(n=>!n.parentId||!byId[n.parentId]);
+  let out='';
+  function walk(n,depth){
+    const indent='  '.repeat(depth);
+    out+=`${indent}- [id:${n.id}] "${n.keyword}" (${n.funnel.toUpperCase()}, ${ptLabel(n.pageType)})\n`;
+    ns.filter(c=>c.parentId===n.id).forEach(c=>walk(c,depth+1));
+  }
+  roots.forEach(r=>walk(r,0));
+  return out||'(kosong — belum ada node)';
+}
+
+function aiBuildPrompt(keywords,ns,projName){
+  const langMap={id:'Bahasa Indonesia',en:'English',mix:'mixed Indonesian/English'};
+  const lang=langMap[aiCfg.language]||'Bahasa Indonesia';
+  const tree=aiBuildTree(ns);
+  const ptList=PT_ALL.map(p=>`${p.v} (${p.l})`).join(', ');
+  return `You are an SEO content strategist. Map new keywords into an existing keyword cluster project.
+
+PROJECT: "${projName}"
+KEYWORD LANGUAGE: ${lang}
+
+EXISTING CLUSTER STRUCTURE (${ns.length} nodes):
+${tree}
+
+VALID pageType VALUES: ${ptList}
+VALID funnel VALUES: bofu (transactional/ready-to-buy), mofu (comparison/consideration), tofu (informational/awareness)
+
+NEW KEYWORDS TO MAP:
+${keywords.map((k,i)=>`${i+1}. ${k}`).join('\n')}
+
+TASK: For EACH new keyword, decide:
+- funnel: bofu/mofu/tofu
+- pageType: pick the BEST match from valid values above
+- suggestedParent: the [id:...] of an existing node it should attach under, OR "ROOT" if it should be a new top-level cluster. Prefer attaching to existing relevant parents over creating new roots.
+- suggestedParentLabel: the keyword text of that parent (or "ROOT")
+- confidence: 0.0 to 1.0
+- reasoning: max 8 words, why this mapping
+
+Return ONLY a valid JSON array, no markdown, no explanation. Format:
+[{"keyword":"...","funnel":"tofu","pageType":"article-how-to","suggestedParent":"ROOT","suggestedParentLabel":"ROOT","confidence":0.9,"reasoning":"..."}]`;
+}
+
+function aiParseResponse(text){
+  // Bersihkan markdown fences kalau ada, lalu parse JSON
+  let t=text.trim();
+  t=t.replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();
+  // Cari array JSON pertama
+  const start=t.indexOf('[');
+  const end=t.lastIndexOf(']');
+  if(start>=0&&end>start)t=t.slice(start,end+1);
+  return JSON.parse(t);
+}
+  // === AI: MAIN AUTO-MAP CALLER ===
+async function aiAutoMap(){
+  const p=P();
+  if(!p){toast('Pilih atau buat project dulu!',1);return;}
+  const lines=gv('bKW').split('\n').map(l=>l.trim()).filter(Boolean);
+  if(!lines.length){toast('Isi keyword di Bulk Add dulu (1 per baris)!',1);return;}
+  if(lines.length>100){toast('Max 100 keyword per batch. Kurangi dulu.',1);return;}
+
+  const check=aiCanRequest();
+  if(!check.ok){toast(check.reason,1);if(check.reason.includes('Setup'))openAiMo();return;}
+
+  aiBusy=true;updateAiStatusUI();
+  const btn=document.getElementById('btnAutoMap');
+  if(btn){btn.disabled=true;btn.querySelector('.lbl').textContent='Processing...';}
+
+  // 1. Rule baseline (instant, jalan duluan)
+  const ruleResults={};
+  lines.forEach(kw=>{ruleResults[kw]=ruleClassify(kw);});
+
+  try{
+    const prompt=aiBuildPrompt(lines,p.nodes,p.name);
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${aiCfg.model}:generateContent?key=${aiCfg.apiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{parts:[{text:prompt}]}],
+        generationConfig:{temperature:0.2,maxOutputTokens:8192}
+      })
+    });
+    if(!res.ok){
+      const e=await res.json().catch(()=>({}));
+      throw new Error(e.error?.message||('HTTP '+res.status));
+    }
+    const data=await res.json();
+    const txt=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+    if(!txt)throw new Error('Empty response dari AI');
+
+    // Track token usage
+    const usage=data.usageMetadata||{};
+    aiRecordRequest(usage.promptTokenCount||0,usage.candidatesTokenCount||0);
+
+    let aiResults;
+    try{aiResults=aiParseResponse(txt);}
+    catch(pe){throw new Error('Gagal parse JSON dari AI. Coba lagi.');}
+    if(!Array.isArray(aiResults))throw new Error('Format AI tidak sesuai (bukan array)');
+
+    // Gabung AI + Rule jadi preview rows
+    aiPreviewRows=lines.map(kw=>{
+      const ai=aiResults.find(r=>r.keyword&&r.keyword.trim().toLowerCase()===kw.toLowerCase())||{};
+      const rule=ruleResults[kw];
+      const aiFunnel=(ai.funnel||rule.funnel).toLowerCase();
+      const aiPageType=ai.pageType||rule.pageType;
+      // Validasi pageType ada di daftar valid, fallback ke rule
+      const validPt=PT_ALL.some(p=>p.v===aiPageType)?aiPageType:rule.pageType;
+      const agree=(aiFunnel===rule.funnel);
+      return {
+        keyword:kw,
+        funnel:aiFunnel,
+        pageType:validPt,
+        ruleFunnel:rule.funnel,
+        rulePageType:rule.pageType,
+        suggestedParent:ai.suggestedParent||'ROOT',
+        suggestedParentLabel:ai.suggestedParentLabel||'ROOT',
+        confidence:typeof ai.confidence==='number'?ai.confidence:0.5,
+        reasoning:ai.reasoning||'(rule-based fallback)',
+        agree,
+        selected:true,
+        hasAi:!!ai.funnel
+      };
+    });
+
+    aiRenderPreview();
+    document.getElementById('aiPrevMo').classList.add('active');
+    toast(`AI mapped ${aiPreviewRows.length} keyword. Review & apply.`);
+  }catch(e){
+    // Fallback: tetap tampilkan preview pakai rule-only
+    toast('AI error: '+e.message+' — pakai rule-based.',1);
+    aiPreviewRows=lines.map(kw=>{
+      const rule=ruleResults[kw];
+      return {
+        keyword:kw,funnel:rule.funnel,pageType:rule.pageType,
+        ruleFunnel:rule.funnel,rulePageType:rule.pageType,
+        suggestedParent:'ROOT',suggestedParentLabel:'ROOT',
+        confidence:0,reasoning:'(AI gagal — rule-based)',
+        agree:true,selected:true,hasAi:false
+      };
+    });
+    aiRenderPreview();
+    document.getElementById('aiPrevMo').classList.add('active');
+  }finally{
+    aiBusy=false;updateAiStatusUI();
+    if(btn){btn.disabled=!aiIsConfigured();btn.querySelector('.lbl').textContent='Auto-Map with AI';}
+  }
+}
+  // === AI: PREVIEW RENDER ===
+function aiConfDots(conf){
+  const filled=Math.round((conf||0)*5);
+  let h='<span class="ai-conf">';
+  for(let i=0;i<5;i++)h+=`<i class="${i<filled?'on':''}"></i>`;
+  h+='</span>';
+  return h;
+}
+
+function aiRenderPreview(){
+  const ns=N();
+  // Meta info
+  const meta=document.getElementById('aiPrevMeta');
+  const disagreeCount=aiPreviewRows.filter(r=>!r.agree).length;
+  const aiCount=aiPreviewRows.filter(r=>r.hasAi).length;
+  meta.innerHTML=`
+    <div>Model: <strong>${aiCfg.model}</strong></div>
+    <div>Keywords: <strong>${aiPreviewRows.length}</strong></div>
+    <div>AI mapped: <strong>${aiCount}</strong></div>
+    <div>⚠ Disagree (AI≠Rule): <strong>${disagreeCount}</strong></div>
+    <div>Quota: <strong>${aiUsage.rpdUsed}/${aiRpdLimit()}</strong></div>`;
+
+  // Parent options (existing nodes + ROOT)
+  const parentOpts=`<option value="ROOT">-- ROOT (new cluster) --</option>`+
+    ns.map(n=>`<option value="${n.id}">${esc(n.keyword)} [${n.funnel.toUpperCase()}]</option>`).join('');
+  const funnelOpts=(sel)=>['tofu','mofu','bofu'].map(f=>`<option value="${f}" ${f===sel?'selected':''}>${f.toUpperCase()}</option>`).join('');
+  const ptOpts=(sel)=>PT_ALL.map(p=>`<option value="${p.v}" ${p.v===sel?'selected':''}>${p.l}</option>`).join('');
+
+  let h=`<thead><tr>
+    <th class="ai-prev-cb"><input type="checkbox" id="aiSelAll" onchange="aiPrevSelectAll(this.checked)" checked></th>
+    <th>Keyword</th>
+    <th>Funnel</th>
+    <th>Page Type</th>
+    <th>Parent</th>
+    <th>Confidence</th>
+  </tr></thead><tbody>`;
+
+  aiPreviewRows.forEach((r,i)=>{
+    const parentSel=ns.find(n=>n.id===r.suggestedParent)?r.suggestedParent:'ROOT';
+    h+=`<tr class="${r.agree?'':'disagree-row'}">
+      <td class="ai-prev-cb"><input type="checkbox" ${r.selected?'checked':''} onchange="aiPrevToggle(${i},this.checked)"></td>
+      <td>
+        <div class="ai-kw">${esc(r.keyword)}</div>
+        <div class="ai-rule-hint">${esc(r.reasoning)}</div>
+      </td>
+      <td>
+        <select onchange="aiPrevEdit(${i},'funnel',this.value)">${funnelOpts(r.funnel)}</select>
+        ${r.agree?'<span class="ai-rule-tag agree">✓R</span>':`<span class="ai-rule-tag disagree" title="Rule says: ${r.ruleFunnel.toUpperCase()}">⚠R</span>`}
+      </td>
+      <td><select onchange="aiPrevEdit(${i},'pageType',this.value)">${ptOpts(r.pageType)}</select></td>
+      <td><select onchange="aiPrevEdit(${i},'suggestedParent',this.value)">${parentOpts.replace(`value="${parentSel}"`,`value="${parentSel}" selected`)}</select></td>
+      <td>${aiConfDots(r.confidence)}</td>
+    </tr>`;
+  });
+  h+='</tbody>';
+  document.getElementById('aiPrevTable').innerHTML=h;
+  aiUpdatePrevCount();
+}
+
+function aiPrevToggle(i,checked){
+  if(aiPreviewRows[i])aiPreviewRows[i].selected=checked;
+  aiUpdatePrevCount();
+}
+function aiPrevEdit(i,field,val){
+  if(aiPreviewRows[i]){
+    aiPreviewRows[i][field]=val;
+    // Re-evaluate agreement kalau funnel diubah manual
+    if(field==='funnel')aiPreviewRows[i].agree=(val===aiPreviewRows[i].ruleFunnel);
+  }
+}
+function aiPrevSelectAll(checked){
+  aiPreviewRows.forEach(r=>r.selected=checked);
+  document.querySelectorAll('#aiPrevTable tbody input[type="checkbox"]').forEach(cb=>cb.checked=checked);
+  const head=document.getElementById('aiSelAll');if(head)head.checked=checked;
+  aiUpdatePrevCount();
+}
+function aiPrevSelectAgree(){
+  aiPreviewRows.forEach(r=>r.selected=r.agree);
+  aiRenderPreview();
+}
+function aiUpdatePrevCount(){
+  const n=aiPreviewRows.filter(r=>r.selected).length;
+  const el=document.getElementById('aiPrevCount');if(el)el.textContent=n+' selected';
+}
+function closeAiPrevMo(){document.getElementById('aiPrevMo').classList.remove('active');}
 // === INIT ===
 loadTheme();
 loadSidebarState();
