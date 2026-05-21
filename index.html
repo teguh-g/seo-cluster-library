@@ -1276,6 +1276,24 @@ let curView='graph';
 const GRAPH_CHILD_LIMIT=5; // auto-collapse children di graph kalau lebih dari ini
 let collapsedParents=new Set(); // parent IDs yang childrennya di-collapse di graph
 
+  // === AI: DETEKSI KEYWORD MIRIP ===
+const KW_STOPWORDS=new Set(['yang','untuk','dan','di','ke','dari','dengan','the','for','and','to','of','a','an','in','on']);
+function kwSignature(keyword){
+  return keyword.toLowerCase()
+    .replace(/[^\w\s]/g,' ')
+    .split(/\s+/)
+    .filter(w=>w&&!KW_STOPWORDS.has(w))
+    .map(w=>w.replace(/(nya|kah|lah|s)$/,''))
+    .sort();
+}
+function sigSimilar(a,b){
+  if(!a.length||!b.length)return false;
+  const setA=new Set(a),setB=new Set(b);
+  let common=0;
+  setA.forEach(w=>{if(setB.has(w))common++;});
+  const maxLen=Math.max(setA.size,setB.size);
+  return (common/maxLen)>=0.9;
+}
 // AI auto-mapping state
 const AI_KEY='seo-cluster-ai';
 let aiCfg={provider:'gemini',model:'gemini-2.5-flash',apiKey:'',language:'id'};
@@ -4979,30 +4997,7 @@ Return ONLY a valid JSON array, no markdown:
     aiBusy=false;updateAiStatusUI();
   }
 
-  // === AI: DETEKSI KEYWORD MIRIP ===
-// Stopwords ID/EN yang sering jadi pengganggu (diabaikan saat banding)
-const KW_STOPWORDS=new Set(['yang','untuk','dan','di','ke','dari','dengan','the','for','and','to','of','a','an','in','on']);
-function kwSignature(keyword){
-  // Pecah jadi kata, buang stopword, ambil akar kata sederhana, lalu sort → set kata
-  return keyword.toLowerCase()
-    .replace(/[^\w\s]/g,' ')          // buang tanda baca
-    .split(/\s+/)
-    .filter(w=>w&&!KW_STOPWORDS.has(w))
-    .map(w=>w.replace(/(nya|kah|lah|s)$/,'')) // akar kata kasar (buang akhiran umum)
-    .sort();
-}
-function sigSimilar(a,b){
-  // a, b = array kata (signature). Mirip kalau set kata-nya sama persis,
-  // atau salah satu superset kecil dari yang lain (selisih max 0 kata penting)
-  if(!a.length||!b.length)return false;
-  const setA=new Set(a),setB=new Set(b);
-  // Hitung irisan
-  let common=0;
-  setA.forEach(w=>{if(setB.has(w))common++;});
-  const maxLen=Math.max(setA.size,setB.size);
-  // Mirip kalau ≥90% kata sama (praktis: semua kata penting sama, beda urutan saja)
-  return (common/maxLen)>=0.9;
-}
+
 }
 // === INIT ===
 loadTheme();
