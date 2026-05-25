@@ -918,6 +918,12 @@ body.panel-collapsed .panel {
   </div>
 </div>
 
+<div id="pcCtxMenu" class="ctx-menu" style="display:none;">
+  <div onclick="detachParentCtx()" class="del">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:6px;vertical-align:-2px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Lepas dari parent (jadi root)
+  </div>
+</div>
+
 <div id="ctxMenu" class="ctx-menu" style="display: none;">
   <div onclick="ctxCreateBrief()" style="font-weight:600; color:var(--bl);">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:6px;vertical-align:-2px;">
@@ -967,7 +973,7 @@ body.panel-collapsed .panel {
       <div style="margin-bottom:10px;">Mapping keyword otomatis pakai Gemini. API key disimpan lokal di browser ini saja.</div>
 
       <div class="ig"><label>Model</label>
-        <select id="aiModel">
+        <select id="aiModel" onchange="aiRenderKeyList();aiRenderQuota();">
           <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite (tercepat)</option>
           <option value="gemini-2.5-flash">Gemini 2.5 Flash (balanced)</option>
           <option value="gemini-2.5-pro">Gemini 2.5 Pro (terbaik)</option>
@@ -975,7 +981,14 @@ body.panel-collapsed .panel {
           <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash-Lite (preview)</option>
         </select>
       </div>
-      <div class="ig"><label>API Key (Google AI Studio)</label><input type="password" id="aiApiKey" placeholder="AIzaSy..."></div>
+      <div class="ig"><label>Saved API Keys (multi-brand)</label>
+        <div id="aiKeyList" style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px;"></div>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="aiKeyName" placeholder="Nama (mis. Brand A)" style="flex:0 0 38%;">
+          <input type="password" id="aiApiKey" placeholder="AIzaSy..." style="flex:1;">
+        </div>
+        <button class="btn btn-g btn-sm" onclick="aiAddKey()" style="width:100%;margin-top:5px;justify-content:center;">+ Simpan key ini ke daftar</button>
+      </div>
       <div class="ig"><label>Default bahasa keyword</label>
         <select id="aiLang">
           <option value="id">Bahasa Indonesia</option>
@@ -1329,6 +1342,7 @@ function sigSimilar(a,b){
 // AI auto-mapping state
 const AI_KEY='seo-cluster-ai';
 let aiCfg={provider:'gemini',model:'gemini-2.5-flash',apiKey:'',language:'id'};
+let aiKeys=[]; // [{name, key}] — daftar API key tersimpan utk multi-brand
 // Usage sekarang per-key+model: aiUsageMap[keyId][model] = {date,rpdUsed,rpmWindow,inTokens,outTokens,totalReq,totalIn,totalOut}
 let aiUsageMap={};
 let aiPreviewRows=[]; // hasil mapping yang sedang di-preview
@@ -1556,7 +1570,7 @@ function closeCtx() {
 }
 
 document.addEventListener('click', (e) => {
-  if (!e.target.closest('.ctx-menu')) { closeCtx(); closeLinkCtx(); }
+  if (!e.target.closest('.ctx-menu')) { closeCtx(); closeLinkCtx(); closePcCtx(); }
 });
 
 function ctxEdit() { if(ctxNodeId) openEd(ctxNodeId); closeCtx(); }
@@ -1908,6 +1922,21 @@ svg.style.display='block';
       arr.setAttribute('points',`${x2},${y2} ${x2-arrowSize/1.4},${y2-arrowSize} ${x2+arrowSize/1.4},${y2-arrowSize}`);
       arr.setAttribute('fill',col); arr.setAttribute('opacity','0.6');
       svg.appendChild(arr);
+
+      // Hit area untuk klik kanan → lepas dari parent
+      const pcHit=mkSVG('path');
+      pcHit.setAttribute('d',`M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${yEnd}`);
+      pcHit.setAttribute('stroke','transparent');
+      pcHit.setAttribute('stroke-width','12');
+      pcHit.setAttribute('fill','none');
+      pcHit.style.cursor='pointer';
+      pcHit.addEventListener('mouseenter',()=>{path.setAttribute('stroke-width','3');});
+      pcHit.addEventListener('mouseleave',()=>{path.setAttribute('stroke-width','1.5');});
+      pcHit.addEventListener('contextmenu',(ev)=>{
+        ev.preventDefault();ev.stopPropagation();
+        showPcCtx(n.id,ev);
+      });
+      svg.appendChild(pcHit);
     }
   });
 
@@ -2830,6 +2859,7 @@ function setV(v){
   document.getElementById('tv').style.display=v==='table'?'block':'none';
   document.getElementById('tv').classList.toggle('active',v==='table');
   document.getElementById('dv').style.display=v==='dashboard'?'block':'none';
+  const ts=document.getElementById('tblSort');if(ts)ts.style.display=v==='table'?'':'none';
   // Hide stats bar in dashboard view (dashboard has its own stats)
   document.querySelector('.sb').style.display=v==='dashboard'?'none':'flex';
   if(v==='graph')renderGraph();
@@ -4506,15 +4536,18 @@ document.addEventListener('keydown', function(eSB) {
   if ((eSB.ctrlKey || eSB.metaKey) && eSB.key === ']') { eSB.preventDefault(); collapsePanel(); }
 });
 
-  // === AI: CONFIG & USAGE ===
-function loadAiCfg(){
+  // === AI: CONFIG & USAGE ===function loadAiCfg(){
   try{
     const d=localStorage.getItem(AI_KEY);
-    if(d){const parsed=JSON.parse(d);aiCfg={...aiCfg,...parsed.cfg};if(parsed.usageMap)aiUsageMap=parsed.usageMap;}
+    if(d){const parsed=JSON.parse(d);aiCfg={...aiCfg,...parsed.cfg};if(parsed.usageMap)aiUsageMap=parsed.usageMap;if(Array.isArray(parsed.keys))aiKeys=parsed.keys;}
   }catch(e){}
+  // Kalau ada apiKey aktif tapi belum kedaftar di aiKeys, daftarin otomatis
+  if(aiCfg.apiKey&&!aiKeys.find(k=>k.key===aiCfg.apiKey)){
+    aiKeys.push({name:'Key 1',key:aiCfg.apiKey});
+  }
   updateAiStatusUI();
 }
-function saveAiCfgStore(){try{localStorage.setItem(AI_KEY,JSON.stringify({cfg:aiCfg,usageMap:aiUsageMap}));}catch(e){}}
+function saveAiCfgStore(){try{localStorage.setItem(AI_KEY,JSON.stringify({cfg:aiCfg,usageMap:aiUsageMap,keys:aiKeys}));}catch(e){}}
 function aiIsConfigured(){return !!(aiCfg.apiKey&&aiCfg.apiKey.length>10);}
 function aiRpmCurrent(){const u=aiU();const now=Date.now();u.rpmWindow=u.rpmWindow.filter(ts=>now-ts<60000);return u.rpmWindow.length;}
 function aiRpmLimit(){return {'gemini-2.5-pro':5,'gemini-2.5-flash':10,'gemini-2.5-flash-lite':15,'gemini-3-flash-preview':10,'gemini-3.1-flash-lite-preview':15}[aiCfg.model]||10;}
@@ -4548,11 +4581,56 @@ function updateAiStatusUI(){
     else{btn.disabled=true;btn.style.opacity='.4';btn.title='Setup AI dulu (klik icon AI di header)';}
   }
 }
+  // === AI: MULTI-KEY MANAGEMENT ===
+function aiRenderKeyList(){
+  const el=document.getElementById('aiKeyList');if(!el)return;
+  if(!aiKeys.length){el.innerHTML='<div style="font-size:10px;color:var(--tf);font-family:var(--m);">Belum ada key tersimpan.</div>';return;}
+  el.innerHTML=aiKeys.map((k,i)=>{
+    const active=k.key===aiCfg.apiKey;
+    // hitung quota key ini untuk model aktif
+    const kid=aiKeyId(k.key);
+    let used=0;
+    try{used=(aiUsageMap[kid]&&aiUsageMap[kid][aiCfg.model])?aiUsageMap[kid][aiCfg.model].rpdUsed:0;}catch(e){}
+    return `<div style="display:flex;align-items:center;gap:6px;padding:5px 7px;border:1px solid ${active?'var(--bofu)':'var(--bd)'};border-radius:var(--rs);background:${active?'var(--bofuBg)':'var(--s2)'};">
+      <input type="radio" name="aiKeyPick" ${active?'checked':''} onchange="aiPickKey(${i})" style="width:auto;cursor:pointer;accent-color:var(--bofu);">
+      <span style="flex:1;font-size:11px;color:var(--t);cursor:pointer;" onclick="aiPickKey(${i})">${esc(k.name)} <span style="font-family:var(--m);font-size:9px;color:var(--tf);">${used}/${aiRpdLimit()}</span></span>
+      <button class="btn btn-d btn-sm" style="padding:2px 6px;" onclick="aiDelKey(${i})" title="Hapus key">×</button>
+    </div>`;
+  }).join('');
+}
+function aiAddKey(){
+  const name=(document.getElementById('aiKeyName').value||'').trim()||('Key '+(aiKeys.length+1));
+  const key=(document.getElementById('aiApiKey').value||'').trim();
+  if(key.length<10){toast('Paste API key valid dulu.',1);return;}
+  if(aiKeys.find(k=>k.key===key)){toast('Key ini sudah ada di daftar.',1);return;}
+  aiKeys.push({name,key});
+  aiCfg.apiKey=key; // langsung aktifkan
+  document.getElementById('aiKeyName').value='';
+  saveAiCfgStore();aiRenderKeyList();aiRenderQuota();updateAiStatusUI();
+  toast(`Key "${name}" disimpan & diaktifkan.`);
+}
+function aiPickKey(i){
+  const k=aiKeys[i];if(!k)return;
+  aiCfg.apiKey=k.key;
+  document.getElementById('aiApiKey').value=k.key;
+  saveAiCfgStore();aiRenderKeyList();aiRenderQuota();updateAiStatusUI();
+  toast(`Aktif: "${k.name}"`);
+}
+function aiDelKey(i){
+  const k=aiKeys[i];if(!k)return;
+  if(!confirm(`Hapus key "${k.name}" dari daftar? (Quota tracking-nya juga hilang)`))return;
+  const wasActive=k.key===aiCfg.apiKey;
+  aiKeys.splice(i,1);
+  if(wasActive){aiCfg.apiKey=aiKeys[0]?aiKeys[0].key:'';document.getElementById('aiApiKey').value=aiCfg.apiKey;}
+  saveAiCfgStore();aiRenderKeyList();aiRenderQuota();updateAiStatusUI();
+  toast('Key dihapus.');
+}
 // === AI: SETTINGS MODAL ===
 function openAiMo(){
   document.getElementById('aiModel').value=aiCfg.model;
   document.getElementById('aiApiKey').value=aiCfg.apiKey;
   document.getElementById('aiLang').value=aiCfg.language;
+  aiRenderKeyList();
   aiRenderQuota();
   document.getElementById('aiMo').classList.add('active');
 }
@@ -5379,6 +5457,24 @@ function aiRenderLinkTree(rootNode){
       </div>
     </div>`;
   }).join('');
+}
+  // === PARENT-CHILD: lepas dari parent via klik kanan garis ===
+let pcCtxChildId=null;
+function showPcCtx(childId,e){
+  pcCtxChildId=childId;
+  const m=document.getElementById('pcCtxMenu');
+  m.style.left=e.clientX+'px';m.style.top=e.clientY+'px';m.style.display='block';
+}
+function closePcCtx(){const m=document.getElementById('pcCtxMenu');if(m)m.style.display='none';pcCtxChildId=null;}
+function detachParentCtx(){
+  if(!pcCtxChildId){closePcCtx();return;}
+  const p=P();if(!p){closePcCtx();return;}
+  const n=p.nodes.find(x=>x.id===pcCtxChildId);
+  if(!n){closePcCtx();return;}
+  if(!confirm(`Lepas "${n.keyword}" dari parent-nya? Node ini jadi root (anak-anaknya tetap ikut).`)){closePcCtx();return;}
+  n.parentId=null;
+  closePcCtx();snapshotState();save();renderAll();
+  toast('Node dilepas dari parent.');
 }
 // === INIT ===
 loadTheme();
