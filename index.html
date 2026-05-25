@@ -924,9 +924,35 @@ body.panel-collapsed .panel {
   <div onclick="ctxEdit()">Edit Node...</div>
   <div onclick="ctxAddChild()">Add Child Node</div>
   <div onclick="ctxExpandAi()" id="ctxExpandBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;margin-right:6px;vertical-align:-2px;"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6l2.1 2.1m0-12.8l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>Expand with AI</div>
+  <div onclick="ctxAddChildrenAi()" id="ctxAddChildBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;margin-right:6px;vertical-align:-2px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Children with AI</div>
+  <div onclick="ctxSuggestLinks()" id="ctxLinkAiBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;margin-right:6px;vertical-align:-2px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Suggest Links with AI</div>
   <div onclick="ctxDup()">Duplicate (with subtree)</div>
   <div onclick="ctxAddLink()" id="ctxLinkBtn">Add Internal Link</div>
   <div class="del" onclick="ctxDel()">Delete Node</div>
+</div>
+  <div class="mo" id="aiAddChildMo">
+  <div class="md" style="max-width:480px;">
+    <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Children with AI</h3>
+    <div style="font-size:11px;color:var(--td);margin-bottom:10px;">Ketik keyword (1 per baris). AI akan tentukan funnel & page type, lalu semua jadi anak dari: <strong id="aiAddChildParent" style="color:var(--bofu);"></strong></div>
+    <div class="ig"><textarea id="aiAddChildKW" placeholder="keyword satu&#10;keyword dua&#10;keyword tiga" style="min-height:120px;"></textarea></div>
+    <div class="btn-row" style="margin-top:12px;">
+      <div style="flex:1"></div>
+      <button class="btn btn-g btn-sm" onclick="closeAiAddChildMo()">Cancel</button>
+      <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="aiAddChildrenRun()">Map with AI →</button>
+    </div>
+  </div>
+</div>
+  <div class="mo" id="aiLinkMo">
+  <div class="md" style="max-width:600px;max-height:85vh;display:flex;flex-direction:column;">
+    <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>AI Internal Link Suggestions</h3>
+    <div style="font-size:11px;color:var(--td);margin-bottom:10px;">Saran link relevan dari/ke: <strong id="aiLinkNode" style="color:var(--bofu);"></strong></div>
+    <div style="flex:1;overflow:auto;border:1px solid var(--bd);border-radius:var(--rs);" id="aiLinkList"></div>
+    <div class="btn-row" style="margin-top:12px;flex-shrink:0;">
+      <div style="flex:1"></div>
+      <button class="btn btn-g btn-sm" onclick="closeAiLinkMo()">Close</button>
+      <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="aiApplyLinks()">Add Selected Links →</button>
+    </div>
+  </div>
 </div>
 <div class="mo" id="aiMo">
   <div class="md" style="max-width:480px;">
@@ -5012,6 +5038,215 @@ Return ONLY a valid JSON array, no markdown:
 
 
 }
+
+  // === AI: ADD CHILDREN (user ketik keyword, AI map, parent dikunci) ===
+let aiAddChildParentId=null;
+
+function ctxAddChildrenAi(){
+  if(!ctxNodeId){closeCtx();return;}
+  if(!aiIsConfigured()){toast('Setup AI dulu (klik icon AI di header)',1);openAiMo();closeCtx();return;}
+  const node=N().find(n=>n.id===ctxNodeId);
+  if(!node){closeCtx();return;}
+  aiAddChildParentId=ctxNodeId;
+  document.getElementById('aiAddChildParent').textContent=node.keyword;
+  document.getElementById('aiAddChildKW').value='';
+  document.getElementById('aiAddChildMo').classList.add('active');
+  closeCtx();
+}
+function closeAiAddChildMo(){document.getElementById('aiAddChildMo').classList.remove('active');}
+
+async function aiAddChildrenRun(){
+  const p=P();if(!p)return;
+  const node=p.nodes.find(n=>n.id===aiAddChildParentId);if(!node){toast('Parent node hilang.',1);return;}
+  const lines=document.getElementById('aiAddChildKW').value.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(!lines.length){toast('Ketik keyword dulu!',1);return;}
+  if(lines.length>50){toast('Max 50 keyword per batch.',1);return;}
+
+  const check=aiCanRequest();
+  if(!check.ok){toast(check.reason,1);return;}
+
+  closeAiAddChildMo();
+  aiBusy=true;updateAiStatusUI();
+  toast(`AI mapping ${lines.length} keyword ke "${node.keyword}"...`);
+
+  // Rule baseline
+  const ruleResults={};
+  lines.forEach(kw=>{ruleResults[kw]=ruleClassify(kw);});
+
+  const langMap={id:'Bahasa Indonesia',en:'English',mix:'mixed Indonesian/English'};
+  const lang=langMap[aiCfg.language]||'Bahasa Indonesia';
+  const prompt=`You are an SEO content strategist. Classify keywords that are all children of one parent topic.
+
+PARENT TOPIC: "${node.keyword}" (funnel: ${node.funnel.toUpperCase()}, type: ${ptLabel(node.pageType)})
+KEYWORD LANGUAGE: ${lang}
+
+KEYWORDS TO CLASSIFY (all belong under the parent above):
+${lines.map((k,i)=>`${i+1}. ${k}`).join('\n')}
+
+For EACH keyword decide funnel (bofu/mofu/tofu) and pageType from: ${PT_ALL.map(p=>p.v).join(', ')}.
+
+Return ONLY a valid JSON array, no markdown:
+[{"keyword":"...","funnel":"mofu","pageType":"article-comparison","confidence":0.9,"reasoning":"max 8 words"}]`;
+
+  try{
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${aiCfg.model}:generateContent?key=${aiCfg.apiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,maxOutputTokens:8192}})
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||('HTTP '+res.status));}
+    const data=await res.json();
+    const txt=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+    if(!txt)throw new Error('Empty response');
+    const usage=data.usageMetadata||{};
+    aiRecordRequest(usage.promptTokenCount||0,usage.candidatesTokenCount||0);
+
+    let aiResults=aiParseResponse(txt);
+    if(!Array.isArray(aiResults))throw new Error('Format AI tidak sesuai');
+
+    // Bangun preview rows — semua parent dikunci ke node ini
+    aiPreviewRows=lines.map(kw=>{
+      const ai=aiResults.find(r=>r.keyword&&r.keyword.trim().toLowerCase()===kw.toLowerCase())||{};
+      const rule=ruleResults[kw];
+      const aiFunnel=(ai.funnel||rule.funnel).toLowerCase();
+      const validPt=PT_ALL.some(pt=>pt.v===(ai.pageType||rule.pageType))?(ai.pageType||rule.pageType):rule.pageType;
+      return {
+        keyword:kw,funnel:aiFunnel,pageType:validPt,
+        ruleFunnel:rule.funnel,rulePageType:rule.pageType,
+        suggestedParent:aiAddChildParentId,suggestedParentLabel:node.keyword,
+        confidence:typeof ai.confidence==='number'?ai.confidence:0.5,
+        reasoning:ai.reasoning||'(rule-based)',
+        agree:(aiFunnel===rule.funnel),selected:true,hasAi:!!ai.funnel
+      };
+    });
+    aiRenderPreview();
+    document.getElementById('aiPrevMo').classList.add('active');
+    toast(`${aiPreviewRows.length} keyword di-map ke "${node.keyword}". Review & apply.`);
+  }catch(e){
+    toast('AI error: '+e.message,1);
+  }finally{
+    aiBusy=false;updateAiStatusUI();
+  }
+}
+  // === AI: SUGGEST INTERNAL LINKS (fokus 1 node) ===
+let aiLinkSuggestions=[];
+let aiLinkSourceId=null;
+
+function ctxSuggestLinks(){
+  if(!ctxNodeId){closeCtx();return;}
+  if(!aiIsConfigured()){toast('Setup AI dulu',1);openAiMo();closeCtx();return;}
+  aiSuggestLinks(ctxNodeId);
+  closeCtx();
+}
+
+async function aiSuggestLinks(nodeId){
+  const p=P();if(!p)return;
+  const node=p.nodes.find(n=>n.id===nodeId);if(!node)return;
+  if(p.nodes.length<2){toast('Butuh minimal 2 node.',1);return;}
+
+  const check=aiCanRequest();
+  if(!check.ok){toast(check.reason,1);return;}
+
+  aiLinkSourceId=nodeId;
+  aiBusy=true;updateAiStatusUI();
+  toast(`AI cari link relevan untuk "${node.keyword}"...`);
+
+  // Daftar node lain (kandidat link) + link existing biar ga duplikat
+  const others=p.nodes.filter(n=>n.id!==nodeId);
+  const existingLinks=p.links.filter(l=>l.from===nodeId||l.to===nodeId)
+    .map(l=>l.from===nodeId?l.to:l.from);
+
+  const candList=others.map(n=>`[id:${n.id}] "${n.keyword}" (${n.funnel.toUpperCase()})`).join('\n');
+
+  const prompt=`You are an SEO internal linking strategist. Suggest relevant internal links for ONE target page.
+
+TARGET PAGE: "${node.keyword}" (funnel: ${node.funnel.toUpperCase()}, type: ${ptLabel(node.pageType)})
+
+CANDIDATE PAGES (other nodes in the cluster):
+${candList}
+
+TASK: Suggest the most topically relevant internal links involving the target page. For each suggestion:
+- direction: "from" (target links TO candidate) or "to" (candidate links TO target)
+- targetId: the [id:...] of the candidate page
+- reason: max 10 words why this link helps SEO/UX
+
+Suggest only genuinely relevant links (max 8). Prefer linking related subtopics, comparisons, and supporting content.
+
+Return ONLY a valid JSON array, no markdown:
+[{"direction":"from","targetId":"...","reason":"..."}]`;
+
+  try{
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${aiCfg.model}:generateContent?key=${aiCfg.apiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:4096}})
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||('HTTP '+res.status));}
+    const data=await res.json();
+    const txt=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+    if(!txt)throw new Error('Empty response');
+    const usage=data.usageMetadata||{};
+    aiRecordRequest(usage.promptTokenCount||0,usage.candidatesTokenCount||0);
+
+    let results=aiParseResponse(txt);
+    if(!Array.isArray(results))throw new Error('Format AI tidak sesuai');
+
+    // Validasi + buang yang udah ada link-nya
+    aiLinkSuggestions=results.filter(r=>{
+      if(!r.targetId)return false;
+      if(!p.nodes.find(n=>n.id===r.targetId))return false; // target valid
+      if(existingLinks.includes(r.targetId))return false;   // udah ada link
+      return true;
+    }).map(r=>({...r,selected:true}));
+
+    if(!aiLinkSuggestions.length){toast('Ga ada saran link baru (semua relevan udah ke-link).',1);
+      aiBusy=false;updateAiStatusUI();return;}
+
+    aiRenderLinkSuggestions(node);
+    document.getElementById('aiLinkMo').classList.add('active');
+  }catch(e){
+    toast('AI error: '+e.message,1);
+  }finally{
+    aiBusy=false;updateAiStatusUI();
+  }
+}
+
+function aiRenderLinkSuggestions(node){
+  document.getElementById('aiLinkNode').textContent=node.keyword;
+  const ns=N();
+  const el=document.getElementById('aiLinkList');
+  el.innerHTML=aiLinkSuggestions.map((s,i)=>{
+    const target=ns.find(n=>n.id===s.targetId);
+    if(!target)return '';
+    const arrow=s.direction==='from'?'→':'←';
+    const label=s.direction==='from'
+      ? `${esc(node.keyword)} <span style="color:var(--bofu);">${arrow}</span> ${esc(target.keyword)}`
+      : `${esc(target.keyword)} <span style="color:var(--bofu);">${arrow}</span> ${esc(node.keyword)}`;
+    return `<div style="padding:9px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:flex-start;gap:8px;">
+      <input type="checkbox" ${s.selected?'checked':''} onchange="aiLinkSuggestions[${i}].selected=this.checked" style="margin-top:2px;accent-color:var(--bofu);cursor:pointer;">
+      <div style="flex:1;">
+        <div style="font-size:11px;font-weight:600;color:var(--t);">${label}</div>
+        <div style="font-size:9px;color:var(--tf);font-family:var(--m);margin-top:2px;">${esc(s.reason||'')}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function aiApplyLinks(){
+  const p=P();if(!p)return;
+  const sel=aiLinkSuggestions.filter(s=>s.selected);
+  if(!sel.length){toast('Pilih minimal 1 link!',1);return;}
+  let added=0;
+  sel.forEach(s=>{
+    const from=s.direction==='from'?aiLinkSourceId:s.targetId;
+    const to=s.direction==='from'?s.targetId:aiLinkSourceId;
+    if(from===to)return;
+    if(p.links.find(l=>l.from===from&&l.to===to))return;
+    p.links.push({from,to});added++;
+  });
+  closeAiLinkMo();
+  snapshotState();save();renderAll();
+  toast(`${added} internal link ditambahkan!`);
+}
+function closeAiLinkMo(){document.getElementById('aiLinkMo').classList.remove('active');}
 // === INIT ===
 loadTheme();
 loadSidebarState();
