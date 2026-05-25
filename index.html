@@ -4472,44 +4472,44 @@ document.addEventListener('keydown', function(eSB) {
 function loadAiCfg(){
   try{
     const d=localStorage.getItem(AI_KEY);
-    if(d){const parsed=JSON.parse(d);aiCfg={...aiCfg,...parsed.cfg};aiUsage={...aiUsage,...parsed.usage};}
+    if(d){const parsed=JSON.parse(d);aiCfg={...aiCfg,...parsed.cfg};if(parsed.usageMap)aiUsageMap=parsed.usageMap;}
   }catch(e){}
-  const today=new Date(Date.now()-8*3600*1000).toISOString().split('T')[0];
-  if(aiUsage.date!==today){aiUsage.date=today;aiUsage.rpdUsed=0;aiUsage.rpmWindow=[];aiUsage.inTokens=0;aiUsage.outTokens=0;}
   updateAiStatusUI();
 }
-function saveAiCfgStore(){try{localStorage.setItem(AI_KEY,JSON.stringify({cfg:aiCfg,usage:aiUsage}));}catch(e){}}
+function saveAiCfgStore(){try{localStorage.setItem(AI_KEY,JSON.stringify({cfg:aiCfg,usageMap:aiUsageMap}));}catch(e){}}
 function aiIsConfigured(){return !!(aiCfg.apiKey&&aiCfg.apiKey.length>10);}
-function aiRpmCurrent(){const now=Date.now();aiUsage.rpmWindow=aiUsage.rpmWindow.filter(ts=>now-ts<60000);return aiUsage.rpmWindow.length;}
+function aiRpmCurrent(){const u=aiU();const now=Date.now();u.rpmWindow=u.rpmWindow.filter(ts=>now-ts<60000);return u.rpmWindow.length;}
 function aiRpmLimit(){return {'gemini-2.5-pro':5,'gemini-2.5-flash':10,'gemini-2.5-flash-lite':15,'gemini-3-flash-preview':10,'gemini-3.1-flash-lite-preview':15}[aiCfg.model]||10;}
 function aiRpdLimit(){return 20;}
 function aiCanRequest(){
   if(!aiIsConfigured())return {ok:false,reason:'Setup API key dulu'};
-  if(aiUsage.rpdUsed>=aiRpdLimit())return {ok:false,reason:`Quota harian habis (${aiUsage.rpdUsed}/${aiRpdLimit()})`};
+  const u=aiU();
+  if(u.rpdUsed>=aiRpdLimit())return {ok:false,reason:`Quota harian habis (${u.rpdUsed}/${aiRpdLimit()})`};
   if(aiRpmCurrent()>=aiRpmLimit())return {ok:false,reason:`Tunggu sebentar — RPM throttle (${aiRpmCurrent()}/${aiRpmLimit()})`};
   return {ok:true};
 }
 function aiRecordRequest(inTok,outTok){
-  aiUsage.rpdUsed++;aiUsage.rpmWindow.push(Date.now());
-  aiUsage.inTokens+=inTok||0;aiUsage.outTokens+=outTok||0;
-  aiUsage.totalReq++;aiUsage.totalIn+=inTok||0;aiUsage.totalOut+=outTok||0;
+  const u=aiU();
+  u.rpdUsed++;u.rpmWindow.push(Date.now());
+  u.inTokens+=inTok||0;u.outTokens+=outTok||0;
+  u.totalReq++;u.totalIn+=inTok||0;u.totalOut+=outTok||0;
   saveAiCfgStore();updateAiStatusUI();
 }
 function updateAiStatusUI(){
   const el=document.getElementById('aiSt');if(!el)return;
   const lbl=document.getElementById('aiLbl');
   el.classList.remove('off','on','busy','warn');
+  const used=aiIsConfigured()?aiU().rpdUsed:0;
   if(aiBusy){el.classList.add('busy');lbl.textContent='AI processing...';}
   else if(!aiIsConfigured()){el.classList.add('off');lbl.textContent='AI: off';}
-  else if(aiUsage.rpdUsed>=aiRpdLimit()){el.classList.add('warn');lbl.textContent=`AI: ${aiUsage.rpdUsed}/${aiRpdLimit()} (limit)`;}
-  else {el.classList.add('on');lbl.textContent=`AI: ${aiUsage.rpdUsed}/${aiRpdLimit()}`;}
+  else if(used>=aiRpdLimit()){el.classList.add('warn');lbl.textContent=`AI: ${used}/${aiRpdLimit()} (limit)`;}
+  else {el.classList.add('on');lbl.textContent=`AI: ${used}/${aiRpdLimit()}`;}
   const btn=document.getElementById('btnAutoMap');
   if(btn){
     if(aiIsConfigured()){btn.disabled=false;btn.style.opacity='';btn.title='Auto-map keywords with AI';}
     else{btn.disabled=true;btn.style.opacity='.4';btn.title='Setup AI dulu (klik icon AI di header)';}
   }
 }
-
 // === AI: SETTINGS MODAL ===
 function openAiMo(){
   document.getElementById('aiModel').value=aiCfg.model;
@@ -4520,12 +4520,13 @@ function openAiMo(){
 }
 function closeAiMo(){document.getElementById('aiMo').classList.remove('active');}
 function aiRenderQuota(){
-  const pct=Math.min(100,(aiUsage.rpdUsed/aiRpdLimit())*100);
+  const u=aiU();
+  const pct=Math.min(100,(u.rpdUsed/aiRpdLimit())*100);
   const fill=document.getElementById('aiQuotaFill');
-  if(fill){fill.style.width=pct+'%';fill.classList.toggle('warn',aiUsage.rpdUsed>=aiRpdLimit());}
-  const qv=document.getElementById('aiQuotaVal');if(qv)qv.textContent=`${aiUsage.rpdUsed} / ${aiRpdLimit()}`;
-  const tv=document.getElementById('aiTokVal');if(tv)tv.textContent=`${aiUsage.inTokens.toLocaleString()} / ${aiUsage.outTokens.toLocaleString()}`;
-  const tot=document.getElementById('aiTotalVal');if(tot)tot.textContent=aiUsage.totalReq.toLocaleString();
+  if(fill){fill.style.width=pct+'%';fill.classList.toggle('warn',u.rpdUsed>=aiRpdLimit());}
+  const qv=document.getElementById('aiQuotaVal');if(qv)qv.textContent=`${u.rpdUsed} / ${aiRpdLimit()}`;
+  const tv=document.getElementById('aiTokVal');if(tv)tv.textContent=`${u.inTokens.toLocaleString()} / ${u.outTokens.toLocaleString()}`;
+  const tot=document.getElementById('aiTotalVal');if(tot)tot.textContent=u.totalReq.toLocaleString();
 }
 function aiSaveCfg(){
   aiCfg.model=document.getElementById('aiModel').value;
@@ -4796,7 +4797,7 @@ function aiRenderPreview(){
     <div>Keywords: <strong>${aiPreviewRows.length}</strong></div>
     <div>AI mapped: <strong>${aiCount}</strong></div>
     <div>⚠ Disagree (AI≠Rule): <strong>${disagreeCount}</strong></div>
-    <div>Quota: <strong>${aiUsage.rpdUsed}/${aiRpdLimit()}</strong></div>`;
+    <div>Quota: <strong>${aiU().rpdUsed}/${aiRpdLimit()}</strong></div>`;
 
   // Parent options (existing nodes + ROOT)
   const parentOpts=`<option value="ROOT">-- ROOT (new cluster) --</option>`+
