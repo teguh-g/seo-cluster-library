@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
 <title>SEO Cluster Library</title>
 <meta name="author" content="Teguh Gunawan, S.Li.">
 <meta name="description" content="SEO Cluster Library — keyword cluster management tool by Teguh Gunawan, S.Li.">
@@ -4536,7 +4536,8 @@ document.addEventListener('keydown', function(eSB) {
   if ((eSB.ctrlKey || eSB.metaKey) && eSB.key === ']') { eSB.preventDefault(); collapsePanel(); }
 });
 
-  // === AI: CONFIG & USAGE ===function loadAiCfg(){
+  // === AI: CONFIG & USAGE ===
+  function loadAiCfg(){
   try{
     const d=localStorage.getItem(AI_KEY);
     if(d){const parsed=JSON.parse(d);aiCfg={...aiCfg,...parsed.cfg};if(parsed.usageMap)aiUsageMap=parsed.usageMap;if(Array.isArray(parsed.keys))aiKeys=parsed.keys;}
