@@ -1812,7 +1812,7 @@ function renderGraph(){
   const stCols={published:'#34d399',draft:'#5a6478','in-progress':'#f59e0b',done:'#4a90ff','needs-update':'#ef4444'};
 
   const canvas=document.createElement('canvas');const ctx2=canvas.getContext('2d');
-  ctx2.font='600 12px DM Sans';
+  ctx2.font='600 12px Inter';
   const nodeH=62,padX=20,gapX=28,gapY=80;
   const widths={};
   ns.forEach(n=>{widths[n.id]=Math.max(180,ctx2.measureText(n.keyword).width+padX*2+40);});
@@ -2017,10 +2017,10 @@ svg.style.display='block';
         const isUp=delta<0;
         const trCol=isUp?'#34d399':'#ef4444';
         const arrow=isUp?'↑':'↓';
-        trendSvg=`<text x="${p.x+w-8}" y="${p.y+38}" fill="${trCol}" font-size="9" font-family="Space Mono" font-weight="700" text-anchor="end">${arrow}${Math.abs(delta).toFixed(1)}</text>`;
+        trendSvg=`<text x="${p.x+w-8}" y="${p.y+38}" fill="${trCol}" font-size="9" font-family="JetBrains Mono" font-weight="700" text-anchor="end">${arrow}${Math.abs(delta).toFixed(1)}</text>`;
       }
     }else if(n.isNew){
-      trendSvg=`<text x="${p.x+w-8}" y="${p.y+38}" fill="#4a90ff" font-size="8" font-family="Space Mono" font-weight="700" text-anchor="end">NEW</text>`;
+      trendSvg=`<text x="${p.x+w-8}" y="${p.y+38}" fill="#4a90ff" font-size="8" font-family="JetBrains Mono" font-weight="700" text-anchor="end">NEW</text>`;
     }
     
     const isDark=document.documentElement.getAttribute('data-theme')!=='light';
@@ -2031,11 +2031,11 @@ svg.style.display='block';
     g.innerHTML=`
       <rect class="gn-rect ${graphSelected.has(n.id)?'gn-selected':''}" data-id="${n.id}" x="${p.x}" y="${p.y}" width="${w}" height="${nodeH}" rx="8" fill="${nodeBg}" stroke="${statusColor}" stroke-width="1.5" ${strokeDash}/>
       ${funnelAccent}
-      <text x="${p.x+16}" y="${p.y+18}" fill="${col}" font-size="9" font-family="Space Mono" font-weight="700">${n.funnel.toUpperCase()}</text>
-      <text x="${p.x+w-8}" y="${p.y+18}" fill="${subTextCol}" font-size="8" font-family="Space Mono" text-anchor="end">${ptLabel(n.pageType)}</text>
-      <text x="${p.x+16}" y="${p.y+38}" fill="${textCol}" font-size="12" font-family="DM Sans" font-weight="600">${esc(n.keyword)}</text>
+      <text x="${p.x+16}" y="${p.y+18}" fill="${col}" font-size="9" font-family="JetBrains Mono" font-weight="700">${n.funnel.toUpperCase()}</text>
+      <text x="${p.x+w-8}" y="${p.y+18}" fill="${subTextCol}" font-size="8" font-family="JetBrains Mono" text-anchor="end">${ptLabel(n.pageType)}</text>
+      <text x="${p.x+16}" y="${p.y+38}" fill="${textCol}" font-size="12" font-family="Inter" font-weight="600">${esc(n.keyword)}</text>
       ${trendSvg}
-      <text x="${p.x+16}" y="${p.y+54}" fill="${subTextCol}" font-size="9" font-family="Space Mono">${[n.impressions?'impr:'+n.impressions.toLocaleString():'',n.clicks?'clk:'+n.clicks:'',n.position?'#'+(typeof n.position==='number'?n.position.toFixed(1):n.position):''].filter(Boolean).join('  ')}</text>
+      <text x="${p.x+16}" y="${p.y+54}" fill="${subTextCol}" font-size="9" font-family="JetBrains Mono">${[n.impressions?'impr:'+n.impressions.toLocaleString():'',n.clicks?'clk:'+n.clicks:'',n.position?'#'+(typeof n.position==='number'?n.position.toFixed(1):n.position):''].filter(Boolean).join('  ')}</text>
     `;
     
     g.addEventListener('mousedown',(e)=>{
@@ -2095,7 +2095,7 @@ svg.style.display='block';
         fill="${btnBg}" stroke="${btnBd}" stroke-width="1"/>
       <circle cx="${btnX+10}" cy="${btnY+btnH/2}" r="2.5" fill="${accent}"/>
       <text x="${btnX+btnW/2+5}" y="${btnY+btnH/2+4}" fill="${btnTxt}"
-        font-size="10" font-family="Space Mono" font-weight="600" text-anchor="middle">${label}</text>
+        font-size="10" font-family="JetBrains Mono" font-weight="600" text-anchor="middle">${label}</text>
     `;
     g.addEventListener('click',(e)=>{
       e.stopPropagation();
@@ -4135,7 +4135,7 @@ function exportSVG(){
   titleText.setAttribute('x',20);
   titleText.setAttribute('y',-15);
   titleText.setAttribute('fill',isDark?'#e4e8f0':'#111827');
-  titleText.setAttribute('font-family','DM Sans, sans-serif');
+  titleText.setAttribute('font-family','Inter, sans-serif');
   titleText.setAttribute('font-size','16');
   titleText.setAttribute('font-weight','700');
   titleText.textContent=p.name;
@@ -4145,7 +4145,7 @@ function exportSVG(){
   subText.setAttribute('x',w-20);
   subText.setAttribute('y',-15);
   subText.setAttribute('fill',isDark?'#5a6478':'#9ca3af');
-  subText.setAttribute('font-family','Space Mono, monospace');
+  subText.setAttribute('font-family','JetBrains Mono, monospace');
   subText.setAttribute('font-size','10');
   subText.setAttribute('text-anchor','end');
   subText.textContent=`${p.nodes.length} nodes · ${new Date().toLocaleDateString('en-GB')}`;
@@ -4250,12 +4250,12 @@ async function doPngExport(){
     // Title
     if(inclTitle){
       ctx.fillStyle=isDarkBg?'#e4e8f0':'#111827';
-      ctx.font='bold 18px "DM Sans", sans-serif';
+      ctx.font='bold 18px "Inter", sans-serif';
       ctx.textBaseline='top';
       ctx.fillText(p.name,padding,padding);
 
       ctx.fillStyle=isDarkBg?'#5a6478':'#9ca3af';
-      ctx.font='11px "Space Mono", monospace';
+      ctx.font='11px "JetBrains Mono", monospace';
       ctx.textAlign='right';
       ctx.fillText(`${p.nodes.length} nodes · ${new Date().toLocaleDateString('en-GB')}`,totalW-padding,padding+4);
       ctx.textAlign='left';
