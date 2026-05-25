@@ -4203,10 +4203,21 @@ async function doPngExport(){
       clone.querySelectorAll('text[fill="#5a6478"]').forEach(t=>t.setAttribute('fill','#6b7280'));
     }
 
-    const titleH=inclTitle?50:0;
+   const titleH=inclTitle?50:0;
     const padding=20;
     const totalW=w+padding*2;
     const totalH=h+titleH+padding*2;
+
+    // Guard: turunin scale otomatis kalau canvas nembus batas browser (~16384px / 268MP)
+    let scaleEff=scale;
+    const MAX_SIDE=16000, MAX_AREA=260000000;
+    while(scaleEff>0.3&&((totalW*scaleEff>MAX_SIDE)||(totalH*scaleEff>MAX_SIDE)||(totalW*scaleEff*totalH*scaleEff>MAX_AREA))){
+      scaleEff-=0.25;
+    }
+    if(scaleEff<0.3)scaleEff=0.3;
+    if(scaleEff<scale){
+      toast(`Graph besar — resolusi otomatis diturunkan ke ${scaleEff.toFixed(2)}x biar ga gagal.`);
+    }
 
     clone.setAttribute('width',w);
     clone.setAttribute('height',h);
@@ -4225,10 +4236,10 @@ async function doPngExport(){
     });
 
     const canvas=document.createElement('canvas');
-    canvas.width=totalW*scale;
-    canvas.height=totalH*scale;
+    canvas.width=totalW*scaleEff;
+    canvas.height=totalH*scaleEff;
     const ctx=canvas.getContext('2d');
-    ctx.scale(scale,scale);
+    ctx.scale(scaleEff,scaleEff);
 
     // Background
     if(bgColor!=='transparent'){
