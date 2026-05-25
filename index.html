@@ -665,7 +665,7 @@ body.panel-collapsed .panel {
       <span class="kbhint">Ctrl + ]</span>
     </button>
     <span class="sep"></span>
-    <div class="sync-st off" id="syncSt"
+    <div class="sync-st off" id="syncSt">
       <span class="sd"></span>
       <span id="syncLbl">Not configured</span>
     </div>
@@ -835,8 +835,8 @@ body.panel-collapsed .panel {
         <option value="oldest">Sort: Terlama → Terbaru</option>
         <option value="newest">Sort: Terbaru → Terlama</option>
       </select>
-      <button class="btn btn-g btn-sm" onclick="copyTable('all')" title="Copy all rows as TSV (paste to Sheets/Excel)">
-      <button class="btn btn-g btn-sm" onclick="copyTable('selected')" title="Copy only checked rows" id="btnCopySel" style="display:none;"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span class="lbl">Copy Selected (<span id="copySelCount">0</span>)</span></button>
+      <button class="btn btn-g btn-sm" onclick="copyTable('all')" title="Copy all rows as TSV (paste to Sheets/Excel)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="lbl">Copy All</span></button>
+<button class="btn btn-g btn-sm" onclick="copyTable('selected')" ...>
       <button class="btn btn-g btn-sm" onclick="expCSV()" title="Download CSV file"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="lbl">CSV</span></button>
       <button class="btn btn-g btn-sm" onclick="expXLSX()" title="Download TSV (open with Excel/Sheets)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="lbl">TSV</span></button>
       <button class="btn btn-g btn-sm" onclick="expJSON()" title="Save project as JSON file">Save Project</button>
@@ -3628,7 +3628,7 @@ function gscDoImport(){
         keyword:urlToKeyword(r.url),
         url:r.url,
         funnel:defaultFunnel,
-        pageType:defaultFunnel==='bofu'?'landing-page':defaultFunnel==='mofu'?'consideration':'informational',
+        pageType:defaultFunnel==='bofu'?'landing-page':defaultFunnel==='mofu'?'article-consideration':'article-informational',
         volume:0,
         kd:0,
         position:r.position,
