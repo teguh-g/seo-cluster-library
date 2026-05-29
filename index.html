@@ -688,6 +688,7 @@ body.panel-collapsed .panel {
     <button class="btn btn-g btn-sm" onclick="openGscMo()" title="Import from GSC"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="lbl">GSC</span></button>
     <button class="btn btn-g btn-sm" onclick="openSnapMo()" title="Backup snapshots"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5a2 2 0 0 1 2-2h3l2-2h4l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg><span class="lbl">Snaps</span></button>
     <button class="btn btn-g btn-sm" onclick="checkCannibals()" title="Check keyword cannibalization"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
+    <button class="btn btn-g btn-sm" onclick="openSitemapMo()" title="Sitemap Check — cek anti-duplikasi konten"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v3l2 2"/></svg><span class="lbl">Sitemap</span></button>
     <span class="sep"></span>
     <span class="sep"></span>
     <button class="btn btn-g btn-sm" onclick="exportPNG()" title="Export graph as PNG image"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span class="lbl">PNG</span></button>
@@ -1111,6 +1112,52 @@ body.panel-collapsed .panel {
     <div class="btn-row" style="margin-top:14px;">
       <div style="flex:1"></div>
       <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="closeCbMo()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="mo" id="cbMo">
+  <div class="md" style="max-width:560px;">
+    <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Keyword Cannibalization Check</h3>
+    <p style="font-size:11px;color:var(--td);margin-bottom:12px;">Keyword yang muncul di lebih dari 1 node — kemungkinan cannibalization SEO.</p>
+    <div class="cb-list" id="cbList"></div>
+    <div class="btn-row" style="margin-top:14px;">
+      <div style="flex:1"></div>
+      <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="closeCbMo()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="mo" id="sitemapMo">
+  <div class="md" style="max-width:720px;max-height:88vh;display:flex;flex-direction:column;">
+    <h3><svg class="h3-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v3l2 2"/></svg>Sitemap Check</h3>
+    <p style="font-size:11px;color:var(--td);line-height:1.55;margin-bottom:10px;">Cek apakah keyword di project ini udah pernah dipublish. Paste sitemap kamu (URL per baris, path per baris, atau XML sitemap full). Hanya node berstatus <strong style="color:var(--t);">draft / in-progress / done</strong> yang dicek.</p>
+
+    <div class="ig"><label>Sitemap input</label>
+      <textarea id="smInput" placeholder="Salah satu format:&#10;&#10;https://situsanda.com/article/baja-ringan&#10;https://situsanda.com/article/atap-rumah&#10;&#10;atau path saja:&#10;/article/baja-ringan&#10;/article/atap-rumah&#10;&#10;atau full XML sitemap (paste isinya)" style="min-height:160px;font-family:var(--m);font-size:10.5px;"></textarea>
+    </div>
+
+    <div style="display:flex;gap:10px;align-items:center;margin-top:6px;">
+      <div class="ig" style="flex:0 0 140px;margin-bottom:0;">
+        <label>Match threshold</label>
+        <select id="smThreshold">
+          <option value="0.7">70% — longgar</option>
+          <option value="0.75" selected>75% — balanced</option>
+          <option value="0.8">80% — ketat</option>
+          <option value="0.85">85% — sangat ketat</option>
+        </select>
+      </div>
+      <div style="flex:1;font-size:10px;color:var(--td);line-height:1.5;padding-top:14px;">
+        <strong style="color:var(--t);">2 layer matching:</strong> URL langsung (kalau node punya URL) + slug similarity (untuk node tanpa URL).
+      </div>
+    </div>
+
+    <div id="smResults" style="flex:1;overflow-y:auto;margin-top:12px;display:none;"></div>
+
+    <div class="btn-row" style="margin-top:14px;flex-shrink:0;">
+      <span id="smStatus" style="font-size:10px;color:var(--td);align-self:center;flex:1;"></span>
+      <button class="btn btn-g btn-sm" onclick="closeSitemapMo()">Close</button>
+      <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="runSitemapCheck()" id="smRunBtn">Check Sitemap →</button>
     </div>
   </div>
 </div>
@@ -3294,6 +3341,23 @@ function checkCannibals(){
   document.getElementById('cbMo').classList.add('active');
 }
 function closeCbMo(){document.getElementById('cbMo').classList.remove('active');}
+
+function closeCbMo(){document.getElementById('cbMo').classList.remove('active');}
+
+// === SITEMAP CHECK ===
+function openSitemapMo(){
+  const p=P();
+  if(!p){toast('Pilih atau buat project dulu!',1);return;}
+  document.getElementById('smInput').value='';
+  document.getElementById('smResults').style.display='none';
+  document.getElementById('smResults').innerHTML='';
+  document.getElementById('smStatus').textContent='';
+  document.getElementById('sitemapMo').classList.add('active');
+}
+function closeSitemapMo(){document.getElementById('sitemapMo').classList.remove('active');}
+function runSitemapCheck(){
+  toast('Parser belum dibangun — Step 2 nanti.',1);
+}
 
 function updateCannibalWarn(){
   const cb=findCannibals();
