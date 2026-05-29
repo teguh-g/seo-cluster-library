@@ -1138,14 +1138,16 @@ body.panel-collapsed .panel {
     </div>
 
     <div style="display:flex;gap:10px;align-items:center;margin-top:6px;">
-      <div class="ig" style="flex:0 0 140px;margin-bottom:0;">
-        <label>Match threshold</label>
+     <div class="ig" style="flex:0 0 140px;margin-bottom:0;">
+        <label>"Likely" threshold</label>
         <select id="smThreshold">
           <option value="0.7">70% — longgar</option>
           <option value="0.75" selected>75% — balanced</option>
           <option value="0.8">80% — ketat</option>
-          <option value="0.85">85% — sangat ketat</option>
         </select>
+      </div>
+      <div style="flex:1;font-size:10px;color:var(--td);line-height:1.5;padding-top:14px;">
+        <strong style="color:var(--t);">4 band matching:</strong> Strong (≥85% / URL match) · Likely (≥threshold) · Possible (50-69%) · Unmatched. Threshold = batas bawah Likely.
       </div>
       <div style="flex:1;font-size:10px;color:var(--td);line-height:1.5;padding-top:14px;">
         <strong style="color:var(--t);">2 layer matching:</strong> URL langsung (kalau node punya URL) + slug similarity (untuk node tanpa URL).
@@ -3467,20 +3469,30 @@ function smSimilarity(kwA,kwB){
 }
 
 // Match engine: bandingin semua node (yg dicek) sama parsed sitemap
-// Return: {matches:[], clean:[], unknown:[], skipped:[]}
+// Return: {strong:[], likely:[], possible:[], unmatched:[], skipped:[]}
+// 4 band kategorisasi:
+// - strong: URL match langsung (Layer 1) atau slug similarity >=85%
+// - likely: slug similarity threshold..84%
+// - possible: slug similarity 50..(threshold-1)%
+// - unmatched: slug similarity <50% atau URL ada tapi ga match
 function smMatchNodes(parsed,threshold){
   const p=P();
-  if(!p)return {matches:[],clean:[],unknown:[],skipped:[]};
+  if(!p)return {strong:[],likely:[],possible:[],unmatched:[],skipped:[]};
   const ns=p.nodes;
 
   // Build path index untuk fast lookup Layer 1
   const pathIdx={};
   parsed.forEach(s=>{pathIdx[s.path]=s;});
 
-  const matches=[];
-  const clean=[];
-  const unknown=[];
+  const strong=[];
+  const likely=[];
+  const possible=[];
+  const unmatched=[];
   const skipped=[];
+
+  // Band thresholds
+  const TH_STRONG=0.85;
+  const TH_POSSIBLE=0.50;
 
   ns.forEach(n=>{
     // Filter status: skip published & needs-update
@@ -3492,20 +3504,20 @@ function smMatchNodes(parsed,threshold){
     const hasUrl=n.url&&n.url.trim();
     const nodePath=hasUrl?smExtractPath(n.url):'';
 
-    // === LAYER 1: Direct URL path match ===
+    // === LAYER 1: Direct URL path match → otomatis Strong ===
     if(nodePath&&pathIdx[nodePath]){
-      matches.push({
+      strong.push({
         node:n,
         sitemap:pathIdx[nodePath],
         layer:1,
         confidence:1.0,
+        band:'strong',
         reason:'URL match langsung'
       });
       return;
     }
 
-    // === LAYER 2: Slug similarity match ===
-    // Bandingin keyword node ke semua slug sitemap, ambil score tertinggi
+    // === LAYER 2: Slug similarity match — band-based ===
     let best={score:0,entry:null};
     parsed.forEach(s=>{
       if(!s.slug)return;
@@ -3513,24 +3525,31 @@ function smMatchNodes(parsed,threshold){
       if(score>best.score)best={score,entry:s};
     });
 
-    if(best.score>=threshold){
-      matches.push({
-        node:n,
-        sitemap:best.entry,
-        layer:2,
-        confidence:best.score,
-        reason:`Slug similarity ${Math.round(best.score*100)}%`
-      });
-    }else if(hasUrl){
-      // Node punya URL tapi ga match sitemap → konten baru valid
-      clean.push({node:n});
+    const score=best.score;
+    const entry=best.entry;
+    const baseRow={
+      node:n,
+      sitemap:entry,
+      layer:2,
+      confidence:score,
+      reason:`Slug similarity ${Math.round(score*100)}%`
+    };
+
+    if(score>=TH_STRONG){
+      strong.push({...baseRow,band:'strong'});
+    }else if(score>=threshold){
+      likely.push({...baseRow,band:'likely'});
+    }else if(score>=TH_POSSIBLE){
+      possible.push({...baseRow,band:'possible',bestScore:score,bestEntry:entry});
     }else{
-      // Node ga punya URL, slug juga ga match → unknown
-      unknown.push({node:n,bestScore:best.score,bestEntry:best.entry});
+      // Score <50% — beda topik / unmatched
+      // Kalau node ada URL tapi gada match → tetap unmatched (konten baru valid)
+      // Kalau URL kosong + score rendah → unmatched juga
+      unmatched.push({node:n,hasUrl,bestScore:score,bestEntry:entry});
     }
   });
 
-  return {matches,clean,unknown,skipped};
+  return {strong,likely,possible,unmatched,skipped};
 }
 
 // Cache hasil check terakhir biar action button bisa akses data
