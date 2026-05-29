@@ -145,6 +145,14 @@ button{font-family:var(--f);}
 .panel-section-header:hover h3{color:var(--t);}
 .collapse-btn{background:none;border:none;color:var(--td);cursor:pointer;padding:2px 4px;font-size:14px;line-height:1;border-radius:3px;transition:transform .2s;}
 .panel-section.collapsed .collapse-btn{transform:rotate(-90deg);}
+/* === FOLDER DRAG & DROP === */
+.folder-item[draggable="true"],
+.folder-group-header[draggable="true"]{cursor:grab;}
+.folder-item.dragging,
+.folder-group-header.dragging{opacity:.4;}
+.folder-group-header.drop-target{background:var(--bofuBg) !important;outline:2px dashed var(--bofu);outline-offset:-2px;color:var(--bofu) !important;}
+.folder-root-drop{padding:8px 12px;margin-top:6px;border:1px dashed transparent;border-radius:var(--rs);font-size:10px;color:var(--tf);text-align:center;transition:all .15s;}
+.folder-root-drop.drop-target{border-color:var(--bofu);background:var(--bofuBg);color:var(--bofu);}
   
 /* === PANEL === */
 .panel{border-right:1px solid var(--bd);display:flex;flex-direction:column;background:var(--s1);overflow-y:auto;overflow-x:hidden;min-height:0;}
@@ -943,6 +951,47 @@ body.panel-collapsed .panel {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:6px;vertical-align:-2px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Lepas dari parent (jadi root)
   </div>
 </div>
+  <!-- Context menu untuk Project (klik kanan project di sidebar) -->
+<div id="projCtxMenu" class="ctx-menu" style="display:none;">
+  <div onclick="projCtxRename()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:6px;vertical-align:-2px;"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Rename Project
+  </div>
+  <div onclick="projCtxDup()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:6px;vertical-align:-2px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Duplicate Project
+  </div>
+  <div class="ctx-divider"></div>
+  <div onclick="projCtxMove()" id="projCtxMoveBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:6px;vertical-align:-2px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Move to Folder...
+  </div>
+  <div onclick="projCtxMoveRoot()" id="projCtxMoveRootBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:6px;vertical-align:-2px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Move to Root
+  </div>
+  <div class="ctx-divider"></div>
+  <div class="del" onclick="projCtxDel()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:6px;vertical-align:-2px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Delete Project
+  </div>
+</div>
+
+<!-- Context menu untuk Folder (klik kanan folder di sidebar) -->
+<div id="folderCtxMenu" class="ctx-menu" style="display:none;">
+  <div onclick="folderCtxAddSub()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:6px;vertical-align:-2px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Buat Sub-folder
+  </div>
+  <div onclick="folderCtxRename()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:6px;vertical-align:-2px;"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Rename Folder
+  </div>
+  <div class="ctx-divider"></div>
+  <div onclick="folderCtxMove()" id="folderCtxMoveBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:6px;vertical-align:-2px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Pindah ke Folder Lain...
+  </div>
+  <div onclick="folderCtxMoveRoot()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:6px;vertical-align:-2px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Pindah ke Root
+  </div>
+  <div class="ctx-divider"></div>
+  <div class="del" onclick="folderCtxDel()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:6px;vertical-align:-2px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Hapus Folder
+  </div>
+</div>
 
 <div id="ctxMenu" class="ctx-menu" style="display: none;">
   <div onclick="ctxCreateBrief()" style="font-weight:600; color:var(--bl);">
@@ -1507,10 +1556,117 @@ function addFolderItem(parentFolderId=null){
   snapshotState();save();renderFolders();
   toast('Folder dibuat.');
 }
+// === DRAG & DROP: FOLDERS/PROJECTS ===
+let fdDragData=null; // {type:'project'|'folder', id:string}
+
+function fdDragStart(e,type,id){
+  e.stopPropagation();
+  fdDragData={type,id};
+  e.dataTransfer.effectAllowed='move';
+  try{e.dataTransfer.setData('text/plain',type+':'+id);}catch(err){}
+  e.currentTarget.classList.add('dragging');
+}
+function fdDragEnd(e){
+  document.querySelectorAll('.dragging,.drop-target').forEach(el=>{
+    el.classList.remove('dragging');el.classList.remove('drop-target');
+  });
+  fdDragData=null;
+}
+function fdDragOver(e,folderId){
+  if(!fdDragData)return;
+  // Ga boleh drop folder ke diri sendiri atau descendant-nya
+  if(fdDragData.type==='folder'){
+    if(fdDragData.id===folderId)return;
+    if(isFolderDescendant(fdDragData.id,folderId))return;
+  }
+  e.preventDefault();
+  e.stopPropagation();
+  e.dataTransfer.dropEffect='move';
+  e.currentTarget.classList.add('drop-target');
+}
+function fdDragLeave(e){
+  e.currentTarget.classList.remove('drop-target');
+}
+function fdDrop(e,folderId){
+  e.preventDefault();
+  e.stopPropagation();
+  e.currentTarget.classList.remove('drop-target');
+  if(!fdDragData)return;
+
+  if(fdDragData.type==='project'){
+    const p=projects.find(x=>x.id===fdDragData.id);
+    if(!p){fdDragData=null;return;}
+    if(p.folderId===folderId){fdDragData=null;return;} // udah di sini
+    p.folderId=folderId;
+    expandedFolders.add(folderId);
+    snapshotState();save();renderFolders();
+    toast(`"${p.name}" dipindah.`);
+  }else if(fdDragData.type==='folder'){
+    if(fdDragData.id===folderId){fdDragData=null;return;}
+    if(isFolderDescendant(fdDragData.id,folderId)){toast('Ga bisa pindahin folder ke dalam dirinya sendiri.',1);fdDragData=null;return;}
+    const f=getFolderById(fdDragData.id);
+    if(!f){fdDragData=null;return;}
+    if(f.parentFolderId===folderId){fdDragData=null;return;}
+    f.parentFolderId=folderId;
+    expandedFolders.add(folderId);
+    snapshotState();save();renderFolders();
+    toast(`Folder "${f.name}" dipindah.`);
+  }
+  fdDragData=null;
+}
+function fdDragOverRoot(e){
+  if(!fdDragData)return;
+  // Cek apakah project/folder sudah di root
+  if(fdDragData.type==='project'){
+    const p=projects.find(x=>x.id===fdDragData.id);
+    if(!p||p.folderId===null)return;
+  }else{
+    const f=getFolderById(fdDragData.id);
+    if(!f||f.parentFolderId===null)return;
+  }
+  // Hanya highlight kalau target adalah area kosong (root zone), bukan folder header
+  if(e.target.closest('.folder-group-header')||e.target.closest('.folder-item'))return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  document.getElementById('fdRootDropHint')?.classList.add('drop-target');
+}
+function fdDragLeaveRoot(e){
+  // Only un-highlight when leaving the wrapper, not when entering child
+  if(e.target.id==='fdRootZone'){
+    document.getElementById('fdRootDropHint')?.classList.remove('drop-target');
+  }
+}
+function fdDropRoot(e){
+  // Jangan trigger kalau drop-nya ke dalam folder header (sudah dihandle fdDrop)
+  if(e.target.closest('.folder-group-header'))return;
+  e.preventDefault();
+  document.getElementById('fdRootDropHint')?.classList.remove('drop-target');
+  if(!fdDragData)return;
+  if(fdDragData.type==='project'){
+    const p=projects.find(x=>x.id===fdDragData.id);
+    if(!p||p.folderId===null){fdDragData=null;return;}
+    p.folderId=null;
+    snapshotState();save();renderFolders();
+    toast(`"${p.name}" dipindah ke root.`);
+  }else{
+    const f=getFolderById(fdDragData.id);
+    if(!f||f.parentFolderId===null){fdDragData=null;return;}
+    f.parentFolderId=null;
+    snapshotState();save();renderFolders();
+    toast(`Folder "${f.name}" dipindah ke root.`);
+  }
+  fdDragData=null;
+}    
 function toggleFolderExpand(folderId){
   if(expandedFolders.has(folderId))expandedFolders.delete(folderId);
   else expandedFolders.add(folderId);
   save();renderFolders();
+}
+    function getSiblingProjects(){
+  // Return list project yang berada di folder yang sama dengan project aktif (termasuk dirinya)
+  const cur=P();
+  if(!cur)return [];
+  return projects.filter(p=>p.folderId===cur.folderId);
 }
 
 function P(){return projects.find(p=>p.id===activeProj);}
@@ -1544,9 +1700,145 @@ function deleteFolderItem(folderId){
   snapshotState();save();renderFolders();
   toast('Folder dihapus.');
 }
+// === CONTEXT MENU: PROJECT (klik kanan project di sidebar) ===
+let projCtxId=null;
+function showProjCtx(projId,e){
+  e.preventDefault();e.stopPropagation();
+  projCtxId=projId;
+  const m=document.getElementById('projCtxMenu');
+  m.style.left=e.clientX+'px';
+  m.style.top=e.clientY+'px';
+  m.style.display='block';
+  // Hide "Move to Root" kalau project udah di root
+  const p=projects.find(x=>x.id===projId);
+  const rootBtn=document.getElementById('projCtxMoveRootBtn');
+  if(rootBtn)rootBtn.style.display=(p&&p.folderId)?'flex':'none';
+  // Hide "Move to Folder" kalau ga ada folder sama sekali
+  const moveBtn=document.getElementById('projCtxMoveBtn');
+  if(moveBtn)moveBtn.style.display=folders.length?'flex':'none';
+}
+function closeProjCtx(){
+  const m=document.getElementById('projCtxMenu');if(m)m.style.display='none';
+  projCtxId=null;
+}
+function projCtxRename(){
+  if(!projCtxId)return;
+  const p=projects.find(x=>x.id===projCtxId);if(!p){closeProjCtx();return;}
+  const n=prompt('Rename project:',p.name);
+  if(n&&n.trim()){p.name=n.trim();snapshotState();save();renderAll();}
+  closeProjCtx();
+}
+function projCtxDup(){
+  if(!projCtxId){closeProjCtx();return;}
+  const id=projCtxId;closeProjCtx();
+  dupFolder(id,{stopPropagation(){}}); // pakai function lama
+}
+function projCtxDel(){
+  if(!projCtxId){closeProjCtx();return;}
+  const id=projCtxId;closeProjCtx();
+  delFolder(id,{stopPropagation(){}}); // pakai function lama
+}
+function projCtxMoveRoot(){
+  if(!projCtxId){closeProjCtx();return;}
+  const p=projects.find(x=>x.id===projCtxId);if(!p){closeProjCtx();return;}
+  p.folderId=null;
+  snapshotState();save();renderFolders();
+  toast(`Project "${p.name}" dipindah ke root.`);
+  closeProjCtx();
+}
+function projCtxMove(){
+  if(!projCtxId){closeProjCtx();return;}
+  const p=projects.find(x=>x.id===projCtxId);if(!p){closeProjCtx();return;}
+  // Bikin list folder pilihan (nested path)
+  function folderPath(folderId){
+    const path=[];
+    let cur=folderId,guard=0;
+    while(cur&&guard++<99){
+      const f=getFolderById(cur);
+      if(!f)break;
+      path.unshift(f.name);
+      cur=f.parentFolderId;
+    }
+    return path.join(' / ');
+  }
+  if(!folders.length){toast('Belum ada folder.',1);closeProjCtx();return;}
+  const choices=folders.map((f,i)=>`${i+1}. ${folderPath(f.id)}`).join('\n');
+  const choice=prompt(`Pindah "${p.name}" ke folder mana?\n\n${choices}\n\nKetik nomor:`);
+  if(!choice)return closeProjCtx();
+  const idx=parseInt(choice)-1;
+  if(idx<0||idx>=folders.length){toast('Nomor invalid.',1);closeProjCtx();return;}
+  p.folderId=folders[idx].id;
+  expandedFolders.add(folders[idx].id); // expand folder tujuan
+  snapshotState();save();renderFolders();
+  toast(`"${p.name}" dipindah ke "${folders[idx].name}".`);
+  closeProjCtx();
+}
+
+// === CONTEXT MENU: FOLDER (klik kanan folder di sidebar) ===
+let folderCtxId=null;
 function showFolderCtx(folderId,e){
-  // Step C bakal isi konteks menu lengkap
-  e.preventDefault();
+  e.preventDefault();e.stopPropagation();
+  folderCtxId=folderId;
+  const m=document.getElementById('folderCtxMenu');
+  m.style.left=e.clientX+'px';
+  m.style.top=e.clientY+'px';
+  m.style.display='block';
+  // Hide "Move to Folder" kalau cuma 1 folder doang
+  const moveBtn=document.getElementById('folderCtxMoveBtn');
+  if(moveBtn)moveBtn.style.display=folders.length>1?'flex':'none';
+}
+function closeFolderCtx(){
+  const m=document.getElementById('folderCtxMenu');if(m)m.style.display='none';
+  folderCtxId=null;
+}
+function folderCtxAddSub(){
+  if(!folderCtxId){closeFolderCtx();return;}
+  const id=folderCtxId;closeFolderCtx();
+  addFolderItem(id);
+}
+function folderCtxRename(){
+  if(!folderCtxId){closeFolderCtx();return;}
+  const id=folderCtxId;closeFolderCtx();
+  renameFolderItem(id);
+}
+function folderCtxDel(){
+  if(!folderCtxId){closeFolderCtx();return;}
+  const id=folderCtxId;closeFolderCtx();
+  deleteFolderItem(id);
+}
+function folderCtxMoveRoot(){
+  if(!folderCtxId){closeFolderCtx();return;}
+  const f=getFolderById(folderCtxId);if(!f){closeFolderCtx();return;}
+  if(!f.parentFolderId){toast('Folder ini udah di root.',1);closeFolderCtx();return;}
+  f.parentFolderId=null;
+  snapshotState();save();renderFolders();
+  toast(`Folder "${f.name}" dipindah ke root.`);
+  closeFolderCtx();
+}
+function folderCtxMove(){
+  if(!folderCtxId){closeFolderCtx();return;}
+  const f=getFolderById(folderCtxId);if(!f){closeFolderCtx();return;}
+  function folderPath(folderId){
+    const path=[];let cur=folderId,guard=0;
+    while(cur&&guard++<99){
+      const ff=getFolderById(cur);if(!ff)break;
+      path.unshift(ff.name);cur=ff.parentFolderId;
+    }
+    return path.join(' / ');
+  }
+  // List folder lain (exclude diri sendiri & descendant)
+  const valid=folders.filter(x=>x.id!==f.id&&!isFolderDescendant(f.id,x.id));
+  if(!valid.length){toast('Ga ada folder tujuan valid.',1);closeFolderCtx();return;}
+  const choices=valid.map((x,i)=>`${i+1}. ${folderPath(x.id)}`).join('\n');
+  const choice=prompt(`Pindah folder "${f.name}" ke folder mana?\n\n${choices}\n\nKetik nomor:`);
+  if(!choice)return closeFolderCtx();
+  const idx=parseInt(choice)-1;
+  if(idx<0||idx>=valid.length){toast('Nomor invalid.',1);closeFolderCtx();return;}
+  f.parentFolderId=valid[idx].id;
+  expandedFolders.add(valid[idx].id);
+  snapshotState();save();renderFolders();
+  toast(`Folder "${f.name}" dipindah.`);
+  closeFolderCtx();
 }
   
 // === FOLDERS ===
@@ -1607,8 +1899,11 @@ function renderFolders(){
     el.innerHTML='<div style="padding:16px;text-align:center;font-size:11px;color:var(--tf);">No projects yet.</div>';
     return;
   }
-  // Render rekursif: folder + project di dalamnya, mulai dari root (parentFolderId/folderId === null)
-  el.innerHTML=renderFolderLevel(null);
+  // Wrapper root jadi drop zone untuk "Move to Root"
+  el.innerHTML=`<div id="fdRootZone" ondragover="fdDragOverRoot(event)" ondragleave="fdDragLeaveRoot(event)" ondrop="fdDropRoot(event)">
+    ${renderFolderLevel(null)}
+    <div class="folder-root-drop" id="fdRootDropHint">⤓ Drop di sini untuk pindah ke root</div>
+  </div>`;
 }
 
 // Render satu level: semua folder + project yang parentFolderId/folderId === level
@@ -1621,7 +1916,7 @@ function renderFolderLevel(parentFolderId){
     const isExpanded=expandedFolders.has(f.id);
     const childCount=getProjectsInFolder(f.id).length+getFoldersInFolder(f.id).length;
     html+=`<div class="folder-group ${isExpanded?'':'collapsed'}" data-folder-id="${f.id}">
-      <div class="folder-group-header" onclick="toggleFolderExpand('${f.id}')" oncontextmenu="showFolderCtx('${f.id}',event)">
+      <div class="folder-group-header" draggable="true" ondragstart="fdDragStart(event,'folder','${f.id}')" ondragend="fdDragEnd(event)" ondragover="fdDragOver(event,'${f.id}')" ondragleave="fdDragLeave(event)" ondrop="fdDrop(event,'${f.id}')" onclick="toggleFolderExpand('${f.id}')" oncontextmenu="showFolderCtx('${f.id}',event)">
         <span class="fg-toggle ${isExpanded?'open':''}"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></span>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--mofu);"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
         <span class="fg-name">${esc(f.name)}</span>
@@ -1637,7 +1932,7 @@ function renderFolderLevel(parentFolderId){
   });
   // Render projects di level ini
   projectsHere.forEach(p=>{
-    html+=`<div class="folder-item ${p.id===activeProj?'active':''}" data-project-id="${p.id}" onclick="selFolder('${p.id}')">
+    html+=`<div class="folder-item ${p.id===activeProj?'active':''}" data-project-id="${p.id}" draggable="true" ondragstart="fdDragStart(event,'project','${p.id}')" ondragend="fdDragEnd(event)" onclick="selFolder('${p.id}')" oncontextmenu="showProjCtx('${p.id}',event)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <span class="f-name">${esc(p.name)}</span>
       <span class="f-actions">
@@ -1770,7 +2065,7 @@ function closeCtx() {
 }
 
 document.addEventListener('click', (e) => {
-  if (!e.target.closest('.ctx-menu')) { closeCtx(); closeLinkCtx(); closePcCtx(); }
+  if (!e.target.closest('.ctx-menu')) { closeCtx(); closeLinkCtx(); closePcCtx(); closeProjCtx(); closeFolderCtx(); }
 });
 
 function ctxEdit() { if(ctxNodeId) openEd(ctxNodeId); closeCtx(); }
@@ -3451,8 +3746,10 @@ setInterval(()=>{if(projects.length)snapAdd('Auto-hourly');},10*60*1000);
 
 // === CANNIBALIZATION ===
 function findCannibals(){
+  // Scope: project aktif + project lain di folder yang sama (sibling)
+  const scope=getSiblingProjects();
   const map={};
-  projects.forEach(p=>{
+  scope.forEach(p=>{
     p.nodes.forEach(n=>{
       const k=n.keyword.trim().toLowerCase();
       if(!k)return;
@@ -3466,6 +3763,17 @@ function findCannibals(){
 function checkCannibals(){
   const cb=findCannibals();
   if(!cb.length){toast('No cannibalization detected');document.getElementById('cbWarn').classList.remove('show');return;}
+  // Update modal heading dengan info scope folder
+  const scope=getSiblingProjects();
+  const cur=P();
+  const folderName=cur&&cur.folderId?getFolderById(cur.folderId)?.name:null;
+  const scopeMsg=folderName
+    ?`Scope: folder <strong style="color:var(--mofu);">"${esc(folderName)}"</strong> (${scope.length} project)`
+    :`Scope: root (${scope.length} project di root)`;
+  const subEl=document.querySelector('#cbMo .md p');
+  if(subEl){
+    subEl.innerHTML=`Keyword yang muncul di lebih dari 1 node — kemungkinan cannibalization SEO.<br><span style="font-size:10px;color:var(--td);">${scopeMsg}</span>`;
+  }
   const el=document.getElementById('cbList');
   el.innerHTML=cb.map(c=>`
     <div class="cb-row">
