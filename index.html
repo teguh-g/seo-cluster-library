@@ -1375,8 +1375,10 @@ body.panel-collapsed .panel {
 
 <script>
 // === STATE ===
-let projects=[]; // [{id,name,nodes:[],links:[]}]
+let projects=[]; // [{id,name,nodes:[],links:[],folderId:null}]
+let folders=[]; // [{id,name,parentFolderId:null,collapsed:false}]
 let activeProj=null;
+let expandedFolders=new Set(); // ID folder yang sedang expand (default semua collapse)
 let editId=null;
 let dragId=null;
 let graphDragId=null;
@@ -1439,8 +1441,61 @@ const PT_ALL=[
 function ptLabel(v){const p=PT_ALL.find(x=>x.v===v);return p?p.l:v;}
 
 // === PERSISTENCE ===
-function save(){try{localStorage.setItem('seo-cluster-lib',JSON.stringify(projects));}catch(e){}}
-function load(){try{const d=localStorage.getItem('seo-cluster-lib');if(d){projects=JSON.parse(d);if(projects.length&&!activeProj)activeProj=projects[0].id;}}catch(e){}}
+// === PERSISTENCE ===
+const FOLDERS_KEY='seo-cluster-folders';
+const EXPANDED_KEY='seo-cluster-expanded-folders';
+
+function save(){
+  try{
+    localStorage.setItem('seo-cluster-lib',JSON.stringify(projects));
+    localStorage.setItem(FOLDERS_KEY,JSON.stringify(folders));
+    localStorage.setItem(EXPANDED_KEY,JSON.stringify([...expandedFolders]));
+  }catch(e){}
+}
+function load(){
+  try{
+    const d=localStorage.getItem('seo-cluster-lib');
+    if(d){
+      projects=JSON.parse(d);
+      // Migration: tambahin folderId=null kalau belum ada
+      projects.forEach(p=>{if(!('folderId' in p))p.folderId=null;});
+      if(projects.length&&!activeProj)activeProj=projects[0].id;
+    }
+    const f=localStorage.getItem(FOLDERS_KEY);
+    if(f)folders=JSON.parse(f);
+    const ex=localStorage.getItem(EXPANDED_KEY);
+    if(ex)expandedFolders=new Set(JSON.parse(ex));
+  }catch(e){}
+}
+  // === FOLDER HELPERS ===
+function getFolderById(id){return folders.find(f=>f.id===id);}
+function getProjectsInFolder(folderId){return projects.filter(p=>p.folderId===folderId);}
+function getFoldersInFolder(parentId){return folders.filter(f=>f.parentFolderId===parentId);}
+function isFolderDescendant(ancestorId,folderId){
+  let cur=folderId,guard=0;
+  while(cur&&guard++<99){
+    if(cur===ancestorId)return true;
+    const f=getFolderById(cur);
+    cur=f?f.parentFolderId:null;
+  }
+  return false;
+}
+function addFolderItem(parentFolderId=null){
+  const name=prompt('Folder name:');
+  if(!name||!name.trim())return;
+  const f={id:'f_'+uid(),name:name.trim(),parentFolderId,collapsed:false};
+  folders.push(f);
+  expandedFolders.add(f.id); // auto-expand folder baru
+  // Kalau folder ini di dalam folder lain, expand parent-nya juga
+  if(parentFolderId)expandedFolders.add(parentFolderId);
+  snapshotState();save();renderFolders();
+  toast('Folder dibuat.');
+}
+function toggleFolderExpand(folderId){
+  if(expandedFolders.has(folderId))expandedFolders.delete(folderId);
+  else expandedFolders.add(folderId);
+  save();renderFolders();
+}
 
 function P(){return projects.find(p=>p.id===activeProj);}
 function N(){const p=P();return p?p.nodes:[];}
