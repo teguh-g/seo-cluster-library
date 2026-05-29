@@ -125,6 +125,21 @@ button{font-family:var(--f);}
 .folder-item:hover .f-actions{display:flex;}
 .f-actions button{background:none;border:none;color:var(--td);cursor:pointer;padding:2px;}
 .f-actions button:hover{color:var(--danger);}
+  /* === FOLDER ITEMS === */
+.folder-group{margin-bottom:1px;}
+.folder-group-header{padding:7px 10px;border-radius:var(--rs);cursor:pointer;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--td);transition:background .12s;margin-bottom:1px;position:relative;}
+.folder-group-header:hover{background:var(--s2);color:var(--t);}
+.folder-group-header .fg-toggle{width:14px;height:14px;display:flex;align-items:center;justify-content:center;transition:transform .15s;flex-shrink:0;}
+.folder-group-header .fg-toggle.open{transform:rotate(90deg);}
+.folder-group-header .fg-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.folder-group-header .fg-count{font-family:var(--m);font-size:9px;color:var(--tf);margin-right:4px;}
+.folder-group-header .fg-actions{display:none;gap:3px;}
+.folder-group-header:hover .fg-actions{display:flex;}
+.fg-actions button{background:none;border:none;color:var(--td);cursor:pointer;padding:2px;display:flex;align-items:center;}
+.fg-actions button:hover{color:var(--bofu);}
+.fg-actions button.del:hover{color:var(--danger);}
+.folder-group-body{padding-left:14px;border-left:1px dashed var(--bd);margin-left:6px;}
+.folder-group.collapsed .folder-group-body{display:none;}
 .panel-section.collapsed .panel-section-body{display:none;}
 .panel-section-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
 .panel-section-header:hover h3{color:var(--t);}
@@ -713,8 +728,9 @@ body.panel-collapsed .panel {
 <div class="folders">
   <div class="folders-hdr panel-section-header" onclick="toggleSection(this.closest('.folders'))">
     <h3>Projects</h3>
-    <div style="display:flex;gap:6px;align-items:center;">
-      <button class="btn btn-g btn-sm" onclick="event.stopPropagation();addFolder()">+ New</button>
+    <div style="display:flex;gap:4px;align-items:center;">
+      <button class="btn btn-g btn-sm" onclick="event.stopPropagation();addFolderItem(null)" title="Buat folder baru di root" style="padding:4px 7px;">📁+</button>
+      <button class="btn btn-g btn-sm" onclick="event.stopPropagation();addFolder()" title="Buat project baru di root">+ New</button>
       <button class="collapse-btn">▾</button>
     </div>
   </div>
@@ -1501,6 +1517,38 @@ function P(){return projects.find(p=>p.id===activeProj);}
 function N(){const p=P();return p?p.nodes:[];}
 function L(){const p=P();return p?p.links:[];}
 
+// Stub — implementasi penuh di Step C
+function renameFolderItem(folderId){
+  const f=getFolderById(folderId);
+  if(!f)return;
+  const n=prompt('Rename folder:',f.name);
+  if(!n||!n.trim())return;
+  f.name=n.trim();
+  snapshotState();save();renderFolders();
+}
+function deleteFolderItem(folderId){
+  const f=getFolderById(folderId);
+  if(!f)return;
+  const projInside=getProjectsInFolder(folderId).length;
+  const subInside=getFoldersInFolder(folderId).length;
+  if(projInside||subInside){
+    if(!confirm(`Folder "${f.name}" punya ${projInside} project & ${subInside} sub-folder.\n\nIsinya bakal dipindah ke root (parent folder). Lanjut?`))return;
+    // Move isinya ke parent folder
+    getProjectsInFolder(folderId).forEach(p=>p.folderId=f.parentFolderId);
+    getFoldersInFolder(folderId).forEach(sf=>sf.parentFolderId=f.parentFolderId);
+  }else{
+    if(!confirm(`Hapus folder "${f.name}"?`))return;
+  }
+  folders=folders.filter(x=>x.id!==folderId);
+  expandedFolders.delete(folderId);
+  snapshotState();save();renderFolders();
+  toast('Folder dihapus.');
+}
+function showFolderCtx(folderId,e){
+  // Step C bakal isi konteks menu lengkap
+  e.preventDefault();
+}
+  
 // === FOLDERS ===
 function addFolder(){
   const name=prompt('Project name:');
@@ -1555,19 +1603,51 @@ function delFolder(id,e){
 
 function renderFolders(){
   const el=document.getElementById('folderList');
-  if(!projects.length){el.innerHTML='<div style="padding:16px;text-align:center;font-size:11px;color:var(--tf);">No projects yet.</div>';return;}
-  el.innerHTML=projects.map(p=>`
-    <div class="folder-item ${p.id===activeProj?'active':''}" onclick="selFolder('${p.id}')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+  if(!projects.length&&!folders.length){
+    el.innerHTML='<div style="padding:16px;text-align:center;font-size:11px;color:var(--tf);">No projects yet.</div>';
+    return;
+  }
+  // Render rekursif: folder + project di dalamnya, mulai dari root (parentFolderId/folderId === null)
+  el.innerHTML=renderFolderLevel(null);
+}
+
+// Render satu level: semua folder + project yang parentFolderId/folderId === level
+function renderFolderLevel(parentFolderId){
+  const subfolders=getFoldersInFolder(parentFolderId);
+  const projectsHere=getProjectsInFolder(parentFolderId);
+  let html='';
+  // Render subfolders dulu
+  subfolders.forEach(f=>{
+    const isExpanded=expandedFolders.has(f.id);
+    const childCount=getProjectsInFolder(f.id).length+getFoldersInFolder(f.id).length;
+    html+=`<div class="folder-group ${isExpanded?'':'collapsed'}" data-folder-id="${f.id}">
+      <div class="folder-group-header" onclick="toggleFolderExpand('${f.id}')" oncontextmenu="showFolderCtx('${f.id}',event)">
+        <span class="fg-toggle ${isExpanded?'open':''}"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--mofu);"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span class="fg-name">${esc(f.name)}</span>
+        <span class="fg-count">${childCount}</span>
+        <span class="fg-actions">
+          <button onclick="event.stopPropagation();addFolderItem('${f.id}')" title="Buat sub-folder di sini"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+          <button onclick="event.stopPropagation();renameFolderItem('${f.id}')" title="Rename folder"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="del" onclick="event.stopPropagation();deleteFolderItem('${f.id}')" title="Hapus folder"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>
+        </span>
+      </div>
+      <div class="folder-group-body">${renderFolderLevel(f.id)}</div>
+    </div>`;
+  });
+  // Render projects di level ini
+  projectsHere.forEach(p=>{
+    html+=`<div class="folder-item ${p.id===activeProj?'active':''}" data-project-id="${p.id}" onclick="selFolder('${p.id}')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <span class="f-name">${esc(p.name)}</span>
-      
       <span class="f-actions">
         <button onclick="renameFolder('${p.id}',event)" title="Rename"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
         <button onclick="dupFolder('${p.id}',event)" title="Duplicate project"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
         <button onclick="delFolder('${p.id}',event)" title="Delete"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
       </span>
-    </div>
-  `).join('');
+    </div>`;
+  });
+  return html||'<div style="padding:8px 12px;font-size:10px;color:var(--tf);font-style:italic;">(kosong)</div>';
 }
 
 // === FUNNEL CHANGE ===
