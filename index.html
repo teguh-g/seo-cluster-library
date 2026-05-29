@@ -145,6 +145,32 @@ button{font-family:var(--f);}
 .panel-section-header:hover h3{color:var(--t);}
 .collapse-btn{background:none;border:none;color:var(--td);cursor:pointer;padding:2px 4px;font-size:14px;line-height:1;border-radius:3px;transition:transform .2s;}
 .panel-section.collapsed .collapse-btn{transform:rotate(-90deg);}
+  /* === PIN STAR === */
+.fd-pin-btn{background:none;border:none;color:var(--tf);cursor:pointer;padding:2px;display:flex;align-items:center;justify-content:center;transition:color .15s;opacity:0;}
+.folder-item:hover .fd-pin-btn,
+.folder-group-header:hover .fd-pin-btn{opacity:1;}
+.fd-pin-btn:hover{color:var(--mofu);}
+.fd-pin-btn.active{opacity:1;color:var(--mofu);}
+.fd-pin-btn.active:hover{color:var(--td);}
+
+  /* === COLOR LABELS === */
+.fd-color-btn{background:none;border:none;cursor:pointer;padding:2px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;}
+.folder-item:hover .fd-color-btn,
+.folder-group-header:hover .fd-color-btn{opacity:1;}
+.fd-color-dot{width:11px;height:11px;border-radius:50%;border:1.5px solid var(--bd2);box-sizing:border-box;}
+.fd-color-btn.has-color .fd-color-dot{border-color:transparent;}
+.fd-color-btn:hover .fd-color-dot{transform:scale(1.15);transition:transform .12s;}
+.folder-item,.folder-group-header{position:relative;}
+.fd-color-bar{position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:2px;}
+
+/* Color picker popover */
+.fd-color-picker{position:fixed;background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);box-shadow:0 4px 16px rgba(0,0,0,.3);padding:8px;display:none;z-index:9999;}
+.fd-color-picker.show{display:flex;gap:5px;align-items:center;}
+.fd-color-swatch{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .12s,border-color .12s;}
+.fd-color-swatch:hover{transform:scale(1.15);}
+.fd-color-swatch.selected{border-color:var(--t);}
+.fd-color-clear{width:20px;height:20px;border-radius:50%;cursor:pointer;border:1.5px dashed var(--td);background:transparent;display:flex;align-items:center;justify-content:center;color:var(--td);font-size:12px;line-height:1;transition:all .12s;}
+.fd-color-clear:hover{border-color:var(--danger);color:var(--danger);}
 /* === FOLDER DRAG & DROP === */
 .folder-item[draggable="true"],
 .folder-group-header[draggable="true"]{cursor:grab;}
@@ -153,7 +179,11 @@ button{font-family:var(--f);}
 .folder-group-header.drop-target{background:var(--bofuBg) !important;outline:2px dashed var(--bofu);outline-offset:-2px;color:var(--bofu) !important;}
 .folder-root-drop{padding:8px 12px;margin-top:6px;border:1px dashed transparent;border-radius:var(--rs);font-size:10px;color:var(--tf);text-align:center;transition:all .15s;}
 .folder-root-drop.drop-target{border-color:var(--bofu);background:var(--bofuBg);color:var(--bofu);}
-  
+
+/* Reorder insert indicator */
+.fd-insert-line{position:absolute;left:6px;right:6px;height:2px;background:var(--bofu);border-radius:1px;pointer-events:none;display:none;z-index:50;box-shadow:0 0 4px var(--bofu);}
+.fd-insert-line.show{display:block;}
+.fd-insert-line::before{content:'';position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--bofu);}
 /* === PANEL === */
 .panel{border-right:1px solid var(--bd);display:flex;flex-direction:column;background:var(--s1);overflow-y:auto;overflow-x:hidden;min-height:0;}
 .panel-section{padding:14px 16px;border-bottom:1px solid var(--bd);flex-shrink:0;}
@@ -992,6 +1022,16 @@ body.panel-collapsed .panel {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:6px;vertical-align:-2px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Hapus Folder
   </div>
 </div>
+  <!-- Color picker popover -->
+<div id="fdColorPicker" class="fd-color-picker">
+  <div class="fd-color-swatch" data-color="red" style="background:#ef4444;" onclick="pickColor('red')" title="Merah"></div>
+  <div class="fd-color-swatch" data-color="orange" style="background:#f59e0b;" onclick="pickColor('orange')" title="Oranye"></div>
+  <div class="fd-color-swatch" data-color="yellow" style="background:#eab308;" onclick="pickColor('yellow')" title="Kuning"></div>
+  <div class="fd-color-swatch" data-color="green" style="background:#34d399;" onclick="pickColor('green')" title="Hijau"></div>
+  <div class="fd-color-swatch" data-color="blue" style="background:#4a90ff;" onclick="pickColor('blue')" title="Biru"></div>
+  <div class="fd-color-swatch" data-color="purple" style="background:#a78bfa;" onclick="pickColor('purple')" title="Ungu"></div>
+  <div class="fd-color-clear" onclick="pickColor(null)" title="Hapus warna">×</div>
+</div>
 
 <div id="ctxMenu" class="ctx-menu" style="display: none;">
   <div onclick="ctxCreateBrief()" style="font-weight:600; color:var(--bl);">
@@ -1522,20 +1562,33 @@ function load(){
     const d=localStorage.getItem('seo-cluster-lib');
     if(d){
       projects=JSON.parse(d);
-      // Migration: tambahin folderId=null kalau belum ada
-      projects.forEach(p=>{if(!('folderId' in p))p.folderId=null;});
+      // Migration: tambahin field baru kalau belum ada
+      projects.forEach(p=>{
+        if(!('folderId' in p))p.folderId=null;
+        if(!('pinned' in p))p.pinned=false;
+        if(!('color' in p))p.color=null;
+        if(!('sortIdx' in p))p.sortIdx=0;
+      });
       if(projects.length&&!activeProj)activeProj=projects[0].id;
     }
     const f=localStorage.getItem(FOLDERS_KEY);
-    if(f)folders=JSON.parse(f);
+    if(f){
+      folders=JSON.parse(f);
+      // Migration folders juga
+      folders.forEach(fd=>{
+        if(!('pinned' in fd))fd.pinned=false;
+        if(!('color' in fd))fd.color=null;
+        if(!('sortIdx' in fd))fd.sortIdx=0;
+      });
+    }
     const ex=localStorage.getItem(EXPANDED_KEY);
     if(ex)expandedFolders=new Set(JSON.parse(ex));
   }catch(e){}
 }
   // === FOLDER HELPERS ===
 function getFolderById(id){return folders.find(f=>f.id===id);}
-function getProjectsInFolder(folderId){return projects.filter(p=>p.folderId===folderId);}
-function getFoldersInFolder(parentId){return folders.filter(f=>f.parentFolderId===parentId);}
+function getProjectsInFolder(folderId){return projects.filter(p=>p.folderId===folderId).sort(fdSortCompare);}
+function getFoldersInFolder(parentId){return folders.filter(f=>f.parentFolderId===parentId).sort(fdSortCompare);}
 function isFolderDescendant(ancestorId,folderId){
   let cur=folderId,guard=0;
   while(cur&&guard++<99){
@@ -1545,10 +1598,84 @@ function isFolderDescendant(ancestorId,folderId){
   }
   return false;
 }
+
+  // Color palette buat project/folder labels
+const FD_COLORS={
+  red:'#ef4444',
+  orange:'#f59e0b',
+  yellow:'#eab308',
+  green:'#34d399',
+  blue:'#4a90ff',
+  purple:'#a78bfa'
+};
+function fdColorHex(name){return name?FD_COLORS[name]:null;}
+  // Sort comparator: pinned dulu, lalu sortIdx (manual order), lalu nama (fallback)
+function fdSortCompare(a,b){
+  // Pinned selalu di atas
+  if(a.pinned&&!b.pinned)return -1;
+  if(!a.pinned&&b.pinned)return 1;
+  // Lalu sortIdx (manual order, lebih kecil = atas)
+  const sa=a.sortIdx||0,sb=b.sortIdx||0;
+  if(sa!==sb)return sa-sb;
+  // Fallback nama
+  return (a.name||'').localeCompare(b.name||'');
+}
+  function togglePin(type,id){
+  let item;
+  if(type==='project')item=projects.find(p=>p.id===id);
+  else if(type==='folder')item=getFolderById(id);
+  if(!item)return;
+  item.pinned=!item.pinned;
+  snapshotState();save();renderFolders();
+  toast(item.pinned?`📌 "${item.name}" di-pin`:`Unpinned "${item.name}"`);
+}
+  // Color picker state
+let colorPickerTarget=null; // {type, id}
+
+function showColorPicker(type,id,e){
+  e.stopPropagation();
+  colorPickerTarget={type,id};
+  const picker=document.getElementById('fdColorPicker');
+  const rect=e.currentTarget.getBoundingClientRect();
+  // Position di bawah tombol color
+  picker.style.left=rect.left+'px';
+  picker.style.top=(rect.bottom+4)+'px';
+  // Highlight current color
+  let item;
+  if(type==='project')item=projects.find(p=>p.id===id);
+  else item=getFolderById(id);
+  picker.querySelectorAll('.fd-color-swatch').forEach(sw=>{
+    sw.classList.toggle('selected',item&&sw.dataset.color===item.color);
+  });
+  picker.classList.add('show');
+}
+function hideColorPicker(){
+  const p=document.getElementById('fdColorPicker');
+  if(p)p.classList.remove('show');
+  colorPickerTarget=null;
+}
+function pickColor(color){
+  if(!colorPickerTarget){hideColorPicker();return;}
+  const {type,id}=colorPickerTarget;
+  let item;
+  if(type==='project')item=projects.find(p=>p.id===id);
+  else item=getFolderById(id);
+  if(!item){hideColorPicker();return;}
+  item.color=color||null;
+  hideColorPicker();
+  snapshotState();save();renderFolders();
+}
+
+// Tutup color picker pas klik di luar
+document.addEventListener('click',(e)=>{
+  if(!e.target.closest('.fd-color-picker')&&!e.target.closest('.fd-color-btn')){
+    hideColorPicker();
+  }
+});
 function addFolderItem(parentFolderId=null){
   const name=prompt('Folder name:');
   if(!name||!name.trim())return;
-  const f={id:'f_'+uid(),name:name.trim(),parentFolderId,collapsed:false};
+  const f={id:'f_'+uid(),name:name.trim(),parentFolderId,collapsed:false,pinned:false,color:null,sortIdx:Date.now()};
   folders.push(f);
   expandedFolders.add(f.id); // auto-expand folder baru
   // Kalau folder ini di dalam folder lain, expand parent-nya juga
@@ -1558,7 +1685,33 @@ function addFolderItem(parentFolderId=null){
 }
 // === DRAG & DROP: FOLDERS/PROJECTS ===
 let fdDragData=null; // {type:'project'|'folder', id:string}
-
+function fdShowInsertLine(targetEl,zone){
+  const line=fdGetOrCreateInsertLine();
+  const rect=targetEl.getBoundingClientRect();
+  const parentRect=targetEl.offsetParent.getBoundingClientRect();
+  line.style.left=(rect.left-parentRect.left)+'px';
+  line.style.width=rect.width+'px';
+  if(zone==='before'){
+    line.style.top=(rect.top-parentRect.top-1)+'px';
+  }else{
+    line.style.top=(rect.bottom-parentRect.top-1)+'px';
+  }
+  line.classList.add('show');
+}
+function fdClearInsertIndicators(){
+  const line=document.getElementById('fdInsertLine');
+  if(line)line.classList.remove('show');
+}
+function fdGetOrCreateInsertLine(){
+  let line=document.getElementById('fdInsertLine');
+  if(!line){
+    line=document.createElement('div');
+    line.id='fdInsertLine';
+    line.className='fd-insert-line';
+    document.getElementById('folderList').appendChild(line);
+  }
+  return line;
+}
 function fdDragStart(e,type,id){
   e.stopPropagation();
   fdDragData={type,id};
@@ -1570,6 +1723,7 @@ function fdDragEnd(e){
   document.querySelectorAll('.dragging,.drop-target').forEach(el=>{
     el.classList.remove('dragging');el.classList.remove('drop-target');
   });
+  fdClearInsertIndicators();
   fdDragData=null;
 }
 function fdDragOver(e,folderId){
@@ -1582,21 +1736,48 @@ function fdDragOver(e,folderId){
   e.preventDefault();
   e.stopPropagation();
   e.dataTransfer.dropEffect='move';
-  e.currentTarget.classList.add('drop-target');
+  // Detect zone: top/bottom 25% = reorder, middle 50% = drop into folder
+  const rect=e.currentTarget.getBoundingClientRect();
+  const y=e.clientY-rect.top;
+  const zone=y<rect.height*0.25?'before':y>rect.height*0.75?'after':'inside';
+  // Clear semua indicator dulu
+  fdClearInsertIndicators();
+  if(zone==='inside'){
+    e.currentTarget.classList.add('drop-target');
+  }else{
+    e.currentTarget.classList.remove('drop-target');
+    fdShowInsertLine(e.currentTarget,zone);
+  }
+  // Stash zone for drop handler
+  fdDragData._zone=zone;
 }
 function fdDragLeave(e){
   e.currentTarget.classList.remove('drop-target');
+  // Note: ga clear indicator di sini karena bisa flicker pas drag pindah antar item
 }
 function fdDrop(e,folderId){
   e.preventDefault();
   e.stopPropagation();
   e.currentTarget.classList.remove('drop-target');
+  fdClearInsertIndicators();
   if(!fdDragData)return;
 
+  const zone=fdDragData._zone||'inside';
+
+  // Reorder mode: drop di edge (before/after) → adjust sortIdx, parentFolderId tetap sama dengan target
+  if(zone==='before'||zone==='after'){
+    const targetFolder=getFolderById(folderId);
+    if(!targetFolder){fdDragData=null;return;}
+    fdReorder(fdDragData.type,fdDragData.id,'folder',folderId,zone);
+    fdDragData=null;
+    return;
+  }
+
+  // Drop INSIDE folder (perilaku original)
   if(fdDragData.type==='project'){
     const p=projects.find(x=>x.id===fdDragData.id);
     if(!p){fdDragData=null;return;}
-    if(p.folderId===folderId){fdDragData=null;return;} // udah di sini
+    if(p.folderId===folderId){fdDragData=null;return;}
     p.folderId=folderId;
     expandedFolders.add(folderId);
     snapshotState();save();renderFolders();
@@ -1613,6 +1794,72 @@ function fdDrop(e,folderId){
     toast(`Folder "${f.name}" dipindah.`);
   }
   fdDragData=null;
+}
+
+// Reposition item ke sebelum/sesudah target dalam parent yang sama dengan target
+function fdReorder(srcType,srcId,tgtType,tgtId,zone){
+  // Validasi: ga boleh reorder folder ke dalam descendant-nya
+  if(srcType==='folder'){
+    const tgtParent=tgtType==='folder'?getFolderById(tgtId)?.parentFolderId:null;
+    if(srcId===tgtId||(tgtParent&&isFolderDescendant(srcId,tgtParent))){
+      toast('Ga bisa reorder ke posisi itu.',1);return;
+    }
+  }
+  // Project ga punya zone "inside" — drop di project = reorder dulu/setelah project itu
+function fdDragOverProject(e,projId){
+  if(!fdDragData)return;
+  // Ga bisa drop ke project sendiri
+  if(fdDragData.type==='project'&&fdDragData.id===projId)return;
+  e.preventDefault();
+  e.stopPropagation();
+  e.dataTransfer.dropEffect='move';
+  const rect=e.currentTarget.getBoundingClientRect();
+  const y=e.clientY-rect.top;
+  const zone=y<rect.height/2?'before':'after';
+  fdClearInsertIndicators();
+  fdShowInsertLine(e.currentTarget,zone);
+  fdDragData._zone=zone;
+}
+function fdDropProject(e,projId){
+  e.preventDefault();
+  e.stopPropagation();
+  fdClearInsertIndicators();
+  if(!fdDragData)return;
+  if(fdDragData.type==='project'&&fdDragData.id===projId){fdDragData=null;return;}
+  const zone=fdDragData._zone||'before';
+  fdReorder(fdDragData.type,fdDragData.id,'project',projId,zone);
+  fdDragData=null;
+}
+  // Target's parent folder
+  let tgtParentFolder=null;
+  if(tgtType==='folder'){tgtParentFolder=getFolderById(tgtId)?.parentFolderId;}
+  else if(tgtType==='project'){tgtParentFolder=projects.find(p=>p.id===tgtId)?.folderId;}
+
+  // Move src ke parent folder yang sama dengan target
+  let src;
+  if(srcType==='project')src=projects.find(p=>p.id===srcId);
+  else src=getFolderById(srcId);
+  if(!src){return;}
+  if(srcType==='project')src.folderId=tgtParentFolder;
+  else src.parentFolderId=tgtParentFolder;
+
+  // Hitung sortIdx baru
+  // Ambil semua sibling (di parent yang sama, sort ascending sortIdx)
+  let siblings;
+  if(srcType==='project')siblings=projects.filter(p=>p.folderId===tgtParentFolder).sort((a,b)=>(a.sortIdx||0)-(b.sortIdx||0));
+  else siblings=folders.filter(f=>f.parentFolderId===tgtParentFolder).sort((a,b)=>(a.sortIdx||0)-(b.sortIdx||0));
+
+  // Reassign sortIdx sebagai 1, 2, 3, ... (renumber clean)
+  siblings.forEach((s,i)=>s.sortIdx=(i+1)*100);
+
+  // Cari sortIdx target & adjust src
+  const tgt=siblings.find(s=>s.id===tgtId);
+  if(tgt){
+    if(zone==='before')src.sortIdx=tgt.sortIdx-50;
+    else src.sortIdx=tgt.sortIdx+50;
+  }
+  snapshotState();save();renderFolders();
+  toast(`"${src.name}" diatur ulang posisinya.`);
 }
 function fdDragOverRoot(e){
   if(!fdDragData)return;
@@ -1845,7 +2092,7 @@ function folderCtxMove(){
 function addFolder(){
   const name=prompt('Project name:');
   if(!name)return;
-  const p={id:uid(),name,nodes:[],links:[]};
+  const p={id:uid(),name,nodes:[],links:[],folderId:null,pinned:false,color:null,sortIdx:Date.now()};
   projects.push(p);
   activeProj=p.id;
   save();renderAll();
@@ -1917,10 +2164,13 @@ function renderFolderLevel(parentFolderId){
     const childCount=getProjectsInFolder(f.id).length+getFoldersInFolder(f.id).length;
     html+=`<div class="folder-group ${isExpanded?'':'collapsed'}" data-folder-id="${f.id}">
       <div class="folder-group-header" draggable="true" ondragstart="fdDragStart(event,'folder','${f.id}')" ondragend="fdDragEnd(event)" ondragover="fdDragOver(event,'${f.id}')" ondragleave="fdDragLeave(event)" ondrop="fdDrop(event,'${f.id}')" onclick="toggleFolderExpand('${f.id}')" oncontextmenu="showFolderCtx('${f.id}',event)">
+        ${f.color?`<span class="fd-color-bar" style="background:${fdColorHex(f.color)};"></span>`:''}
         <span class="fg-toggle ${isExpanded?'open':''}"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></span>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--mofu);"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
         <span class="fg-name">${esc(f.name)}</span>
         <span class="fg-count">${childCount}</span>
+        <button class="fd-pin-btn ${f.pinned?'active':''}" onclick="event.stopPropagation();togglePin('folder','${f.id}')" title="${f.pinned?'Unpin folder':'Pin folder ke atas'}"><svg width="11" height="11" viewBox="0 0 24 24" fill="${f.pinned?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+        <button class="fd-color-btn ${f.color?'has-color':''}" onclick="event.stopPropagation();showColorPicker('folder','${f.id}',event)" title="Set warna label"><span class="fd-color-dot" style="${f.color?`background:${fdColorHex(f.color)};`:''}"></span></button>
         <span class="fg-actions">
           <button onclick="event.stopPropagation();addFolderItem('${f.id}')" title="Buat sub-folder di sini"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
           <button onclick="event.stopPropagation();renameFolderItem('${f.id}')" title="Rename folder"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
@@ -1932,9 +2182,12 @@ function renderFolderLevel(parentFolderId){
   });
   // Render projects di level ini
   projectsHere.forEach(p=>{
-    html+=`<div class="folder-item ${p.id===activeProj?'active':''}" data-project-id="${p.id}" draggable="true" ondragstart="fdDragStart(event,'project','${p.id}')" ondragend="fdDragEnd(event)" onclick="selFolder('${p.id}')" oncontextmenu="showProjCtx('${p.id}',event)">
+    html+=`<div class="folder-item ${p.id===activeProj?'active':''}" data-project-id="${p.id}" draggable="true" ondragstart="fdDragStart(event,'project','${p.id}')" ondragend="fdDragEnd(event)" ondragover="fdDragOverProject(event,'${p.id}')" ondragleave="fdDragLeave(event)" ondrop="fdDropProject(event,'${p.id}')" onclick="selFolder('${p.id}')" oncontextmenu="showProjCtx('${p.id}',event)">
+      ${p.color?`<span class="fd-color-bar" style="background:${fdColorHex(p.color)};"></span>`:''}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <span class="f-name">${esc(p.name)}</span>
+      <button class="fd-pin-btn ${p.pinned?'active':''}" onclick="event.stopPropagation();togglePin('project','${p.id}')" title="${p.pinned?'Unpin project':'Pin project ke atas'}"><svg width="10" height="10" viewBox="0 0 24 24" fill="${p.pinned?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+      <button class="fd-color-btn ${p.color?'has-color':''}" onclick="event.stopPropagation();showColorPicker('project','${p.id}',event)" title="Set warna label"><span class="fd-color-dot" style="${p.color?`background:${fdColorHex(p.color)};`:''}"></span></button>
       <span class="f-actions">
         <button onclick="renameFolder('${p.id}',event)" title="Rename"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
         <button onclick="dupFolder('${p.id}',event)" title="Duplicate project"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
