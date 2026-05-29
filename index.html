@@ -1154,8 +1154,9 @@ body.panel-collapsed .panel {
 
     <div id="smResults" style="flex:1;overflow-y:auto;margin-top:12px;display:none;"></div>
 
-    <div class="btn-row" style="margin-top:14px;flex-shrink:0;">
+   <div class="btn-row" style="margin-top:14px;flex-shrink:0;">
       <span id="smStatus" style="font-size:10px;color:var(--td);align-self:center;flex:1;"></span>
+      <button class="btn btn-d btn-sm" onclick="smClearInput()" title="Kosongin input + hapus dari storage">Clear</button>
       <button class="btn btn-g btn-sm" onclick="closeSitemapMo()">Close</button>
       <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="runSitemapCheck()" id="smRunBtn">Check Sitemap →</button>
     </div>
@@ -3345,14 +3346,35 @@ function closeCbMo(){document.getElementById('cbMo').classList.remove('active');
 function closeCbMo(){document.getElementById('cbMo').classList.remove('active');}
 
 // === SITEMAP CHECK ===
+// Storage key for saved sitemap input per project
+const SM_INPUT_KEY='seo-cluster-sitemap-inputs';
+
+function smLoadSavedInput(projId){
+  try{
+    const all=JSON.parse(localStorage.getItem(SM_INPUT_KEY)||'{}');
+    return all[projId]||'';
+  }catch(e){return '';}
+}
+function smSaveInput(projId,text){
+  try{
+    const all=JSON.parse(localStorage.getItem(SM_INPUT_KEY)||'{}');
+    if(text&&text.trim()){all[projId]=text;}
+    else{delete all[projId];}
+    localStorage.setItem(SM_INPUT_KEY,JSON.stringify(all));
+  }catch(e){}
+}
+
 function openSitemapMo(){
   const p=P();
   if(!p){toast('Pilih atau buat project dulu!',1);return;}
-  document.getElementById('smInput').value='';
+  // Restore saved input untuk project ini
+  const saved=smLoadSavedInput(p.id);
+  document.getElementById('smInput').value=saved;
   document.getElementById('smResults').style.display='none';
   document.getElementById('smResults').innerHTML='';
-  document.getElementById('smStatus').textContent='';
+  document.getElementById('smStatus').textContent=saved?'Sitemap tersimpan dari project ini — klik Check Sitemap.':'';
   document.getElementById('sitemapMo').classList.add('active');
+  smLastCheck=null;
 }
 function closeSitemapMo(){document.getElementById('sitemapMo').classList.remove('active');}
 // Extract path dari URL/string (longgar — abaikan protocol, domain, query, hash, trailing slash)
@@ -3510,14 +3532,30 @@ function smMatchNodes(parsed,threshold){
 let smLastCheck=null;
 
 function runSitemapCheck(){
+  const p=P();
+  if(!p){toast('Pilih project dulu!',1);return;}
   const raw=document.getElementById('smInput').value;
   if(!raw||!raw.trim()){toast('Paste sitemap dulu!',1);return;}
   const parsed=parseSitemapInput(raw);
   if(!parsed.length){toast('Ga ada URL valid terdeteksi.',1);return;}
+  // Auto-save input per project
+  smSaveInput(p.id,raw);
   const threshold=parseFloat(document.getElementById('smThreshold').value)||0.75;
   const result=smMatchNodes(parsed,threshold);
   smLastCheck={parsed,threshold,result};
   renderSitemapResults();
+}
+
+function smClearInput(){
+  const p=P();
+  if(!confirm('Kosongin sitemap input untuk project ini?'))return;
+  document.getElementById('smInput').value='';
+  document.getElementById('smResults').style.display='none';
+  document.getElementById('smResults').innerHTML='';
+  document.getElementById('smStatus').textContent='';
+  if(p)smSaveInput(p.id,'');
+  smLastCheck=null;
+  toast('Sitemap input dikosongin.');
 }
 
 function renderSitemapResults(){
@@ -3604,9 +3642,41 @@ function smRenderSkipped(skipped){
   </div>`;
 }
 
-// Action handler (placeholder Step 3 — full implementation di Step 4)
+// Action handler: update node berdasarkan match result
 function smAction(nodeId,action,matchIdx){
-  toast(`Action "${action}" — implementation di Step 4.`,1);
+  const p=P();if(!p)return;
+  const n=p.nodes.find(x=>x.id===nodeId);if(!n){toast('Node ga ketemu!',1);return;}
+
+  if(action==='skip'){
+    // Hapus dari list match (UI only — ga ubah node)
+    if(smLastCheck&&smLastCheck.result&&smLastCheck.result.matches){
+      smLastCheck.result.matches.splice(matchIdx,1);
+      renderSitemapResults();
+    }
+    return;
+  }
+
+  if(action==='publish'){
+    // Auto-fill URL dari sitemap kalau node URL kosong
+    const match=smLastCheck&&smLastCheck.result&&smLastCheck.result.matches[matchIdx];
+    if(match&&match.sitemap){
+      if(!n.url||!n.url.trim()){
+        n.url=match.sitemap.url;
+        toast(`URL auto-filled: ${match.sitemap.path}`);
+      }
+    }
+    n.status='published';
+  }else if(action==='needs-update'){
+    n.status='needs-update';
+  }
+
+  // Hapus dari list match karena udah diproses
+  if(smLastCheck&&smLastCheck.result&&smLastCheck.result.matches){
+    smLastCheck.result.matches.splice(matchIdx,1);
+  }
+
+  snapshotState();save();renderAll();renderSitemapResults();
+  toast(`Node "${n.keyword}" → ${n.status}`);
 }
   
 function updateCannibalWarn(){
