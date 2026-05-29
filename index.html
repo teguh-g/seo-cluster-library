@@ -132,7 +132,7 @@ button{font-family:var(--f);}
 .panel-section.collapsed .collapse-btn{transform:rotate(-90deg);}
   
 /* === PANEL === */
-.panel{border-right:1px solid var(--bd);display:flex;flex-direction:column;background:var(--s1);overflow-y:auto;overflow-x:hidden;}
+.panel{border-right:1px solid var(--bd);display:flex;flex-direction:column;background:var(--s1);overflow-y:auto;overflow-x:hidden;min-height:0;}
 .panel-section{padding:14px 16px;border-bottom:1px solid var(--bd);flex-shrink:0;}
 .panel-section h3{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--td);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
 .ig{margin-bottom:8px;}.ig label{display:block;font-size:10px;font-weight:500;color:var(--td);margin-bottom:3px;}
@@ -836,9 +836,8 @@ body.panel-collapsed .panel {
         <option value="oldest">Sort: Terlama → Terbaru</option>
         <option value="newest">Sort: Terbaru → Terlama</option>
       </select>
-      <button class="btn btn-g btn-sm" onclick="copyTable('all')" title="Copy all rows as TSV (paste to Sheets/Excel)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="lbl">Copy All</span></button>
-<button class="btn btn-g btn-sm" onclick="copyTable('selected')" ...>
-      <button class="btn btn-g btn-sm" onclick="expCSV()" title="Download CSV file"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="lbl">CSV</span></button>
+      <<button class="btn btn-g btn-sm" onclick="copyTable('all')" title="Copy all rows as TSV (paste to Sheets/Excel)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="lbl">Copy All</span></button>
+      <button class="btn btn-g btn-sm" onclick="expCSV()" title="Download CSV file">
       <button class="btn btn-g btn-sm" onclick="expXLSX()" title="Download TSV (open with Excel/Sheets)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="lbl">TSV</span></button>
       <button class="btn btn-g btn-sm" onclick="expJSON()" title="Save project as JSON file">Save Project</button>
       <button class="btn btn-g btn-sm" onclick="document.getElementById('impF').click()" title="Load project from JSON file">Load</button>
@@ -2289,12 +2288,14 @@ function tblToggleAll(cb){
 }
 function updateCopySelBtn(){
   const btn=document.getElementById('btnCopySel');
-  if(!btn)return;
-  if(tblSelected.size>0){
-    btn.style.display='inline-flex';
-    document.getElementById('copySelCount').textContent=tblSelected.size;
-  }else{
-    btn.style.display='none';
+  if(btn){
+    if(tblSelected.size>0){
+      btn.style.display='inline-flex';
+      const cnt=document.getElementById('copySelCount');
+      if(cnt)cnt.textContent=tblSelected.size;
+    }else{
+      btn.style.display='none';
+    }
   }
   const bar=document.getElementById('tblBulkBar');
   if(!bar)return;
@@ -2305,7 +2306,6 @@ function updateCopySelBtn(){
     bar.style.display='none';
   }
 }
-
 function applyTblBulk(){
   const val=document.getElementById('tblBulkStatus').value;
   if(!val){toast('Pilih action dulu!',1);return;}
