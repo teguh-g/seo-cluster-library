@@ -1577,20 +1577,12 @@ function openEd(id){
 }
 function saveEd(){
   const n=N().find(x=>x.id===editId);if(!n)return;
-  const newStatus=gv('eSt');
-  const newUrl=gv('eURL');
-  // Enforcement: kalau status target butuh URL & URL field kosong → prompt
-  if((newStatus==='published'||newStatus==='needs-update')&&!newUrl.trim()){
-    const check=enforceUrlForStatus({keyword:gv('eKW'),url:''},newStatus);
-    if(!check.ok)return; // user cancel — abort save
-    sv('eURL',check.url); // isi balik field URL biar ke-save di bawah
-  }
   n.funnel=gv('eF');n.pageType=gv('ePT');n.keyword=gv('eKW');
   n.url=gv('eURL'); n.docUrl=gv('eDoc');
   n.notes=document.getElementById('eNotes').value.trim();
   n.volume=int(gv('eVol'));n.kd=int(gv('eKD'));n.position=parseFloat(gv('ePos'))||0;
   n.impressions=int(gv('eImpr'));n.clicks=int(gv('eClicks'));n.ctr=parseFloat(gv('eCtr'))||0;
-  n.status=newStatus;
+  n.status=gv('eSt');
   const np=gv('ePar')||null;
   if(np&&isDesc(editId,np,N())){toast('Circular!',1);return;}
   n.parentId=np;closeMo();save();renderAll();toast('Updated!');
@@ -2377,19 +2369,6 @@ function applyTblBulk(){
     p.nodes=p.nodes.filter(n=>!tblSelected.has(n.id));
     p.links=p.links.filter(l=>!tblSelected.has(l.from)&&!tblSelected.has(l.to));
   }else{
-    // Enforcement: kalau set status published/needs-update, cek URL setiap node
-    if(val==='published'||val==='needs-update'){
-      const needsUrl=p.nodes.filter(n=>tblSelected.has(n.id)&&!(n.url&&n.url.trim()));
-      if(needsUrl.length){
-        if(!confirm(`${needsUrl.length} dari ${tblSelected.size} node belum punya URL.\n\nBakal di-prompt satu per satu untuk isi URL.\nLanjut?`))return;
-        for(const n of needsUrl){
-          const check=enforceUrlForStatus(n,val);
-          console.log('DEBUG bulk:',{node:n.keyword,curUrl:n.url,check});
-          if(!check.ok){toast(`Bulk dibatalkan di node "${n.keyword}"`,1);return;}
-          n.url=check.url;
-        }
-      }
-    }}
     p.nodes.forEach(n=>{if(tblSelected.has(n.id))n.status=val;});
   }
   tblSelected.clear();
@@ -3268,18 +3247,6 @@ function applyBulk(){
     p.links=p.links.filter(l=>!selectedIds.has(l.from)&&!selectedIds.has(l.to));
   }else{
     const [field,val]=action.split(':');
-    // Enforcement: kalau set status published/needs-update, cek URL setiap node
-    if(field==='status'&&(val==='published'||val==='needs-update')){
-      const needsUrl=p.nodes.filter(n=>selectedIds.has(n.id)&&!(n.url&&n.url.trim()));
-      if(needsUrl.length){
-        if(!confirm(`${needsUrl.length} dari ${selectedIds.size} node belum punya URL.\n\nBakal di-prompt satu per satu untuk isi URL.\nLanjut?`))return;
-        for(const n of needsUrl){
-          const check=enforceUrlForStatus(n,val);
-          if(!check.ok){toast(`Bulk dibatalkan di node "${n.keyword}"`,1);return;}
-          n.url=check.url;
-        }
-      }
-    }
     p.nodes.forEach(n=>{if(selectedIds.has(n.id))n[field]=val;});
   }
   snapshotState();save();renderAll();
@@ -3679,33 +3646,7 @@ function smRenderSkipped(skipped){
     </div>
   </div>`;
 }
-// === URL Enforcement Helper ===
-// Cek apakah status butuh URL (published / needs-update)
-// Return: {ok:true, url:string} kalau ok, atau {ok:false} kalau user cancel
-function enforceUrlForStatus(node,newStatus){
-  const needsUrl=(newStatus==='published'||newStatus==='needs-update');
-  if(!needsUrl)return {ok:true,url:node.url||''};
-  const curUrl=(node.url||'').trim();
-  if(curUrl)return {ok:true,url:curUrl};
-  // URL kosong + status butuh URL → prompt
-  const msg=`Node "${node.keyword}" status mau diubah ke "${newStatus}",\ntapi URL masih kosong.\n\nIsi URL sekarang (wajib):`;
-  const input=prompt(msg,'');
-  if(input===null)return {ok:false}; // user cancel
-  const url=input.trim();
-  if(!url){
-    toast('URL wajib diisi untuk status ini!',1);
-    return {ok:false};
-  }
-  // Validasi longgar: harus ada / atau diawali http
-  if(!url.startsWith('http')&&!url.startsWith('/')){
-    toast('URL tidak valid (harus http:// atau /path)',1);
-    return {ok:false};
-  }
-  return {ok:true,url};
-}
 
-
-  
 // Action handler: update node berdasarkan match result
 function smAction(nodeId,action,matchIdx){
   const p=P();if(!p)return;
