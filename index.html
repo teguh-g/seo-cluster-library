@@ -2384,11 +2384,12 @@ function applyTblBulk(){
         if(!confirm(`${needsUrl.length} dari ${tblSelected.size} node belum punya URL.\n\nBakal di-prompt satu per satu untuk isi URL.\nLanjut?`))return;
         for(const n of needsUrl){
           const check=enforceUrlForStatus(n,val);
+          console.log('DEBUG bulk:',{node:n.keyword,curUrl:n.url,check});
           if(!check.ok){toast(`Bulk dibatalkan di node "${n.keyword}"`,1);return;}
           n.url=check.url;
         }
       }
-    }
+    }}
     p.nodes.forEach(n=>{if(tblSelected.has(n.id))n.status=val;});
   }
   tblSelected.clear();
