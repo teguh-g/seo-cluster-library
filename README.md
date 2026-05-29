@@ -1,6 +1,6 @@
 # SEO Cluster Library — Panduan Setup (BUAT ORANG LAIN YANG MAU MAKE)
 
-Tool buat ngatur keyword cluster (peta keyword, funnel BOFU/MOFU/TOFU, internal link, tracking GSC, dll). Dibuat oleh **Teguh Gunawan, S.Li.**
+Tool buat ngatur keyword cluster (peta keyword, funnel BOFU/MOFU/TOFU, internal link, tracking GSC, cek anti-duplikasi konten, dll). Dibuat oleh **Teguh Gunawan, S.Li.**
 
 Ini file HTML tunggal — tinggal buka di browser, langsung jalan. **Ga perlu install apa-apa.**
 
@@ -16,11 +16,36 @@ Data otomatis tersimpan di browser kamu (localStorage). Selama kamu pakai browse
 
 > ⚠️ **Penting:** Karena data nyimpen di browser, kalau kamu clear browsing data / cache, datanya bisa kehapus. Biar aman, lakukan salah satu:
 > - Rutin klik **Export** (header) buat backup file JSON, **atau**
-> - Setup **Cloud Sync** (lihat bagian 3) biar data tersimpan online & bisa diakses dari device lain.
+> - Setup **Cloud Sync** (lihat bagian 4) biar data tersimpan online & bisa diakses dari device lain.
 
 ---
 
-## 2. Fitur AI (opsional — tapi recommended)
+## 2. Struktur Project & Folder
+
+Tool ini support **folder buat ngelompokin project** (mis. per klien, per niche, per kampanye). Folder bisa **nested** (folder di dalam folder).
+
+### Cara bikin folder:
+
+- Klik tombol **📁+** di header panel Projects (pojok kiri).
+- Atau **klik kanan folder** yang udah ada → "Buat Sub-folder".
+
+### Cara masukin project ke folder:
+
+- **Drag & drop:** seret project di sidebar, drop ke folder tujuan.
+- **Klik kanan project** → "Move to Folder..." → ketik nomor folder.
+- Drop project ke area paling bawah ("⤓ Drop di sini untuk pindah ke root") buat keluarin dari folder.
+
+### Cara manage folder:
+
+- **Klik header folder** → expand / collapse isinya.
+- **Klik kanan folder** → Rename, Pindah, Hapus, atau buat sub-folder.
+- Kalau folder dihapus padahal masih ada isinya, isinya otomatis pindah ke parent folder (ga ilang).
+
+> 💡 **Bonus:** Fitur **Cannibalization Check** (deteksi keyword dobel antar project) **otomatis scope ke folder yang sama**. Jadi project klien A ga akan ke-deteksi cannibal sama project klien B walau keyword-nya sama.
+
+---
+
+## 3. Fitur AI (opsional — tapi recommended)
 
 Fitur AI (auto-mapping keyword, expand keyword, saran internal link) pakai **Google Gemini**. Gratis, tapi kamu butuh **API key sendiri**.
 
@@ -38,13 +63,13 @@ Fitur AI (auto-mapping keyword, expand keyword, saran internal link) pakai **Goo
 4. Klik **Save**.
 5. Kalau berhasil, status di header berubah jadi **"AI: 0/20"** (artinya AI aktif).
 
-> 💡 Free tier Gemini = **20 request per hari per API key**. Cukup buat pemakaian normal. Kalau habis, tunggu besok atau pakai API key lain.
+> 💡 Free tier Gemini = **20 request per hari per API key**. Cukup buat pemakaian normal. Kalau habis, tunggu besok atau pakai API key lain (multi-key supported — simpan beberapa key sekaligus, switch dengan klik radio).
 
 > 🔒 API key disimpan di browser kamu aja, ga dikirim ke mana-mana selain ke Google. **Jangan share API key kamu ke orang lain.**
 
 ---
 
-## 3. Cloud Sync via GitHub Gist (opsional)
+## 4. Cloud Sync via GitHub Gist (opsional)
 
 Fitur ini buat **sync data antar device** (mis. laptop ↔ HP) atau backup online. Kalau kamu cuma pakai 1 device, ini ga wajib — skip aja.
 
@@ -89,7 +114,36 @@ Fitur ini buat **sync data antar device** (mis. laptop ↔ HP) atau backup onlin
 
 ---
 
-## 4. Pertanyaan Umum
+## 5. Sitemap Check (Anti Konten Duplikat)
+
+Fitur buat **cek apakah keyword di cluster ini udah pernah dipublish** di website kamu — biar ga nulis ulang artikel yang udah ada.
+
+### Cara pakai:
+
+1. Klik tombol **Sitemap** di header.
+2. Paste salah satu format ini:
+   - **URL per baris** (mis. `https://situsanda.com/article/baja-ringan`)
+   - **Path per baris** (mis. `/article/baja-ringan`)
+   - **Full XML sitemap** (paste isi `sitemap.xml`)
+3. Pilih **threshold** ("Likely" threshold — default 75%).
+4. Klik **Check Sitemap →**.
+
+### Hasil 4 band:
+
+- 🔴 **Strong (≥85%)** — URL match langsung atau slug hampir identik. Hampir pasti duplikat. Tinggal **Mark Published**.
+- 🟠 **Likely (threshold–84%)** — Slug mirip banget. Review URL bentar, lalu Mark Published kalau cocok.
+- 🟡 **Possible (50%–threshold-1)** — Topik mirip tapi sudut beda. Judgment call: kalau yakin sama → **Force Mark**; kalau beda → **Skip**.
+- ⚪ **Unmatched (<50%)** — Aman, konten baru valid.
+
+### Tips:
+
+- Node dengan status `published` / `needs-update` otomatis di-skip (udah dianggap selesai).
+- Klik **Skip** di band Possible bakal **persistent** — node yang udah di-skip ga muncul lagi pas check ulang. Buat reset, klik tombol **Reset skips** di atas hasil.
+- Input sitemap **otomatis tersimpan per project**, jadi pas buka modal lagi, otomatis re-run pakai sitemap yang sama.
+
+---
+
+## 6. Pertanyaan Umum
 
 **Q: Datanya ilang kalau ganti komputer?**
 Iya, kalau ga pakai Cloud Sync. Solusi: Export JSON (backup manual) atau setup Gist sync.
@@ -101,10 +155,16 @@ Tool jalan offline. Yang butuh online cuma: fitur AI (ke Google), Cloud Sync (ke
 Data ada di browser kamu sendiri. Token & API key juga disimpan lokal. Ga ada server pihak ketiga yang nyimpen data kamu (kecuali Gist kamu sendiri kalau pakai sync).
 
 **Q: Token GitHub-ku expired, gimana?**
-Generate token baru (Langkah A), paste ulang di settings (gear icon). Gist ID biarkan sama — datanya aman, cuma "kunci"-nya yang diganti.
+Generate token baru (Langkah A di bagian 4), paste ulang di settings (gear icon). Gist ID biarkan sama — datanya aman, cuma "kunci"-nya yang diganti.
 
 **Q: Bisa buka Panduan Fitur di dalam tool?**
 Bisa. Klik tombol **Help** di header, atau tekan tombol **`?`** di keyboard.
+
+**Q: Cannibalization Check kok cuma deteksi project di folder yang sama?**
+Itu memang behavior-nya — biar project klien A ga konflik sama klien B. Kalau mau cek lintas folder, pindahin project ke folder/root yang sama dulu.
+
+**Q: Bisa di Mac?**
+Bisa. Semua shortcut keyboard `Ctrl` otomatis jadi `⌘` di Mac.
 
 ---
 
@@ -113,6 +173,8 @@ Bisa. Klik tombol **Help** di header, atau tekan tombol **`?`** di keyboard.
 | Mau apa | Yang dibutuhin |
 |---|---|
 | Cuma coba tool | Buka file aja, langsung jalan |
+| Ngelompokin project per klien | Tinggal bikin folder, drag project ke dalamnya |
+| Cek konten duplikat sebelum nulis | Paste sitemap ke fitur Sitemap Check |
 | Pakai fitur AI | API key Gemini gratis (aistudio.google.com) |
 | Sync antar device | Gist + token GitHub sendiri |
 
