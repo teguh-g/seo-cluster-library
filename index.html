@@ -840,7 +840,7 @@ body.panel-collapsed .panel {
         <option value="oldest">Sort: Terlama → Terbaru</option>
         <option value="newest">Sort: Terbaru → Terlama</option>
       </select>
-      <<button class="btn btn-g btn-sm" onclick="copyTable('all')" title="Copy all rows as TSV (paste to Sheets/Excel)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="lbl">Copy All</span></button>
+      <button class="btn btn-g btn-sm" onclick="copyTable('all')" title="Copy all rows as TSV (paste to Sheets/Excel)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="lbl">Copy All</span></button>
       <button class="btn btn-g btn-sm" onclick="expCSV()" title="Download CSV file">
       <button class="btn btn-g btn-sm" onclick="expXLSX()" title="Download TSV (open with Excel/Sheets)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="lbl">TSV</span></button>
       <button class="btn btn-g btn-sm" onclick="expJSON()" title="Save project as JSON file">Save Project</button>
@@ -3355,10 +3355,107 @@ function openSitemapMo(){
   document.getElementById('sitemapMo').classList.add('active');
 }
 function closeSitemapMo(){document.getElementById('sitemapMo').classList.remove('active');}
-function runSitemapCheck(){
-  toast('Parser belum dibangun — Step 2 nanti.',1);
+// Extract path dari URL/string (longgar — abaikan protocol, domain, query, hash, trailing slash)
+// Robust untuk format messy: tab-separated metadata, counter, tanggal, dll
+function smExtractPath(input){
+  if(!input)return '';
+  let s=input.trim();
+  // Kalau ada URL di tengah string, extract URL-nya aja (stop di whitespace)
+  const urlMatch=s.match(/https?:\/\/\S+/i);
+  if(urlMatch)s=urlMatch[0];
+  else{
+    // Path-only format: cut di whitespace pertama (buang counter/tanggal nyasar)
+    s=s.split(/\s+/)[0];
+  }
+  // Buang protocol + domain kalau full URL
+  s=s.replace(/^https?:\/\/[^\/]+/i,'');
+  // Buang query + hash
+  s=s.split('?')[0].split('#')[0];
+  // Trim trailing slash
+  s=s.replace(/\/+$/,'');
+  // Pastiin awalan slash
+  if(s&&!s.startsWith('/'))s='/'+s;
+  return s.toLowerCase();
 }
 
+// Extract slug dari path → return string keyword-like
+// Mis. /article/baja-ringan-untuk-rumah → "baja ringan untuk rumah"
+function smPathToSlug(path){
+  if(!path)return '';
+  let last=path.split('/').filter(Boolean).pop()||'';
+  // Buang ekstensi file (.html .php .aspx)
+  last=last.replace(/\.(html?|php|aspx?|jsp)$/i,'');
+  // Hyphen/underscore → space
+  last=last.replace(/[-_]+/g,' ').trim();
+  // Decode URL-encoded chars
+  try{last=decodeURIComponent(last);}catch(e){}
+  return last.toLowerCase();
+}
+
+// Parse input apapun (URL/path per line, atau XML sitemap)
+// Return: [{url, path, slug}, ...] (deduped by path)
+function parseSitemapInput(text){
+  if(!text||!text.trim())return [];
+  const raw=text.trim();
+  let entries=[];
+  // Detect XML format
+  const isXML=/<urlset|<sitemapindex|<loc\s*>/i.test(raw);
+  if(isXML){
+    const re=/<loc[^>]*>\s*([^<]+?)\s*<\/loc>/gi;
+    let m;
+    while((m=re.exec(raw))!==null){
+      const url=m[1].trim();
+      if(url)entries.push(url);
+    }
+  }else{
+    // Line-based: 1 URL/path per baris
+    entries=raw.split(/\r?\n/).map(l=>l.trim()).filter(l=>l&&!l.startsWith('#'));
+  }
+  // Map ke {url, path, slug} + dedupe by path
+  const seen=new Set();
+  const out=[];
+  entries.forEach(e=>{
+    const path=smExtractPath(e);
+    if(!path||seen.has(path))return;
+    seen.add(path);
+    out.push({
+      url:e,
+      path:path,
+      slug:smPathToSlug(path)
+    });
+  });
+  return out;
+}
+
+function runSitemapCheck(){
+  const raw=document.getElementById('smInput').value;
+  if(!raw||!raw.trim()){toast('Paste sitemap dulu!',1);return;}
+  const parsed=parseSitemapInput(raw);
+  if(!parsed.length){toast('Ga ada URL valid terdeteksi.',1);return;}
+  // Step 2 only: tampilin hasil parsing dulu (preview)
+  const status=document.getElementById('smStatus');
+  status.textContent=`Parsed: ${parsed.length} URL terdeteksi`;
+  const res=document.getElementById('smResults');
+  res.style.display='block';
+  res.innerHTML=`<div style="padding:10px;background:var(--s2);border-radius:var(--rs);font-size:11px;">
+    <div style="color:var(--bofu);font-weight:600;margin-bottom:8px;">✓ Parser jalan — ${parsed.length} URL terdeteksi</div>
+    <div style="font-size:10px;color:var(--td);margin-bottom:6px;">Preview 10 pertama (path + slug):</div>
+    <table style="width:100%;font-family:var(--m);font-size:10px;">
+      <thead><tr style="color:var(--td);text-align:left;">
+        <th style="padding:4px 6px;">#</th>
+        <th style="padding:4px 6px;">Path</th>
+        <th style="padding:4px 6px;">Slug</th>
+      </tr></thead>
+      <tbody>${parsed.slice(0,10).map((p,i)=>`<tr style="border-top:1px solid var(--bd);">
+        <td style="padding:4px 6px;color:var(--tf);">${i+1}</td>
+        <td style="padding:4px 6px;color:var(--t);">${esc(p.path)}</td>
+        <td style="padding:4px 6px;color:var(--td);">${esc(p.slug)}</td>
+      </tr>`).join('')}</tbody>
+    </table>
+    ${parsed.length>10?`<div style="margin-top:8px;font-size:9px;color:var(--tf);">... + ${parsed.length-10} URL lagi (semua bakal di-cek di Step 3)</div>`:''}
+  </div>`;
+  toast(`Parser detect ${parsed.length} URL!`);
+}
 function updateCannibalWarn(){
   const cb=findCannibals();
   const el=document.getElementById('cbWarn');
