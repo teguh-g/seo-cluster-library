@@ -3755,7 +3755,6 @@ function smAction(nodeId,action,band,rowIdx){
     renderSitemapResults();
     toast(`"${n.keyword}" di-skip. Tombol "Reset skips" buat undo.`);
     return;
-  }
   }else if(action==='publish'){
     if(row.sitemap&&(!n.url||!n.url.trim())){
       n.url=row.sitemap.url;
