@@ -563,6 +563,9 @@ body.panel-collapsed   .btn-toggle-panel   .icon-closed { opacity: 1; transform:
 .folders, .panel {
   transition: width .3s cubic-bezier(.165,.85,.45,1),
               min-width .3s cubic-bezier(.165,.85,.45,1);
+}
+body.folders-collapsed .folders,
+body.panel-collapsed .panel {
   overflow: hidden !important;
 }
 body.folders-collapsed .folders {
