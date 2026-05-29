@@ -3427,35 +3427,188 @@ function parseSitemapInput(text){
   return out;
 }
 
+  // Hitung similarity score (0-1) antara 2 keyword pakai signature yang udah ada
+function smSimilarity(kwA,kwB){
+  const sigA=kwSignature(kwA);
+  const sigB=kwSignature(kwB);
+  if(!sigA.length||!sigB.length)return 0;
+  const setA=new Set(sigA),setB=new Set(sigB);
+  let common=0;
+  setA.forEach(w=>{if(setB.has(w))common++;});
+  const maxLen=Math.max(setA.size,setB.size);
+  return common/maxLen;
+}
+
+// Match engine: bandingin semua node (yg dicek) sama parsed sitemap
+// Return: {matches:[], clean:[], unknown:[], skipped:[]}
+function smMatchNodes(parsed,threshold){
+  const p=P();
+  if(!p)return {matches:[],clean:[],unknown:[],skipped:[]};
+  const ns=p.nodes;
+
+  // Build path index untuk fast lookup Layer 1
+  const pathIdx={};
+  parsed.forEach(s=>{pathIdx[s.path]=s;});
+
+  const matches=[];
+  const clean=[];
+  const unknown=[];
+  const skipped=[];
+
+  ns.forEach(n=>{
+    // Filter status: skip published & needs-update
+    if(n.status==='published'||n.status==='needs-update'){
+      skipped.push({node:n,reason:n.status});
+      return;
+    }
+
+    const hasUrl=n.url&&n.url.trim();
+    const nodePath=hasUrl?smExtractPath(n.url):'';
+
+    // === LAYER 1: Direct URL path match ===
+    if(nodePath&&pathIdx[nodePath]){
+      matches.push({
+        node:n,
+        sitemap:pathIdx[nodePath],
+        layer:1,
+        confidence:1.0,
+        reason:'URL match langsung'
+      });
+      return;
+    }
+
+    // === LAYER 2: Slug similarity match ===
+    // Bandingin keyword node ke semua slug sitemap, ambil score tertinggi
+    let best={score:0,entry:null};
+    parsed.forEach(s=>{
+      if(!s.slug)return;
+      const score=smSimilarity(n.keyword,s.slug);
+      if(score>best.score)best={score,entry:s};
+    });
+
+    if(best.score>=threshold){
+      matches.push({
+        node:n,
+        sitemap:best.entry,
+        layer:2,
+        confidence:best.score,
+        reason:`Slug similarity ${Math.round(best.score*100)}%`
+      });
+    }else if(hasUrl){
+      // Node punya URL tapi ga match sitemap → konten baru valid
+      clean.push({node:n});
+    }else{
+      // Node ga punya URL, slug juga ga match → unknown
+      unknown.push({node:n,bestScore:best.score,bestEntry:best.entry});
+    }
+  });
+
+  return {matches,clean,unknown,skipped};
+}
+
+// Cache hasil check terakhir biar action button bisa akses data
+let smLastCheck=null;
+
 function runSitemapCheck(){
   const raw=document.getElementById('smInput').value;
   if(!raw||!raw.trim()){toast('Paste sitemap dulu!',1);return;}
   const parsed=parseSitemapInput(raw);
   if(!parsed.length){toast('Ga ada URL valid terdeteksi.',1);return;}
-  // Step 2 only: tampilin hasil parsing dulu (preview)
+  const threshold=parseFloat(document.getElementById('smThreshold').value)||0.75;
+  const result=smMatchNodes(parsed,threshold);
+  smLastCheck={parsed,threshold,result};
+  renderSitemapResults();
+}
+
+function renderSitemapResults(){
+  if(!smLastCheck)return;
+  const {parsed,threshold,result}=smLastCheck;
+  const {matches,clean,unknown,skipped}=result;
   const status=document.getElementById('smStatus');
-  status.textContent=`Parsed: ${parsed.length} URL terdeteksi`;
+  status.innerHTML=`<strong style="color:var(--t);">${parsed.length}</strong> URL parsed · <strong style="color:var(--mofu);">${matches.length}</strong> match · <strong style="color:var(--ok);">${clean.length}</strong> clean · <strong style="color:var(--td);">${unknown.length}</strong> unknown · ${skipped.length} skipped`;
   const res=document.getElementById('smResults');
   res.style.display='block';
-  res.innerHTML=`<div style="padding:10px;background:var(--s2);border-radius:var(--rs);font-size:11px;">
-    <div style="color:var(--bofu);font-weight:600;margin-bottom:8px;">✓ Parser jalan — ${parsed.length} URL terdeteksi</div>
-    <div style="font-size:10px;color:var(--td);margin-bottom:6px;">Preview 10 pertama (path + slug):</div>
-    <table style="width:100%;font-family:var(--m);font-size:10px;">
-      <thead><tr style="color:var(--td);text-align:left;">
-        <th style="padding:4px 6px;">#</th>
-        <th style="padding:4px 6px;">Path</th>
-        <th style="padding:4px 6px;">Slug</th>
-      </tr></thead>
-      <tbody>${parsed.slice(0,10).map((p,i)=>`<tr style="border-top:1px solid var(--bd);">
-        <td style="padding:4px 6px;color:var(--tf);">${i+1}</td>
-        <td style="padding:4px 6px;color:var(--t);">${esc(p.path)}</td>
-        <td style="padding:4px 6px;color:var(--td);">${esc(p.slug)}</td>
-      </tr>`).join('')}</tbody>
-    </table>
-    ${parsed.length>10?`<div style="margin-top:8px;font-size:9px;color:var(--tf);">... + ${parsed.length-10} URL lagi (semua bakal di-cek di Step 3)</div>`:''}
-  </div>`;
-  toast(`Parser detect ${parsed.length} URL!`);
+  res.innerHTML=`
+    ${matches.length?smRenderMatches(matches):''}
+    ${clean.length?smRenderClean(clean):''}
+    ${unknown.length?smRenderUnknown(unknown):''}
+    ${skipped.length?smRenderSkipped(skipped):''}
+    ${(!matches.length&&!clean.length&&!unknown.length&&!skipped.length)?'<div style="padding:20px;text-align:center;color:var(--tf);font-size:11px;">Ga ada node yang relevan untuk dicek di project ini.</div>':''}
+  `;
 }
+
+function smRenderMatches(matches){
+  return `<div style="margin-bottom:14px;">
+    <div style="font-size:11px;font-weight:700;color:var(--mofu);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Match di sitemap (${matches.length}) — kemungkinan duplikat
+    </div>
+    <div style="border:1px solid var(--mofuBd);border-radius:var(--rs);overflow:hidden;">
+      ${matches.map((m,i)=>`<div style="padding:10px 12px;border-bottom:1px solid var(--bd);background:var(--mofuBg);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:11px;font-weight:600;color:var(--t);margin-bottom:2px;">${esc(m.node.keyword)} <span class="fb fb-${m.node.funnel}" style="display:inline-block;margin-left:4px;">${m.node.funnel}</span></div>
+            <div style="font-size:9px;color:var(--td);font-family:var(--m);margin-bottom:3px;">Node URL: ${m.node.url?esc(m.node.url):'<span style="color:var(--tf);">(kosong)</span>'}</div>
+            <div style="font-size:9px;color:var(--bofu);font-family:var(--m);">→ Sitemap: ${esc(m.sitemap.url)}</div>
+            <div style="font-size:9px;color:var(--mofu);font-family:var(--m);margin-top:3px;">Layer ${m.layer} · ${esc(m.reason)} · confidence <strong>${Math.round(m.confidence*100)}%</strong></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;">
+          <button class="btn btn-acc btn-sm" onclick="smAction('${m.node.id}','publish',${i})" title="Tandai sebagai sudah Published & auto-fill URL dari sitemap">Mark Published & fill URL</button>
+          <button class="btn btn-g btn-sm" onclick="smAction('${m.node.id}','needs-update',${i})" title="Tandai Needs Update">Mark Needs Update</button>
+          <button class="btn btn-g btn-sm" onclick="smAction('${m.node.id}','skip',${i})" title="Skip (hapus dari list)">Skip</button>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function smRenderClean(clean){
+  return `<div style="margin-bottom:14px;">
+    <div style="font-size:11px;font-weight:700;color:var(--ok);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Aman — ga match di sitemap (${clean.length}) — konten baru valid
+    </div>
+    <div style="border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden;">
+      ${clean.slice(0,20).map(c=>`<div style="padding:7px 12px;border-bottom:1px solid var(--bd);font-size:10.5px;color:var(--t);">
+        <span style="font-weight:600;">${esc(c.node.keyword)}</span>
+        <span class="fb fb-${c.node.funnel}" style="display:inline-block;margin-left:5px;">${c.node.funnel}</span>
+        <span style="font-family:var(--m);font-size:9px;color:var(--td);margin-left:8px;">${esc(c.node.url||'')}</span>
+      </div>`).join('')}
+      ${clean.length>20?`<div style="padding:7px 12px;font-size:9px;color:var(--tf);text-align:center;">... + ${clean.length-20} node lagi</div>`:''}
+    </div>
+  </div>`;
+}
+
+function smRenderUnknown(unknown){
+  return `<div style="margin-bottom:14px;">
+    <div style="font-size:11px;font-weight:700;color:var(--td);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      Unknown — URL kosong & ga match slug (${unknown.length})
+    </div>
+    <div style="border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden;">
+      ${unknown.slice(0,15).map(u=>`<div style="padding:7px 12px;border-bottom:1px solid var(--bd);font-size:10.5px;">
+        <div style="color:var(--t);font-weight:600;">${esc(u.node.keyword)} <span class="fb fb-${u.node.funnel}" style="display:inline-block;margin-left:4px;">${u.node.funnel}</span></div>
+        ${u.bestEntry?`<div style="font-size:9px;color:var(--tf);font-family:var(--m);margin-top:2px;">Closest slug match: "${esc(u.bestEntry.slug)}" (${Math.round(u.bestScore*100)}% — below threshold)</div>`:''}
+      </div>`).join('')}
+      ${unknown.length>15?`<div style="padding:7px 12px;font-size:9px;color:var(--tf);text-align:center;">... + ${unknown.length-15} node lagi</div>`:''}
+    </div>
+  </div>`;
+}
+
+function smRenderSkipped(skipped){
+  return `<div style="margin-bottom:14px;">
+    <div style="font-size:10px;color:var(--tf);">
+      Skipped: ${skipped.length} node (status published/needs-update — udah dianggap done)
+    </div>
+  </div>`;
+}
+
+// Action handler (placeholder Step 3 — full implementation di Step 4)
+function smAction(nodeId,action,matchIdx){
+  toast(`Action "${action}" — implementation di Step 4.`,1);
+}
+  
 function updateCannibalWarn(){
   const cb=findCannibals();
   const el=document.getElementById('cbWarn');
