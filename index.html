@@ -6755,6 +6755,358 @@ if(projects.length)snapAdd('Session start');
   document.querySelectorAll('.shortcuts-help kbd').forEach(el=>{if(el.textContent.trim()==='Ctrl')el.textContent='⌘';});
 })();
 
+
+// ============================================================
+// VIEWER MODE v2 — SEO Cluster Library
+// Paste sebelum </script> penutup
+// Fix: tidak pakai template literal panjang, aman dari konflik
+// ============================================================
+
+// === DETECTION ===
+var VIEWER_PARAMS = new URLSearchParams(window.location.search);
+var IS_VIEWER = VIEWER_PARAMS.get('mode') === 'viewer';
+var VIEWER_GIST_ID = VIEWER_PARAMS.get('gist') || '';
+var VIEWER_PROJECT = VIEWER_PARAMS.get('project') || '';
+
+// === CSS ===
+(function() {
+  var s = document.createElement('style');
+  s.textContent = [
+    'body.viewer-mode .folders{display:none!important}',
+    'body.viewer-mode .panel{display:none!important}',
+    'body.viewer-mode .layout{grid-template-columns:0 0 1fr!important}',
+    'body.viewer-mode .hdr-actions .btn-g{display:none!important}',
+    'body.viewer-mode .hdr-actions .btn-acc{display:none!important}',
+    'body.viewer-mode .hdr-actions .sep{display:none!important}',
+    'body.viewer-mode .sync-st{display:none!important}',
+    'body.viewer-mode .ai-st{display:none!important}',
+    'body.viewer-mode #btnToggleFolders{display:none!important}',
+    'body.viewer-mode #btnTogglePanel{display:none!important}',
+    'body.viewer-mode #btnUndo{display:none!important}',
+    'body.viewer-mode .gc-toolbar{display:none!important}',
+    'body.viewer-mode .bulk-bar{display:none!important}',
+    'body.viewer-mode .cb-warn{display:none!important}',
+    'body.viewer-mode #tblBulkBar{display:none!important}',
+    'body.viewer-mode .tn-acts{display:none!important}',
+    'body.viewer-mode .tn-cb{display:none!important}',
+    'body.viewer-mode .gn-group{cursor:default!important}',
+    '.viewer-banner{display:flex;align-items:center;justify-content:space-between;padding:8px 20px;background:linear-gradient(90deg,rgba(74,144,255,.12),rgba(74,144,255,.06));border-bottom:1px solid var(--bofuBd);font-size:11px;color:var(--bofu);flex-shrink:0;gap:12px}',
+    '.viewer-banner .vb-left{display:flex;align-items:center;gap:8px}',
+    '.viewer-banner .vb-dot{width:7px;height:7px;border-radius:50%;background:var(--bofu);box-shadow:0 0 8px var(--bofu);animation:pulse 2s infinite}',
+    '.viewer-banner .vb-right{display:flex;gap:6px;align-items:center}',
+    '.viewer-center{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;color:var(--td);text-align:center;padding:40px}',
+    '.viewer-center h4{font-size:13px;color:var(--t);margin:0}',
+    '.viewer-center p{font-size:11px;margin:0;max-width:300px;line-height:1.5}',
+    '.vl-spinner{width:32px;height:32px;border-radius:50%;border:3px solid var(--bd);border-top-color:var(--bofu);animation:spin 0.8s linear infinite}',
+    '@keyframes spin{to{transform:rotate(360deg)}}'
+  ].join('');
+  document.head.appendChild(s);
+})();
+
+// === BANNER ===
+function viewerInjectBanner(projName, nodeCount, updatedAt) {
+  var old = document.getElementById('viewerBanner');
+  if (old) old.remove();
+
+  var banner = document.createElement('div');
+  banner.id = 'viewerBanner';
+  banner.className = 'viewer-banner';
+
+  var left = document.createElement('div');
+  left.className = 'vb-left';
+
+  var dot = document.createElement('span');
+  dot.className = 'vb-dot';
+
+  var title = document.createElement('span');
+  title.style.cssText = 'font-weight:700;color:var(--t)';
+  title.textContent = 'Viewer Mode';
+
+  var meta = document.createElement('span');
+  meta.style.cssText = 'color:var(--td);font-family:var(--m);font-size:10px';
+  var metaParts = [];
+  if (projName) metaParts.push(projName);
+  if (nodeCount) metaParts.push(nodeCount + ' nodes');
+  if (updatedAt) metaParts.push('updated ' + updatedAt);
+  meta.textContent = metaParts.length ? '· ' + metaParts.join(' · ') : '';
+
+  left.appendChild(dot);
+  left.appendChild(title);
+  left.appendChild(meta);
+
+  var right = document.createElement('div');
+  right.className = 'vb-right';
+
+  var note = document.createElement('span');
+  note.style.cssText = 'font-size:10px;color:var(--td)';
+  note.textContent = 'Read-only · Data dari GitHub Gist';
+
+  var refreshBtn = document.createElement('button');
+  refreshBtn.className = 'btn btn-g btn-sm';
+  refreshBtn.textContent = 'Refresh';
+  refreshBtn.onclick = viewerRefresh;
+
+  right.appendChild(note);
+  right.appendChild(refreshBtn);
+
+  banner.appendChild(left);
+  banner.appendChild(right);
+
+  var hdr = document.querySelector('.hdr');
+  if (hdr && hdr.nextSibling) {
+    hdr.parentNode.insertBefore(banner, hdr.nextSibling);
+  }
+}
+
+// === LOADING STATE ===
+function viewerShowLoading() {
+  var gc = document.getElementById('gc');
+  if (!gc) return;
+
+  var wrap = document.createElement('div');
+  wrap.className = 'viewer-center';
+
+  var spinner = document.createElement('div');
+  spinner.className = 'vl-spinner';
+
+  var h4 = document.createElement('h4');
+  h4.textContent = 'Memuat project...';
+
+  var p = document.createElement('p');
+  p.textContent = 'Mengambil data dari GitHub Gist. Pastikan koneksi internet tersedia.';
+
+  wrap.appendChild(spinner);
+  wrap.appendChild(h4);
+  wrap.appendChild(p);
+
+  gc.innerHTML = '';
+  gc.appendChild(wrap);
+}
+
+// === ERROR STATE ===
+function viewerShowError(msg) {
+  var gc = document.getElementById('gc');
+  if (!gc) return;
+
+  var wrap = document.createElement('div');
+  wrap.className = 'viewer-center';
+
+  var h4 = document.createElement('h4');
+  h4.textContent = 'Project tidak tersedia';
+
+  var p = document.createElement('p');
+  p.textContent = msg || 'Data tidak dapat dimuat. Kemungkinan project telah diprivate atau Gist ID tidak valid.';
+
+  var btn = document.createElement('button');
+  btn.className = 'btn btn-g btn-sm';
+  btn.style.marginTop = '8px';
+  btn.textContent = 'Coba lagi';
+  btn.onclick = viewerRefresh;
+
+  wrap.appendChild(h4);
+  wrap.appendChild(p);
+  wrap.appendChild(btn);
+
+  gc.innerHTML = '';
+  gc.appendChild(wrap);
+}
+
+// === PULL FROM GIST ===
+async function viewerPullGist(gistId) {
+  var res = await fetch('https://api.github.com/gists/' + gistId, {
+    headers: { 'Accept': 'application/vnd.github+json' }
+  });
+
+  if (!res.ok) {
+    if (res.status === 404) throw new Error('Gist tidak ditemukan atau sudah diprivate.');
+    if (res.status === 403) throw new Error('Rate limit GitHub API. Coba lagi dalam beberapa menit.');
+    throw new Error('GitHub API error (HTTP ' + res.status + ')');
+  }
+
+  var gist = await res.json();
+  var file = gist.files['seo-cluster-library.json'] || Object.values(gist.files)[0];
+  if (!file) throw new Error('File data tidak ditemukan di Gist.');
+
+  var content = file.content;
+  if (file.truncated && file.raw_url) {
+    var raw = await fetch(file.raw_url);
+    content = await raw.text();
+  }
+
+  var data = JSON.parse(content || '[]');
+  if (!Array.isArray(data)) throw new Error('Format data tidak valid.');
+
+  var updatedAt = gist.updated_at
+    ? new Date(gist.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    : null;
+
+  return { data: data, updatedAt: updatedAt };
+}
+
+// === PROJECT SELECTOR (multi-project) ===
+function viewerAddProjectSelector() {
+  var banner = document.getElementById('viewerBanner');
+  if (!banner || projects.length < 2) return;
+
+  var vbRight = banner.querySelector('.vb-right');
+  var sel = document.createElement('select');
+  sel.style.cssText = 'background:var(--s2);border:1px solid var(--bd);border-radius:4px;color:var(--t);font-size:10px;padding:4px 8px;outline:none;cursor:pointer;';
+
+  projects.forEach(function(p) {
+    var opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name + ' (' + p.nodes.length + ')';
+    if (p.id === activeProj) opt.selected = true;
+    sel.appendChild(opt);
+  });
+
+  sel.addEventListener('change', function() {
+    activeProj = sel.value;
+    graphPositions = {};
+    var p = projects.find(function(x) { return x.id === activeProj; });
+    if (p && p._gpos) graphPositions = JSON.parse(JSON.stringify(p._gpos));
+    renderAll();
+  });
+
+  vbRight.insertBefore(sel, vbRight.firstChild);
+}
+
+// === REFRESH ===
+async function viewerRefresh() {
+  if (!IS_VIEWER || !VIEWER_GIST_ID) return;
+  viewerShowLoading();
+  try {
+    var result = await viewerPullGist(VIEWER_GIST_ID);
+    projects = result.data;
+    activeProj = projects[0] ? projects[0].id : null;
+    graphPositions = {};
+    if (activeProj) {
+      var p = projects.find(function(x) { return x.id === activeProj; });
+      if (p && p._gpos) graphPositions = JSON.parse(JSON.stringify(p._gpos));
+    }
+    var totalNodes = projects.reduce(function(s, p) { return s + p.nodes.length; }, 0);
+    var projName = projects.length === 1 ? projects[0].name : projects.length + ' projects';
+    viewerInjectBanner(projName, totalNodes, result.updatedAt);
+    renderAll();
+    if (projects.length > 1) viewerAddProjectSelector();
+    toast('Data diperbarui!');
+  } catch (err) {
+    viewerShowError(err.message);
+  }
+}
+
+// === INIT VIEWER ===
+async function viewerInit() {
+  document.body.classList.add('viewer-mode');
+  document.title = 'SEO Cluster — Viewer';
+
+  // Override semua fungsi edit jadi no-op
+  window.addNode = function() {};
+  window.bulkAdd = function() {};
+  window.addLink = function() {};
+  window.saveEd = function() {};
+  window.delNode = function() {};
+  window.rmLink = function() {};
+  window.quickDel = function() {};
+  window.ctxDel = function() {};
+  window.drop = function() {};
+  window.dropRoot = function() {};
+  window.save = function() {};
+  window.snapshotState = function() {};
+  window.aiAutoMap = function() { toast('Viewer mode — fitur edit tidak tersedia', 1); };
+  window.syncPush = function() {};
+  window.syncPull = function() {};
+
+  if (!VIEWER_GIST_ID) {
+    viewerShowError('Gist ID tidak ditemukan di URL. Format: ?mode=viewer&gist=GIST_ID');
+    viewerInjectBanner('', 0, null);
+    return;
+  }
+
+  viewerShowLoading();
+  viewerInjectBanner('Memuat...', 0, null);
+
+  try {
+    var result = await viewerPullGist(VIEWER_GIST_ID);
+    projects = result.data;
+
+    if (VIEWER_PROJECT) {
+      var found = projects.find(function(p) {
+        return p.name.toLowerCase() === decodeURIComponent(VIEWER_PROJECT).toLowerCase();
+      });
+      activeProj = found ? found.id : (projects[0] ? projects[0].id : null);
+    } else {
+      activeProj = projects[0] ? projects[0].id : null;
+    }
+
+    graphPositions = {};
+    if (activeProj) {
+      var proj = projects.find(function(x) { return x.id === activeProj; });
+      if (proj && proj._gpos) graphPositions = JSON.parse(JSON.stringify(proj._gpos));
+    }
+
+    var totalNodes = projects.reduce(function(s, p) { return s + p.nodes.length; }, 0);
+    var projName = projects.length === 1 ? projects[0].name : projects.length + ' projects';
+    viewerInjectBanner(projName, totalNodes, result.updatedAt);
+    renderAll();
+    setV('graph');
+    if (projects.length > 1) viewerAddProjectSelector();
+
+  } catch (err) {
+    viewerShowError(err.message);
+    viewerInjectBanner('Error', 0, null);
+  }
+}
+
+// === SHARE BUTTON (untuk owner, bukan viewer) ===
+function viewerAddShareButton() {
+  if (IS_VIEWER) return;
+  var hdrActions = document.querySelector('.hdr-actions');
+  if (!hdrActions) return;
+
+  var shareBtn = document.createElement('button');
+  shareBtn.className = 'btn btn-g btn-sm';
+  shareBtn.id = 'btnShareViewer';
+  shareBtn.title = 'Copy viewer URL untuk dibagikan';
+  shareBtn.textContent = 'Share';
+  shareBtn.onclick = function() {
+    if (!syncCfg || !syncCfg.gistId) {
+      toast('Setup GitHub Gist sync dulu (klik gear di header).', 1);
+      openSyncMo();
+      return;
+    }
+    var base = window.location.href.split('?')[0];
+    var url = base + '?mode=viewer&gist=' + syncCfg.gistId;
+    var p = P();
+    if (projects.length > 1 && p) {
+      url += '&project=' + encodeURIComponent(p.name);
+    }
+    copyToClipboard(url, function() {
+      toast('Viewer URL di-copy! Bagikan ke siapapun.');
+    });
+  };
+
+  // Insert sebelum Export button
+  var btns = hdrActions.querySelectorAll('.btn');
+  var exportBtn = null;
+  btns.forEach(function(b) {
+    if (b.textContent.trim().indexOf('Export') >= 0) exportBtn = b;
+  });
+
+  if (exportBtn) {
+    hdrActions.insertBefore(shareBtn, exportBtn);
+  } else {
+    hdrActions.appendChild(shareBtn);
+  }
+}
+
+// === RUN ===
+if (IS_VIEWER) {
+  viewerInit();
+} else {
+  viewerAddShareButton();
+}
+  
 </script>
 </body>
 </html>
